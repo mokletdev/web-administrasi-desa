@@ -1,4 +1,14 @@
 import Image from "next/image";
+// import prisma from "@/lib/prisma";
+
+/*
+  You can call this `getPosts` function in the page component
+*/
+
+// async function getPosts() {
+//   const posts = await prisma.post.findMany({});
+//   return posts;
+// }
 
 export default function Home() {
   return (
