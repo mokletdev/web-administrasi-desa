@@ -1,16 +1,14 @@
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
-import { UseFormRegister } from "react-hook-form";
-import { FaEye, FaEyeSlash, FaFileUpload } from "react-icons/fa";
-import { Popover, PopoverContent, PopoverTrigger } from "./popover";
-import { Button } from "./button";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon, Eye, EyeOff, Upload } from "lucide-react";
+import { UseFormRegister } from "react-hook-form";
+import { Button } from "./button";
 import { Calendar } from "./calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 
-export interface InputProps
-  extends React.InputHTMLAttributes<HTMLInputElement> {}
+export type InputProps = React.InputHTMLAttributes<HTMLInputElement>;
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, type, ...props }, ref) => {
@@ -24,7 +22,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           }
           className={cn(
             "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
-            className,
+            className
           )}
           ref={ref}
           {...props}
@@ -35,12 +33,12 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             type="button"
             onClick={() => setShowPassword(!showPassword)}
           >
-            {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
+            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
           </button>
         )}
       </div>
     );
-  },
+  }
 );
 Input.displayName = "Input";
 
@@ -84,7 +82,9 @@ const FileField = React.forwardRef<HTMLInputElement, FileInputProps>(
     return (
       <div className="flex w-full flex-col items-center justify-center py-4">
         <p
-          className={`mb-2 self-start ${errorMessage ? "text-primary-400" : "text-black"}`}
+          className={`mb-2 self-start ${
+            errorMessage ? "text-primary-400" : "text-black"
+          }`}
         >
           {label}
         </p>
@@ -96,13 +96,13 @@ const FileField = React.forwardRef<HTMLInputElement, FileInputProps>(
           htmlFor={name}
           className={cn(
             "relative w-full cursor-pointer rounded-lg border-2 border-dashed px-6 py-4 transition-all duration-300 hover:cursor-pointer hover:border-solid focus:outline-none",
-            errorMessage ? "border-primary-400" : "border-neutral-400",
+            errorMessage ? "border-primary-400" : "border-neutral-400"
           )}
           onDrop={handleDrop}
           onDragOver={handleDragOver}
         >
           <div className="flex flex-col items-center justify-center space-y-2">
-            <FaFileUpload className="h-12 w-12 text-neutral-400" />
+            <Upload className="h-12 w-12 text-neutral-400" />
             <span className="font-medium text-neutral-400">
               {fileName ? fileName : "Drag & drop a file here"}
             </span>
@@ -131,7 +131,7 @@ const FileField = React.forwardRef<HTMLInputElement, FileInputProps>(
         )}
       </div>
     );
-  },
+  }
 );
 FileField.displayName = "FileField";
 
@@ -148,7 +148,7 @@ const DateField = ({
         variant={"outline"}
         className={cn(
           "w-full justify-start text-left font-normal",
-          !date && "text-muted-foreground",
+          !date && "text-muted-foreground"
         )}
       >
         <CalendarIcon className="mr-2 h-4 w-4" />
@@ -161,4 +161,4 @@ const DateField = ({
   </Popover>
 );
 
-export { FileField, Input, DateField };
+export { DateField, FileField, Input };
