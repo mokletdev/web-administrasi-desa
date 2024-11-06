@@ -45,7 +45,7 @@ export default function RootLayout({
           <GoogleAnalytics gaId={process.env.GA_ID} />
         )}
         <body className={`${poppins.className} overflow-x-hidden antialiased`}>
-          <main>{children}</main>
+          {children}
           <Toaster />
         </body>
       </html>
