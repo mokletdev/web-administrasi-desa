@@ -243,6 +243,92 @@ model User {
   @@index([citizenId])
 }
 
+model JenisKelamin {
+  id       Int        @id @default(autoincrement())
+  kode_jk  Int        @unique // KODE_JK: Kode Jenis Kelamin
+  nama     String
+  Penduduk Penduduk[]
+}
+
+model Agama {
+  id       Int        @id @default(autoincrement())
+  kd_agama Int        @unique // KD_AGAMA: Kode Agama
+  nama     String
+  Penduduk Penduduk[]
+}
+
+model Pendidikan {
+  id              Int        @id @default(autoincrement())
+  kode_pddk_akhir Int        @unique // KODE_PDDK_AKHIR: Kode Pendidikan Terakhir
+  nama            String
+  Penduduk        Penduduk[]
+}
+
+model Pekerjaan {
+  id             Int        @id @default(autoincrement())
+  kode_pekerjaan Int        @unique // KODE_PEKERJAAN: Kode Pekerjaan
+  nama           String
+  Penduduk       Penduduk[]
+}
+
+model StatusKawin {
+  id       Int        @id @default(autoincrement())
+  status   Int        @unique // STATUS: Status Kawin
+  nama     String
+  Penduduk Penduduk[]
+}
+
+model HubunganDalamKeluarga {
+  id       Int        @id @default(autoincrement())
+  kodeshdk Int        @unique // KODESHDK: Kode Status Hubungan Dalam Keluarga
+  nama     String
+  Penduduk Penduduk[]
+}
+
+model GolonganDarah {
+  id       Int        @id @default(autoincrement())
+  kode_gdr Int        @unique // KODE_GDR: Kode Golongan Darah
+  nama     String
+  Penduduk Penduduk[]
+}
+
+model Penduduk {
+  id              Int      @id @default(autoincrement())
+  no_nik          String   @unique
+  no_kk           String
+  nama            String
+  tmpt_lhr        String
+  tgl_lhr         DateTime
+  kode_jk         Int // Foreign key ke JenisKelamin
+  kd_agama        Int // Foreign key ke Agama
+  kode_pddk_akhir Int // Foreign key ke Pendidikan
+  kode_pekerjaan  Int // Foreign key ke Pekerjaan
+  status          Int // Foreign key ke StatusKawin
+  kodeshdk        Int // Foreign key ke HubunganDalamKeluarga
+  kode_gdr        Int? // Foreign key ke GolonganDarah
+  alamat          String
+  dusun           String
+  rt              Int
+  rw              Int
+  nik_ibu         String?
+  nama_ibu        String?
+  nik_ayah        String?
+  nama_ayah       String?
+  no_akta_lhr     String?
+  no_akta_kwn     String?
+  wni             Boolean
+
+  jenisKelamin  JenisKelamin          @relation(fields: [kode_jk], references: [kode_jk])
+  agama         Agama                 @relation(fields: [kd_agama], references: [kd_agama])
+  pendidikan    Pendidikan            @relation(fields: [kode_pddk_akhir], references: [kode_pddk_akhir])
+  pekerjaan     Pekerjaan             @relation(fields: [kode_pekerjaan], references: [kode_pekerjaan])
+  statusKawin   StatusKawin           @relation(fields: [status], references: [status])
+  hubungan      HubunganDalamKeluarga @relation(fields: [kodeshdk], references: [kodeshdk])
+  golonganDarah GolonganDarah?        @relation(fields: [kode_gdr], references: [kode_gdr])
+
+  @@map("penduduk")
+}
+
 enum DocumentStatus {
   PENDING_APPROVAL
   APPROVED
