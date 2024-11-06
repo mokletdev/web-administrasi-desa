@@ -1,14 +1,285 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
+}
+
+model City {
+  id          Int          @id @default(autoincrement())
+  name        String
+  districts   District[]
+  submissions Submission[]
+  User        User[]
+
+  @@index([name])
+}
+
+model District {
+  id           Int           @id @default(autoincrement())
+  name         String
+  cityId       Int
+  city         City          @relation(fields: [cityId], references: [id])
+  subDistricts SubDistrict[]
+  submissions  Submission[]
+  User         User[]
+
+  @@index([cityId])
+  @@index([name])
+}
+
+model SubDistrict {
+  id          Int          @id @default(autoincrement())
+  name        String
+  districtId  Int
+  district    District     @relation(fields: [districtId], references: [id])
+  citizens    Citizen[]
+  submissions Submission[]
+  users       User[]
+
+  @@index([districtId])
+  @@index([name])
+}
+
+model Citizen {
+  id            Int          @id @default(autoincrement())
+  nik           String       @unique
+  name          String
+  subDistrictId Int
+  subDistrict   SubDistrict  @relation(fields: [subDistrictId], references: [id])
+  submissions   Submission[]
+  User          User[]
+
+  @@index([subDistrictId])
+  @@index([nik])
+}
+
+model Document {
+  id        String         @id @default(uuid())
+  title     String
+  content   String
+  status    DocumentStatus @default(PENDING_APPROVAL)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  level     UserRole
+  user      User           @relation(fields: [userId], references: [id])
+  Form      Form?
+  signs     Sign[]
+  userId    String
+  Approval  Approval[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+model Sign {
+  id       String   @id @default(uuid())
+  document Document @relation(fields: [documentId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
+
+  documentId String
+  userId     String
+
+  @@index([documentId])
+  @@index([userId])
+}
+
+model SignRequest {
+  id         String     @id @default(uuid())
+  submission Submission @relation(fields: [submissionId], references: [id])
+  user       User       @relation(fields: [userId], references: [id])
+  status     SignStatus @default(REQUESTED)
+
+  userId       String
+  submissionId String @db.Char(36)
+
+  @@index([userId, status])
+}
+
+model FieldValidation {
+  id          String    @id @default(uuid())
+  type        String // e.g., "min", "max", "pattern", "format"
+  value       String // The validation value/pattern
+  message     String // Custom error message
+  FieldType   FieldType @relation(fields: [fieldTypeId], references: [id])
+  fieldTypeId Int       @unique
+
+  @@index([fieldTypeId])
+}
+
+model FieldRelation {
+  id          String    @id @default(uuid())
+  targetTable String // Name of the related table
+  targetField String // Field to display (e.g., name, title)
+  valueField  String // Field to use as value (e.g., id)
+  field       FieldType @relation(fields: [fieldTypeId], references: [id], onDelete: Cascade)
+  fieldTypeId Int       @unique
+
+  @@index([fieldTypeId])
+}
+
+model FieldType {
+  id           Int               @id @default(autoincrement())
+  label        String
+  placeholder  String? // Placeholder text
+  defaultValue String? // Default value
+  validations  FieldValidation[] // Field validation rules
+  relation     FieldRelation? // Optional relation configuration
+  Field        Field[]
+
+  @@index([label])
+}
+
+model Field {
+  id          Int               @id @default(autoincrement()) @map("field_id")
+  label       String
+  baseType    BaseFieldType // Basic type of the field
+  required    Boolean           @default(false)
+  form        Form              @relation(fields: [formId], references: [id], onDelete: Cascade)
+  formId      String
+  options     FieldOption[] // For radio/checkbox options
+  submissions SubmissionField[]
+  FieldType   FieldType         @relation(fields: [fieldTypeId], references: [id])
+  fieldNumber Int               @default(1)
+  fieldTypeId Int
+
+  @@index([formId])
+  @@index([fieldTypeId])
+}
+
+model Form {
+  id          String       @id @default(uuid())
+  document    Document     @relation(fields: [documentId], references: [id])
+  fields      Field[]
+  submissions Submission[]
+  documentId  String       @unique
+  User        User?        @relation(fields: [userId], references: [id])
+  userId      String?
+
+  @@index([userId])
+}
+
+model FieldOption {
+  id      String @id @default(uuid())
+  value   String
+  field   Field  @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  fieldId Int
+
+  @@index([fieldId])
+}
+
+model Submission {
+  id            String            @id @default(uuid()) @db.Char(36)
+  form          Form              @relation(fields: [formId], references: [id], onDelete: Cascade)
+  formId        String
+  user          User              @relation(fields: [userId], references: [id])
+  userId        String
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  fields        SubmissionField[]
+  SignRequest   SignRequest[]
+  City          City?             @relation(fields: [cityId], references: [id])
+  cityId        Int?
+  District      District?         @relation(fields: [districtId], references: [id])
+  districtId    Int?
+  SubDistrict   SubDistrict?      @relation(fields: [subDistrictId], references: [id])
+  subDistrictId Int?
+  Citizen       Citizen?          @relation(fields: [citizenId], references: [id])
+  citizenId     Int?
+
+  @@index([formId, userId])
+}
+
+model SubmissionField {
+  id           String     @id @default(uuid()) @db.Char(36)
+  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  submissionId String
+  field        Field      @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  fieldId      Int
+  value        String     @db.LongText
+
+  @@index([submissionId, fieldId])
+}
+
+model Approval {
+  id           String         @id @default(uuid())
+  documentId   String
+  document     Document       @relation(fields: [documentId], references: [id])
+  approvedById String?
+  approvedBy   User?          @relation(fields: [approvedById], references: [id])
+  status       ApprovalStatus @default(PENDING)
+  approvedAt   DateTime?
+
+  @@index([documentId])
+}
+
+model User {
+  id            String        @id @default(uuid())
+  username      String        @unique
+  email         String        @unique
+  password      String
+  role          UserRole
+  cityId        Int?
+  districtId    Int?
+  subDistrictId Int?
+  citizenId     Int?
+  subDistrict   SubDistrict?  @relation(fields: [subDistrictId], references: [id])
+  approvals     Approval[]
+  City          City?         @relation(fields: [cityId], references: [id])
+  District      District?     @relation(fields: [districtId], references: [id])
+  Citizen       Citizen?      @relation(fields: [citizenId], references: [id])
+  Form          Form[]
+  Submission    Submission[]
+  Sign          Sign[]
+  SignRequest   SignRequest[]
+  Document      Document[]
+
+  @@index([cityId])
+  @@index([districtId])
+  @@index([subDistrictId])
+  @@index([citizenId])
+}
+
+enum DocumentStatus {
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  READY_FOR_SIGNATURE
+  SIGNED
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum UserRole {
+  CITIZEN
+  CITY_ADMIN
+  DISTRICT_ADMIN
+  SUBDISTRICT_ADMIN
+}
+
+enum SignStatus {
+  REQUESTED
+  SIGNED
+}
+
+enum BaseFieldType {
+  text
+  number
+  email
+  password
+  longtext
+  radio
+  checkbox
+  relation // type for database relations
+  date
+  datetime
+  time
+  file
+  phone
 }
