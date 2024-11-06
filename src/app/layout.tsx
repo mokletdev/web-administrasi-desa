@@ -2,18 +2,12 @@ import NextAuthProvider from "@/components/providers/NextAuthProvider";
 import { Toaster } from "@/components/ui/toaster";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import type { Metadata, Viewport } from "next";
-import localFont from "next/font/local";
+import { Poppins } from "next/font/google";
 import "./globals.css";
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
-});
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
+const poppins = Poppins({
+  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+  subsets: ["latin"],
 });
 
 const robots =
@@ -50,9 +44,7 @@ export default function RootLayout({
         {process.env.APP_ENV === "production" && process.env.GA_ID && (
           <GoogleAnalytics gaId={process.env.GA_ID} />
         )}
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-x-hidden`}
-        >
+        <body className={`${poppins.className} overflow-x-hidden antialiased`}>
           <main>{children}</main>
           <Toaster />
         </body>
