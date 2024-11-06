@@ -67,7 +67,7 @@ export const LoginForm: FC = () => {
       description: `Berhasil masuk ke akun ${fields.email}`,
     });
     setLoading(false);
-    return router.push(`/`);
+    return router.push("/admin");
   });
 
   return (
