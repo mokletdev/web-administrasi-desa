@@ -5,7 +5,7 @@ export default async function Root() {
   const session = await getServerSession();
 
   if (!session?.user) {
-    return redirect("/login");
+    return redirect("/auth/login");
   }
 
   return redirect("/admin");
