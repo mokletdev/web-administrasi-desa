@@ -4,7 +4,7 @@ import {
 } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
-import { compareHash } from "@/utils/encryption";
+import { compareHash } from "@/lib/bcryptjs";
 
 import type { DefaultJWT } from "next-auth/jwt";
 
