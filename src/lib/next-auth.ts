@@ -10,6 +10,8 @@ import type { DefaultJWT } from "next-auth/jwt";
 
 import prisma from "./prisma";
 
+import { UserRole } from "@prisma/client";
+
 declare module "next-auth" {
   /**
    * Returned by `useSession`, `getSession` and received as a prop on the `SessionProvider` React Context
@@ -17,8 +19,7 @@ declare module "next-auth" {
   interface Session {
     user?: {
       id: string;
-      // TODO: Change this to the actual role of user in your app
-      role: "GUEST" | "ADMIN";
+      role: UserRole;
       name: string;
       email: string;
     };
@@ -29,20 +30,13 @@ declare module "next-auth/jwt" {
   /** Returned by the `jwt` callback and `getToken`, when using JWT sessions */
   interface JWT extends DefaultJWT {
     id: string;
-    // TODO: Change this to the actual role of user in your app
-    role: "GUEST" | "ADMIN";
+    role: UserRole;
     name: string;
     email: string;
   }
 }
 
-// TODO: Change the logic of authentication according to your app needs
 export const authOptions: AuthOptions = {
-  theme: {
-    colorScheme: "dark",
-    brandColor: "#E04E4E",
-    logo: "/logo.png",
-  },
   session: {
     strategy: "jwt",
   },
@@ -54,7 +48,7 @@ export const authOptions: AuthOptions = {
         email: {
           label: "Email",
           type: "email",
-          placeholder: "user@student.smktelkom-mlg.sch.id",
+          placeholder: "user@email.com",
         },
         password: {
           label: "Password",
@@ -71,7 +65,7 @@ export const authOptions: AuthOptions = {
 
           const isPasswordCorrect = compareHash(
             credentials?.password as string,
-            user.password
+            user.password,
           );
 
           if (!isPasswordCorrect) return null;
@@ -90,11 +84,6 @@ export const authOptions: AuthOptions = {
         }
       },
     }),
-    // GoogleProvider({
-    //   clientId: process.env.GOOGLE_CLIENT_ID,
-    //   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    //   allowDangerousEmailAccountLinking: false,
-    // }),
   ],
   callbacks: {
     async redirect({ url, baseUrl }) {
@@ -108,14 +97,9 @@ export const authOptions: AuthOptions = {
         const findUser = await prisma.user.findUnique({
           where: { email: user.email },
         });
+
         if (!findUser) {
-          await prisma.user.create({
-            data: {
-              email: user.email,
-              name: user.name || "",
-              verified: true,
-            },
-          });
+          throw new Error(`User with email ${user.email} not found`);
         }
       }
 
@@ -127,6 +111,7 @@ export const authOptions: AuthOptions = {
           where: { email: user.email },
         });
         if (!findUser) return token;
+
         token.id = findUser?.id;
         token.role = findUser?.role;
       }
@@ -137,7 +122,8 @@ export const authOptions: AuthOptions = {
         const findUser = await prisma.user.findUnique({
           where: { id: token.id },
         });
-        session.user.role = findUser?.role || "GUEST";
+
+        session.user.role = findUser?.role as UserRole;
         session.user.name = findUser?.name as string;
         session.user.email = findUser?.email as string;
         session.user.id = findUser?.id as string;
