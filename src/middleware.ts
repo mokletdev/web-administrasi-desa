@@ -1,64 +1,61 @@
 import { withAuth } from "next-auth/middleware";
+import { NextResponse } from "next/server";
+import { UserRole } from "@prisma/client";
 
-// middleware is applied to all routes, use conditionals to select
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export default withAuth(function middleware(_) {}, {
-  callbacks: {
-    authorized: ({ req, token }) => {
-      // const pathname = req.nextUrl.pathname;
-      // if (
-      //   (pathname.startsWith("/rooms/book") ||
-      //     pathname.startsWith("/admin") ||
-      //     pathname.startsWith("/receptionist") ||
-      //     pathname.startsWith("/bookings")) &&
-      //   !token
-      // ) {
-      //   return false;
-      // }
+const ROUTES = {
+  ROOT: "/",
+  LOGIN: "/auth/login",
+  ADMIN: "/admin",
+  UNAUTHORIZED: "/unauthorized",
+} as const;
 
-      // if (pathname.startsWith("/auth") && token) {
-      //   return false;
-      // }
+type ProtectedRouteConfig = {
+  path: string;
+  roles: UserRole[];
+};
 
-      return true;
+const PROTECTED_ROUTES: ProtectedRouteConfig[] = [
+  { path: "/admin", roles: ["SUPERADMIN"] },
+];
+
+export default withAuth(
+  async function middleware(req) {
+    const { token } = req.nextauth;
+    const { pathname } = req.nextUrl;
+
+    if (pathname === ROUTES.LOGIN || pathname === ROUTES.ROOT) {
+      if (!token) return NextResponse.next();
+      if (token.role === "SUPERADMIN") {
+        return NextResponse.redirect(new URL(ROUTES.ADMIN, req.url));
+      }
+    }
+
+    if (!token) {
+      return NextResponse.redirect(
+        new URL(`${ROUTES.LOGIN}?callbackUrl=${pathname}`, req.url),
+      );
+    }
+
+    const isRouteProtected = PROTECTED_ROUTES.some(
+      (route) =>
+        pathname.startsWith(route.path) && !route.roles.includes(token.role),
+    );
+
+    if (isRouteProtected) {
+      return NextResponse.rewrite(new URL(ROUTES.UNAUTHORIZED, req.url), {
+        status: 403,
+      });
+    }
+
+    return NextResponse.next();
+  },
+  {
+    callbacks: {
+      authorized: () => true,
     },
   },
-});
+);
 
 export const config = {
-  matcher: [
-    "/about/:path*",
-    "/dashboard/:path*",
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
-
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico, sitemap.xml, robots.txt (metadata files)
-     */
-    {
-      source:
-        "/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
-      missing: [
-        { type: "header", key: "next-router-prefetch" },
-        { type: "header", key: "purpose", value: "prefetch" },
-      ],
-    },
-    {
-      source:
-        "/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
-      has: [
-        { type: "header", key: "next-router-prefetch" },
-        { type: "header", key: "purpose", value: "prefetch" },
-      ],
-    },
-    {
-      source:
-        "/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
-      has: [{ type: "header", key: "x-present" }],
-      missing: [{ type: "header", key: "x-missing", value: "prefetch" }],
-    },
-  ],
+  matcher: ["/", "/admin/:path*", "/auth/login"],
 };

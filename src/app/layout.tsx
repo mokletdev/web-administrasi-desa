@@ -15,16 +15,12 @@ const robots =
 
 // TOOD: Change this metadata
 export const metadata: Metadata = {
-  title: { default: "My App", template: "%s | My App" },
-  description:
-    "Lorem ipsum dolor, sit amet consectetur adipisicing elit. Sint, porro.",
-  authors: [{ name: "Ahsan Azizan", url: "https://ahsanzizan.xyz/" }],
-  creator: "My Team",
-  publisher: "My Publisher",
-  openGraph: {
-    images: `${process.env.URL}/logo-horizontal.png`,
-  },
-  keywords: ["my", "app"],
+  title: { default: "Administrasi Desa", template: "%s | Administrasi Desa" },
+  authors: [
+    { name: "Ahsan Azizan", url: "https://ahsanzizan.xyz/" },
+    { name: "Kusindra Aji Rabbany", url: "https://benspace.xyz/" },
+  ],
+  creator: "MokletDev",
   robots,
 };
 

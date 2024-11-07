@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -65,12 +67,12 @@ export const LoginForm: FC = () => {
       description: `Berhasil masuk ke akun ${fields.email}`,
     });
     setLoading(false);
-    return router.push(`/`);
+    return router.push("/admin");
   });
 
   return (
     <Form {...form}>
-      <form onSubmit={onSubmit}>
+      <form onSubmit={onSubmit} className="w-full">
         <div className="grid w-full items-center gap-y-4">
           <FormField
             control={form.control}
@@ -92,7 +94,11 @@ export const LoginForm: FC = () => {
               <FormItem className="flex flex-col space-y-1.5">
                 <FormLabel htmlFor="password">Password</FormLabel>
                 <FormControl>
-                  <Input {...field} placeholder="Password anda" />
+                  <Input
+                    {...field}
+                    type="password"
+                    placeholder="Password anda"
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
