@@ -111,6 +111,7 @@ model FieldType {
   name         String
   placeholder  String? // Placeholder text
   defaultValue String? // Default value
+  baseType     BaseFieldType // Basic type of the field
   validations  FieldValidation[] // Field validation rules
   relation     FieldRelation? // Optional relation configuration
   fields       Field[]
@@ -119,7 +120,6 @@ model FieldType {
 model Field {
   id          Int               @id @default(autoincrement()) @map("field_id")
   label       String
-  baseType    BaseFieldType // Basic type of the field
   required    Boolean           @default(false)
   form        Form              @relation(fields: [formId], references: [id], onDelete: Cascade)
   formId      String
