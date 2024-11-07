@@ -14,6 +14,7 @@ const createAdminSchema = z.object({
     UserRole.CITY_ADMIN,
     UserRole.DISTRICT_ADMIN,
     UserRole.SUBDISTRICT_ADMIN,
+    UserRole.SUPERADMIN,
   ]),
   creation_password: z.string().min(1),
 });

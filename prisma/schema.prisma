@@ -348,6 +348,7 @@ enum UserRole {
   CITY_ADMIN
   DISTRICT_ADMIN
   SUBDISTRICT_ADMIN
+  SUPERADMIN
 }
 
 enum SignStatus {
