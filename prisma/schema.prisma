@@ -12,7 +12,7 @@ model City {
   name        String
   districts   District[]
   submissions Submission[]
-  User        User[]
+  users       User[]
 
   @@index([name])
 }
@@ -24,7 +24,7 @@ model District {
   city         City          @relation(fields: [cityId], references: [id])
   subDistricts SubDistrict[]
   submissions  Submission[]
-  User         User[]
+  users        User[]
 
   @@index([cityId])
   @@index([name])
@@ -35,40 +35,27 @@ model SubDistrict {
   name        String
   districtId  Int
   district    District     @relation(fields: [districtId], references: [id])
-  citizens    Citizen[]
   submissions Submission[]
   users       User[]
+  penduduk    Penduduk[]
 
   @@index([districtId])
   @@index([name])
 }
 
-model Citizen {
-  id            Int          @id @default(autoincrement())
-  nik           String       @unique
-  name          String
-  subDistrictId Int
-  subDistrict   SubDistrict  @relation(fields: [subDistrictId], references: [id])
-  submissions   Submission[]
-  User          User[]
-
-  @@index([subDistrictId])
-  @@index([nik])
-}
-
 model Document {
   id        String         @id @default(uuid())
   title     String
-  content   String
+  content   String         @db.LongText
   status    DocumentStatus @default(PENDING_APPROVAL)
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
   level     UserRole
   user      User           @relation(fields: [userId], references: [id])
-  Form      Form?
+  form      Form?
   signs     Sign[]
   userId    String
-  Approval  Approval[]
+  approvals Approval[]
 
   @@index([userId])
   @@index([status])
@@ -103,7 +90,7 @@ model FieldValidation {
   type        String // e.g., "min", "max", "pattern", "format"
   value       String // The validation value/pattern
   message     String // Custom error message
-  FieldType   FieldType @relation(fields: [fieldTypeId], references: [id])
+  fieldType   FieldType @relation(fields: [fieldTypeId], references: [id])
   fieldTypeId Int       @unique
 
   @@index([fieldTypeId])
@@ -112,8 +99,7 @@ model FieldValidation {
 model FieldRelation {
   id          String    @id @default(uuid())
   targetTable String // Name of the related table
-  targetField String // Field to display (e.g., name, title)
-  valueField  String // Field to use as value (e.g., id)
+  targetField String // Field to use as value (e.g., id)
   field       FieldType @relation(fields: [fieldTypeId], references: [id], onDelete: Cascade)
   fieldTypeId Int       @unique
 
@@ -122,14 +108,12 @@ model FieldRelation {
 
 model FieldType {
   id           Int               @id @default(autoincrement())
-  label        String
+  name         String
   placeholder  String? // Placeholder text
   defaultValue String? // Default value
   validations  FieldValidation[] // Field validation rules
   relation     FieldRelation? // Optional relation configuration
-  Field        Field[]
-
-  @@index([label])
+  fields       Field[]
 }
 
 model Field {
@@ -141,7 +125,7 @@ model Field {
   formId      String
   options     FieldOption[] // For radio/checkbox options
   submissions SubmissionField[]
-  FieldType   FieldType         @relation(fields: [fieldTypeId], references: [id])
+  fieldType   FieldType         @relation(fields: [fieldTypeId], references: [id])
   fieldNumber Int               @default(1)
   fieldTypeId Int
 
@@ -155,7 +139,7 @@ model Form {
   fields      Field[]
   submissions Submission[]
   documentId  String       @unique
-  User        User?        @relation(fields: [userId], references: [id])
+  user        User?        @relation(fields: [userId], references: [id])
   userId      String?
 
   @@index([userId])
@@ -179,15 +163,13 @@ model Submission {
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
   fields        SubmissionField[]
-  SignRequest   SignRequest[]
-  City          City?             @relation(fields: [cityId], references: [id])
+  signRequests  SignRequest[]
+  city          City?             @relation(fields: [cityId], references: [id])
   cityId        Int?
-  District      District?         @relation(fields: [districtId], references: [id])
+  district      District?         @relation(fields: [districtId], references: [id])
   districtId    Int?
-  SubDistrict   SubDistrict?      @relation(fields: [subDistrictId], references: [id])
+  subDistrict   SubDistrict?      @relation(fields: [subDistrictId], references: [id])
   subDistrictId Int?
-  Citizen       Citizen?          @relation(fields: [citizenId], references: [id])
-  citizenId     Int?
 
   @@index([formId, userId])
 }
@@ -225,76 +207,75 @@ model User {
   cityId        Int?
   districtId    Int?
   subDistrictId Int?
-  citizenId     Int?
+  NIK           String?
   subDistrict   SubDistrict?  @relation(fields: [subDistrictId], references: [id])
   approvals     Approval[]
-  City          City?         @relation(fields: [cityId], references: [id])
-  District      District?     @relation(fields: [districtId], references: [id])
-  Citizen       Citizen?      @relation(fields: [citizenId], references: [id])
-  Form          Form[]
-  Submission    Submission[]
-  Sign          Sign[]
-  SignRequest   SignRequest[]
-  Document      Document[]
+  city          City?         @relation(fields: [cityId], references: [id])
+  district      District?     @relation(fields: [districtId], references: [id])
+  penduduk      Penduduk?     @relation(fields: [NIK], references: [no_nik])
+  forms         Form[]
+  submissions   Submission[]
+  signs         Sign[]
+  signRequests  SignRequest[]
+  documents     Document[]
 
   @@index([cityId])
   @@index([districtId])
   @@index([subDistrictId])
-  @@index([citizenId])
 }
 
 model JenisKelamin {
-  id       Int        @id @default(autoincrement())
-  kode_jk  Int        @unique // KODE_JK: Kode Jenis Kelamin
-  nama     String
-  Penduduk Penduduk[]
+  id        Int        @id @default(autoincrement())
+  kode_jk   Int        @unique // KODE_JK: Kode Jenis Kelamin
+  nama      String
+  penduduks Penduduk[]
 }
 
 model Agama {
   id       Int        @id @default(autoincrement())
   kd_agama Int        @unique // KD_AGAMA: Kode Agama
   nama     String
-  Penduduk Penduduk[]
+  penduduk Penduduk[]
 }
 
 model Pendidikan {
   id              Int        @id @default(autoincrement())
   kode_pddk_akhir Int        @unique // KODE_PDDK_AKHIR: Kode Pendidikan Terakhir
   nama            String
-  Penduduk        Penduduk[]
+  penduduk        Penduduk[]
 }
 
 model Pekerjaan {
   id             Int        @id @default(autoincrement())
   kode_pekerjaan Int        @unique // KODE_PEKERJAAN: Kode Pekerjaan
   nama           String
-  Penduduk       Penduduk[]
+  penduduk       Penduduk[]
 }
 
 model StatusKawin {
   id       Int        @id @default(autoincrement())
   status   Int        @unique // STATUS: Status Kawin
   nama     String
-  Penduduk Penduduk[]
+  penduduk Penduduk[]
 }
 
 model HubunganDalamKeluarga {
   id       Int        @id @default(autoincrement())
   kodeshdk Int        @unique // KODESHDK: Kode Status Hubungan Dalam Keluarga
   nama     String
-  Penduduk Penduduk[]
+  penduduk Penduduk[]
 }
 
 model GolonganDarah {
   id       Int        @id @default(autoincrement())
   kode_gdr Int        @unique // KODE_GDR: Kode Golongan Darah
   nama     String
-  Penduduk Penduduk[]
+  penduduk Penduduk[]
 }
 
 model Penduduk {
-  id              Int      @id @default(autoincrement())
-  no_nik          String   @unique
+  id              Int                   @id @default(autoincrement())
+  no_nik          String                @unique
   no_kk           String
   nama            String
   tmpt_lhr        String
@@ -316,17 +297,29 @@ model Penduduk {
   nama_ayah       String?
   no_akta_lhr     String?
   no_akta_kwn     String?
-  wni             Boolean
+  tgl_kwn         DateTime?
+  no_akta_crai    String?
+  tgl_crai        DateTime?
+  pendatang       Boolean               @default(false)
+  kelainan        Boolean               @default(false)
+  subDistrictId   Int
+  subDistrict     SubDistrict           @relation(fields: [subDistrictId], references: [id])
+  jenisKelamin    JenisKelamin          @relation(fields: [kode_jk], references: [kode_jk])
+  agama           Agama                 @relation(fields: [kd_agama], references: [kd_agama])
+  pendidikan      Pendidikan            @relation(fields: [kode_pddk_akhir], references: [kode_pddk_akhir])
+  pekerjaan       Pekerjaan             @relation(fields: [kode_pekerjaan], references: [kode_pekerjaan])
+  statusKawin     StatusKawin           @relation(fields: [status], references: [status])
+  hubungan        HubunganDalamKeluarga @relation(fields: [kodeshdk], references: [kodeshdk])
+  golonganDarah   GolonganDarah?        @relation(fields: [kode_gdr], references: [kode_gdr])
+  User            User[]
 
-  jenisKelamin  JenisKelamin          @relation(fields: [kode_jk], references: [kode_jk])
-  agama         Agama                 @relation(fields: [kd_agama], references: [kd_agama])
-  pendidikan    Pendidikan            @relation(fields: [kode_pddk_akhir], references: [kode_pddk_akhir])
-  pekerjaan     Pekerjaan             @relation(fields: [kode_pekerjaan], references: [kode_pekerjaan])
-  statusKawin   StatusKawin           @relation(fields: [status], references: [status])
-  hubungan      HubunganDalamKeluarga @relation(fields: [kodeshdk], references: [kodeshdk])
-  golonganDarah GolonganDarah?        @relation(fields: [kode_gdr], references: [kode_gdr])
-
-  @@map("penduduk")
+  @@index([kode_jk])
+  @@index([kd_agama])
+  @@index([kode_pddk_akhir])
+  @@index([kode_pekerjaan])
+  @@index([status])
+  @@index([kodeshdk])
+  @@index([kode_gdr])
 }
 
 enum DocumentStatus {
@@ -354,6 +347,7 @@ enum UserRole {
 enum SignStatus {
   REQUESTED
   SIGNED
+  REJECTED
 }
 
 enum BaseFieldType {
