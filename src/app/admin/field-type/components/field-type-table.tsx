@@ -41,7 +41,7 @@ import {
   Trash,
 } from "lucide-react";
 import { FC, useMemo, useState } from "react";
-import { ConfirmDeletionDialog } from "./dialogs/delete-dialog";
+import { ConfirmDeletionDialog, UpdateFieldTypeDialog } from "./dialogs";
 
 export const FieldTypeTable: FC<{ fieldTypes: FieldType[] }> = ({
   fieldTypes,
@@ -51,6 +51,7 @@ export const FieldTypeTable: FC<{ fieldTypes: FieldType[] }> = ({
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState<FieldType | null>(null);
 
   const columns: ColumnDef<FieldType>[] = useMemo(
@@ -143,8 +144,8 @@ export const FieldTypeTable: FC<{ fieldTypes: FieldType[] }> = ({
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                 <DropdownMenuItem
                   onClick={() => {
-                    // setEditModalOpen(true)
                     setSelectedRow(row.original);
+                    setEditDialogOpen(true);
                   }}
                 >
                   <Pencil size={16} />
@@ -153,8 +154,8 @@ export const FieldTypeTable: FC<{ fieldTypes: FieldType[] }> = ({
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => {
-                    setDeleteDialogOpen(true);
                     setSelectedRow(row.original);
+                    setDeleteDialogOpen(true);
                   }}
                 >
                   <Trash size={16} />
@@ -284,6 +285,11 @@ export const FieldTypeTable: FC<{ fieldTypes: FieldType[] }> = ({
         open={deleteDialogOpen}
         setIsOpen={setDeleteDialogOpen}
         fieldTypeIdToDelete={selectedRow?.id}
+      />
+      <UpdateFieldTypeDialog
+        open={editDialogOpen}
+        setIsOpen={setEditDialogOpen}
+        fieldTypeData={selectedRow!}
       />
     </>
   );
