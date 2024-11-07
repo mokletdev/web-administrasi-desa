@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 
 // TODO: Update this forbidden page
 export default function NotFound() {
-  return <>403. Anda tidak memiliki akses pada halaman ini!</>;
+  return <h1>403. Anda tidak memiliki akses pada halaman ini!</h1>;
 }
