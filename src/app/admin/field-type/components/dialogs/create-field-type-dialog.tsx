@@ -18,37 +18,22 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useZodForm } from "@/hooks/use-zod-form";
-import { FieldType } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import { Dispatch, FC, SetStateAction, useState } from "react";
 import { z } from "zod";
 
-const updateFieldTypeSchema = z.object({
+const createFieldTypeSchema = z.object({
   label: z.string().min(1),
   placeholder: z.string().optional(),
   defaultValue: z.string().optional(),
 });
 
-export const UpdateFieldTypeDialog: FC<{
+export const CreateFieldTypeDialog: FC<{
   open: boolean;
   setIsOpen: Dispatch<SetStateAction<boolean>>;
-  fieldTypeData: FieldType | null;
-}> = ({ open, setIsOpen, fieldTypeData }) => {
+}> = ({ open, setIsOpen }) => {
   const form = useZodForm({
-    values: fieldTypeData
-      ? {
-          label: fieldTypeData.label,
-          placeholder:
-            fieldTypeData.placeholder === null
-              ? undefined
-              : fieldTypeData.placeholder,
-          defaultValue:
-            fieldTypeData.defaultValue === null
-              ? undefined
-              : fieldTypeData.defaultValue,
-        }
-      : undefined,
-    schema: updateFieldTypeSchema,
+    schema: createFieldTypeSchema,
   });
   const [loading, setLoading] = useState(false);
   const { toast, dismiss } = useToast();
@@ -59,16 +44,16 @@ export const UpdateFieldTypeDialog: FC<{
 
     const loadingToast = toast({
       title: "Mengirim...",
-      description: "Permintaan perubahan anda sedang diproses",
+      description: "Permintaan penambahan anda sedang diproses",
     });
 
     console.log(fields);
-    // TODO: Update action
+    // TODO: Create action
 
     dismiss(loadingToast.id);
     toast({
-      title: "Berhasil Mengubah!",
-      description: `Berhasil mengubah data tipe input dengan ID ${fieldTypeData?.id}`,
+      title: "Berhasil Menambahkan!",
+      description: `Berhasil menambahkan data tipe input baru`,
     });
     setLoading(false);
     setIsOpen(false);
@@ -79,9 +64,9 @@ export const UpdateFieldTypeDialog: FC<{
     <Dialog open={open} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Edit Tipe Input</DialogTitle>
+          <DialogTitle>Tambahkan Tipe Input</DialogTitle>
           <DialogDescription>
-            Perbarui Tipe Input disini. Tekan tombol simpan jika telah selesai.
+            Tambahkan Tipe Input disini. Tekan tombol simpan jika telah selesai.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>

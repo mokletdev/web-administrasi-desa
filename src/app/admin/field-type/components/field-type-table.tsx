@@ -41,7 +41,11 @@ import {
   Trash,
 } from "lucide-react";
 import { FC, useMemo, useState } from "react";
-import { ConfirmDeletionDialog, UpdateFieldTypeDialog } from "./dialogs";
+import {
+  ConfirmDeletionDialog,
+  CreateFieldTypeDialog,
+  UpdateFieldTypeDialog,
+} from "./dialogs";
 
 export const FieldTypeTable: FC<{ fieldTypes: FieldType[] }> = ({
   fieldTypes,
@@ -50,9 +54,11 @@ export const FieldTypeTable: FC<{ fieldTypes: FieldType[] }> = ({
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [selectedRow, setSelectedRow] = useState<FieldType | null>(null);
+
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [selectedRow, setSelectedRow] = useState<FieldType | null>(null);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   const columns: ColumnDef<FieldType>[] = useMemo(
     (): ColumnDef<FieldType>[] => [
@@ -192,7 +198,7 @@ export const FieldTypeTable: FC<{ fieldTypes: FieldType[] }> = ({
   return (
     <>
       <div className="w-full">
-        <div className="flex items-center py-4">
+        <div className="flex items-center justify-between py-4">
           <Input
             placeholder="Filter label..."
             value={(table.getColumn("label")?.getFilterValue() as string) ?? ""}
@@ -201,32 +207,40 @@ export const FieldTypeTable: FC<{ fieldTypes: FieldType[] }> = ({
             }
             className="max-w-sm"
           />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="ml-auto">
-                Columns <ChevronDown />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {table
-                .getAllColumns()
-                .filter((column) => column.getCanHide())
-                .map((column) => {
-                  return (
-                    <DropdownMenuCheckboxItem
-                      key={column.id}
-                      className="capitalize"
-                      checked={column.getIsVisible()}
-                      onCheckedChange={(value) =>
-                        column.toggleVisibility(!!value)
-                      }
-                    >
-                      {column.id}
-                    </DropdownMenuCheckboxItem>
-                  );
-                })}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex items-center gap-3">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="ml-auto">
+                  Columns <ChevronDown />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {table
+                  .getAllColumns()
+                  .filter((column) => column.getCanHide())
+                  .map((column) => {
+                    return (
+                      <DropdownMenuCheckboxItem
+                        key={column.id}
+                        className="capitalize"
+                        checked={column.getIsVisible()}
+                        onCheckedChange={(value) =>
+                          column.toggleVisibility(!!value)
+                        }
+                      >
+                        {column.id}
+                      </DropdownMenuCheckboxItem>
+                    );
+                  })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button
+              variant={"default"}
+              onClick={() => setCreateDialogOpen(true)}
+            >
+              Tambah
+            </Button>
+          </div>
         </div>
         <div className="rounded-md border">
           <Table>
@@ -290,6 +304,10 @@ export const FieldTypeTable: FC<{ fieldTypes: FieldType[] }> = ({
         open={editDialogOpen}
         setIsOpen={setEditDialogOpen}
         fieldTypeData={selectedRow!}
+      />
+      <CreateFieldTypeDialog
+        open={createDialogOpen}
+        setIsOpen={setCreateDialogOpen}
       />
     </>
   );
