@@ -1,12 +1,11 @@
-import { FieldType } from "@prisma/client";
+import prisma from "@/lib/prisma";
 import { FieldTypeTable } from "./components/field-type-table";
 
-const fieldTypes: FieldType[] = [
-  { id: 1, label: "Ass", defaultValue: "uss", placeholder: "Jnagan ya" },
-  { id: 2, label: "Mass", defaultValue: "umss", placeholder: "Jnagan ya" },
-];
+export default async function FieldTypeManagement() {
+  const fieldTypes = await prisma.fieldType.findMany({
+    include: { relation: true },
+  });
 
-export default function FieldTypeManagement() {
   return (
     <>
       <div className="mb-8 flex flex-col gap-2">

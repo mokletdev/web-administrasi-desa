@@ -7,13 +7,7 @@ import { revalidatePath } from "next/cache";
 
 export const getAllTableNames = async (): Promise<ActionResponse<string[]>> => {
   try {
-    const tableNames = Object.keys(prisma).filter((key: string) => {
-      return (
-        !key.startsWith("_") &&
-        !key.startsWith("$") &&
-        typeof (prisma as unknown as Record<string, unknown>)[key] === "object"
-      );
-    });
+    const tableNames = Prisma.dmmf.datamodel.models.map((model) => model.name);
 
     return ActionResponses.success(tableNames);
   } catch (error) {
@@ -43,7 +37,7 @@ export const getColumnNames = async (
   }
 };
 
-type FieldTypeResponse = Prisma.FieldTypeGetPayload<{}> & {
+type FieldTypeResponse = Prisma.FieldTypeGetPayload<object> & {
   relation?: {
     targetTable: string;
     targetField: string;
@@ -109,7 +103,9 @@ export async function upsertFieldType(
         baseType: baseType,
       };
 
-      let fieldType;
+      let fieldType: Prisma.FieldTypeGetPayload<{
+        include: { relation: true };
+      }>;
 
       if (id) {
         const existing = await tx.fieldType.findUnique({

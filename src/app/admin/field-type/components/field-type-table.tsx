@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { FieldType } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -47,9 +47,11 @@ import {
   UpdateFieldTypeDialog,
 } from "./dialogs";
 
-export const FieldTypeTable: FC<{ fieldTypes: FieldType[] }> = ({
-  fieldTypes,
-}) => {
+type FieldType = Prisma.FieldTypeGetPayload<{ include: { relation: true } }>;
+
+export const FieldTypeTable: FC<{
+  fieldTypes: Prisma.FieldTypeGetPayload<{ include: { relation: true } }>[];
+}> = ({ fieldTypes }) => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -72,7 +74,7 @@ export const FieldTypeTable: FC<{ fieldTypes: FieldType[] }> = ({
                 column.toggleSorting(column.getIsSorted() === "asc")
               }
             >
-              #
+              ID
               <ArrowUpDown />
             </Button>
           );
@@ -81,7 +83,7 @@ export const FieldTypeTable: FC<{ fieldTypes: FieldType[] }> = ({
         enableSorting: true,
       },
       {
-        accessorKey: "label",
+        accessorKey: "name",
         header: ({ column }) => {
           return (
             <Button
@@ -90,12 +92,30 @@ export const FieldTypeTable: FC<{ fieldTypes: FieldType[] }> = ({
                 column.toggleSorting(column.getIsSorted() === "asc")
               }
             >
-              Label
+              Name
               <ArrowUpDown />
             </Button>
           );
         },
-        cell: ({ row }) => <div>{row.getValue("label")}</div>,
+        cell: ({ row }) => <div>{row.getValue("name")}</div>,
+        enableSorting: true,
+      },
+      {
+        accessorKey: "baseType",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="outline"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              Base Type
+              <ArrowUpDown />
+            </Button>
+          );
+        },
+        cell: ({ row }) => <div>{row.getValue("baseType")}</div>,
         enableSorting: true,
       },
       {
@@ -113,7 +133,7 @@ export const FieldTypeTable: FC<{ fieldTypes: FieldType[] }> = ({
             </Button>
           );
         },
-        cell: ({ row }) => <div>{row.getValue("placeholder")}</div>,
+        cell: ({ row }) => <div>{row.getValue("placeholder") || "-"}</div>,
         enableSorting: true,
       },
       {
@@ -131,7 +151,7 @@ export const FieldTypeTable: FC<{ fieldTypes: FieldType[] }> = ({
             </Button>
           );
         },
-        cell: ({ row }) => <div>{row.getValue("defaultValue")}</div>,
+        cell: ({ row }) => <div>{row.getValue("defaultValue") || "-"}</div>,
         enableSorting: true,
       },
       {
@@ -200,10 +220,10 @@ export const FieldTypeTable: FC<{ fieldTypes: FieldType[] }> = ({
       <div className="w-full">
         <div className="flex items-center justify-between py-4">
           <Input
-            placeholder="Filter label..."
-            value={(table.getColumn("label")?.getFilterValue() as string) ?? ""}
+            placeholder="Filter by name..."
+            value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
             onChange={(event) =>
-              table.getColumn("label")?.setFilterValue(event.target.value)
+              table.getColumn("name")?.setFilterValue(event.target.value)
             }
             className="max-w-sm"
           />

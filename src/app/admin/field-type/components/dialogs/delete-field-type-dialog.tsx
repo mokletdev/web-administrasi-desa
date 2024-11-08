@@ -1,3 +1,5 @@
+"use client";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -9,12 +11,16 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Dispatch, FC, SetStateAction } from "react";
+import { deleteFieldType } from "../../actions";
+import { useToast } from "@/hooks/use-toast";
 
 export const ConfirmDeletionDialog: FC<{
   open: boolean;
   setIsOpen: Dispatch<SetStateAction<boolean>>;
   fieldTypeIdToDelete?: number;
 }> = ({ open, setIsOpen, fieldTypeIdToDelete }) => {
+  const { toast, dismiss } = useToast();
+
   return (
     <AlertDialog open={open} onOpenChange={setIsOpen}>
       <AlertDialogContent>
@@ -31,9 +37,25 @@ export const ConfirmDeletionDialog: FC<{
             Batalkan
           </AlertDialogCancel>
           <AlertDialogAction
-            onClick={() => {
-              // TODO: Delete action here
-              // delete(fieldTypeIdToDelete);
+            onClick={async () => {
+              const loadingToast = toast({
+                title: "Menghapus...",
+                description: "Permintaan penghapusan data anda sedang diproses",
+              });
+
+              const data = new FormData();
+
+              data.append("id", fieldTypeIdToDelete!.toString());
+              const deleteFieldTypeAction = await deleteFieldType(data);
+              if (deleteFieldTypeAction.error) {
+                dismiss(loadingToast.id);
+                return toast({
+                  title: "Gagal menghapus!",
+                  description: `Gagal menghapus data tipe input dengan ID ${fieldTypeIdToDelete} (${deleteFieldTypeAction.error.message})`,
+                });
+              }
+
+              dismiss(loadingToast.id);
               setIsOpen(false);
             }}
           >
