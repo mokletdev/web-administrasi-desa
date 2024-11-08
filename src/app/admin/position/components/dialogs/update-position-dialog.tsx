@@ -46,13 +46,15 @@ const levelMap = {
 };
 
 export const UpdatePositionDialog: FC<
-  DialogBaseProps & { positionData: Position }
+  DialogBaseProps & { positionData: Position | null }
 > = ({ open, setIsOpen, positionData }) => {
   const form = useZodForm({
-    values: {
-      title: positionData.title,
-      level: positionData.level,
-    },
+    values: positionData
+      ? {
+          title: positionData.title,
+          level: positionData.level,
+        }
+      : undefined,
     schema: createPositionSchema,
   });
   const [loading, setLoading] = useState(false);

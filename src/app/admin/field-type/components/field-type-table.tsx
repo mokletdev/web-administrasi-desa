@@ -325,7 +325,7 @@ export const FieldTypeTable: FC<{
       <UpdateFieldTypeDialog
         open={editDialogOpen}
         setIsOpen={setEditDialogOpen}
-        fieldTypeData={selectedRow!}
+        fieldTypeData={selectedRow}
       />
       <CreateFieldTypeDialog
         open={createDialogOpen}

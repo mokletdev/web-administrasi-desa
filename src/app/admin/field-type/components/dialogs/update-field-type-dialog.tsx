@@ -70,24 +70,26 @@ export const UpdateFieldTypeDialog: FC<
   DialogBaseProps & {
     fieldTypeData: Prisma.FieldTypeGetPayload<{
       include: { relation: true };
-    }>;
+    }> | null;
   }
 > = ({ open, setIsOpen, fieldTypeData }) => {
   const form = useZodForm({
-    values: {
-      name: fieldTypeData.name,
-      placeholder:
-        fieldTypeData.placeholder === null
-          ? undefined
-          : fieldTypeData.placeholder,
-      defaultValue:
-        fieldTypeData.defaultValue === null
-          ? undefined
-          : fieldTypeData.defaultValue,
-      baseType: fieldTypeData.baseType,
-      targetTable: fieldTypeData.relation?.targetTable,
-      targetField: fieldTypeData.relation?.targetField,
-    },
+    values: fieldTypeData
+      ? {
+          name: fieldTypeData.name,
+          placeholder:
+            fieldTypeData.placeholder === null
+              ? undefined
+              : fieldTypeData.placeholder,
+          defaultValue:
+            fieldTypeData.defaultValue === null
+              ? undefined
+              : fieldTypeData.defaultValue,
+          baseType: fieldTypeData.baseType,
+          targetTable: fieldTypeData.relation?.targetTable,
+          targetField: fieldTypeData.relation?.targetField,
+        }
+      : undefined,
     schema: updateFieldTypeSchema,
   });
   const [loading, setLoading] = useState(false);

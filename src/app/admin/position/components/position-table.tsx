@@ -287,7 +287,7 @@ export const PositionTable: FC<{
       <UpdatePositionDialog
         open={editDialogOpen}
         setIsOpen={setEditDialogOpen}
-        positionData={selectedRow!}
+        positionData={selectedRow}
       />
       <CreatePositionDialog
         open={createDialogOpen}
