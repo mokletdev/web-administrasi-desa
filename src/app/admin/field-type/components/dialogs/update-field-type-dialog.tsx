@@ -110,7 +110,7 @@ export const UpdateFieldTypeDialog: FC<
     data.append("id", id.toString());
     data.append("name", name);
     data.append("baseType", baseType);
-    defaultValue && data.append("defaultValue", defaultValue);
+    defaultValue && !isRelation && data.append("defaultValue", defaultValue);
     placeholder && data.append("placeholder", placeholder);
 
     const updateFieldTypeAction = await upsertFieldType(data);
@@ -154,7 +154,7 @@ export const UpdateFieldTypeDialog: FC<
     } else {
       setIsRelation(false);
     }
-  }, [baseType]);
+  }, [baseType, fieldTypeData]);
 
   // Handle target table change
   useEffect(() => {
@@ -169,7 +169,7 @@ export const UpdateFieldTypeDialog: FC<
     };
 
     handleTargetTableChange();
-  }, [targetTable]);
+  }, [targetTable, fieldTypeData]);
 
   return (
     <Dialog open={open} onOpenChange={setIsOpen}>
@@ -211,19 +211,6 @@ export const UpdateFieldTypeDialog: FC<
               />
               <FormField
                 control={form.control}
-                name="defaultValue"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col space-y-1.5">
-                    <FormLabel htmlFor="defaultValue">Default value</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Default value" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
                 name="baseType"
                 render={({ field }) => (
                   <FormItem>
@@ -241,6 +228,23 @@ export const UpdateFieldTypeDialog: FC<
                   </FormItem>
                 )}
               />
+              {!isRelation && (
+                <FormField
+                  control={form.control}
+                  name="defaultValue"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col space-y-1.5">
+                      <FormLabel htmlFor="defaultValue">
+                        Default value
+                      </FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Default value" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
               {isRelation && (
                 <>
                   <FormField

@@ -41,11 +41,9 @@ import {
   Trash,
 } from "lucide-react";
 import { FC, useMemo, useState } from "react";
-import {
-  ConfirmDeletionDialog,
-  CreateFieldTypeDialog,
-  UpdateFieldTypeDialog,
-} from "./dialogs";
+import { CreateFieldTypeDialog, UpdateFieldTypeDialog } from "./dialogs";
+import { ConfirmDeletionDialog } from "@/components/dialogs/delete-dialog";
+import { deleteFieldType } from "../actions";
 
 type FieldType = Prisma.FieldTypeGetPayload<{ include: { relation: true } }>;
 
@@ -318,7 +316,11 @@ export const FieldTypeTable: FC<{
       <ConfirmDeletionDialog
         open={deleteDialogOpen}
         setIsOpen={setDeleteDialogOpen}
-        fieldTypeIdToDelete={selectedRow?.id}
+        description={`Anda akan menghapus Tipe Input dengan ID ${selectedRow?.id}. Aksi
+            ini tidak bisa di undo. Ini akan secara permanen menghapus data ini
+            dan menghapusnya dari server kami.`}
+        serverAction={deleteFieldType}
+        id={selectedRow?.id}
       />
       <UpdateFieldTypeDialog
         open={editDialogOpen}

@@ -106,7 +106,7 @@ export const CreateFieldTypeDialog: FC<DialogBaseProps> = ({
     } = fields;
     data.append("name", name);
     data.append("baseType", baseType);
-    defaultValue && data.append("defaultValue", defaultValue);
+    defaultValue && !isRelation && data.append("defaultValue", defaultValue);
     placeholder && data.append("placeholder", placeholder);
     targetTable && data.append("targetTable", targetTable);
     targetField && data.append("targetField", targetField);
@@ -208,19 +208,6 @@ export const CreateFieldTypeDialog: FC<DialogBaseProps> = ({
               />
               <FormField
                 control={form.control}
-                name="defaultValue"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col space-y-1.5">
-                    <FormLabel htmlFor="defaultValue">Default value</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Default value" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
                 name="baseType"
                 render={({ field }) => (
                   <FormItem>
@@ -238,6 +225,23 @@ export const CreateFieldTypeDialog: FC<DialogBaseProps> = ({
                   </FormItem>
                 )}
               />
+              {!isRelation && (
+                <FormField
+                  control={form.control}
+                  name="defaultValue"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col space-y-1.5">
+                      <FormLabel htmlFor="defaultValue">
+                        Default value
+                      </FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Default value" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
               {isRelation && (
                 <>
                   <FormField

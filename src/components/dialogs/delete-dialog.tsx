@@ -1,5 +1,6 @@
 "use client";
 
+import { deleteFieldType } from "@/app/admin/field-type/actions";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,15 +12,21 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { ActionResponse } from "@/types/actions";
 import { DialogBaseProps } from "@/types/dialog";
 import { FC } from "react";
-import { deleteFieldType } from "../../actions";
 
 export const ConfirmDeletionDialog: FC<
   DialogBaseProps & {
-    fieldTypeIdToDelete?: number;
+    id: any;
+    description: string;
+    serverAction: (id: any) => Promise<
+      ActionResponse<{
+        id: number;
+      }>
+    >;
   }
-> = ({ open, setIsOpen, fieldTypeIdToDelete }) => {
+> = ({ open, setIsOpen, id, description, serverAction }) => {
   const { toast, dismiss } = useToast();
 
   return (
@@ -27,11 +34,7 @@ export const ConfirmDeletionDialog: FC<
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Apakah anda yakin?</AlertDialogTitle>
-          <AlertDialogDescription>
-            Anda akan menghapus Tipe Input dengan ID {fieldTypeIdToDelete}. Aksi
-            ini tidak bisa di undo. Ini akan secara permanen menghapus data ini
-            dan menghapusnya dari server kami.
-          </AlertDialogDescription>
+          <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel onClick={() => setIsOpen(false)}>
@@ -46,13 +49,13 @@ export const ConfirmDeletionDialog: FC<
 
               const data = new FormData();
 
-              data.append("id", fieldTypeIdToDelete!.toString());
-              const deleteFieldTypeAction = await deleteFieldType(data);
-              if (deleteFieldTypeAction.error) {
+              data.append("id", id.toString());
+              const deleteAction = await serverAction(data);
+              if (deleteAction.error) {
                 dismiss(loadingToast.id);
                 return toast({
                   title: "Gagal menghapus!",
-                  description: `Gagal menghapus data tipe input dengan ID ${fieldTypeIdToDelete} (${deleteFieldTypeAction.error.message})`,
+                  description: `Gagal menghapus data dengan ID ${id} (${deleteAction.error.message})`,
                 });
               }
 
