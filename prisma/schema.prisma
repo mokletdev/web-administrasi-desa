@@ -13,7 +13,7 @@ model City {
   districts   District[]
   submissions Submission[]
   users       User[]
-  positions   Position[]
+  officials   Official[]
 
   @@index([name])
 }
@@ -26,7 +26,7 @@ model District {
   subDistricts SubDistrict[]
   submissions  Submission[]
   users        User[]
-  positions    Position[]
+  officials    Official[]
 
   @@index([cityId])
   @@index([name])
@@ -40,31 +40,33 @@ model SubDistrict {
   submissions Submission[]
   users       User[]
   penduduk    Penduduk[]
-  positions   Position[]
+  officials   Official[]
 
   @@index([districtId])
   @@index([name])
 }
 
 model Position {
-  id            Int          @id @default(autoincrement())
-  title         String // e.g., "Kepala Kecamatan", "Lurah"
+  id    Int           @id @default(autoincrement())
+  title String // e.g., "Kepala Kecamatan", "Lurah"
+  level DivisionLevel
+
+  officials Official[]
+  Sign      Sign[]
+}
+
+model Official {
+  id            String       @id @default(uuid())
+  userId        String
+  positionId    Int
   cityId        Int? // Optional, if the position is at the City level
   districtId    Int? // Optional, if the position is at the District level
   subDistrictId Int? // Optional, if the position is at the Subdistrict level
   city          City?        @relation(fields: [cityId], references: [id])
   district      District?    @relation(fields: [districtId], references: [id])
   subDistrict   SubDistrict? @relation(fields: [subDistrictId], references: [id])
-  officials     Official[]
-  Sign          Sign[]
-}
-
-model Official {
-  id         String   @id @default(uuid())
-  userId     String
-  positionId Int
-  position   Position @relation(fields: [positionId], references: [id])
-  user       User     @relation(fields: [userId], references: [id])
+  position      Position     @relation(fields: [positionId], references: [id])
+  user          User         @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([positionId])
@@ -373,6 +375,13 @@ enum SignStatus {
   REQUESTED
   SIGNED
   REJECTED
+}
+
+enum DivisionLevel {
+  PROVINCE
+  CITY
+  DISTRICT
+  SUBDISTRICT
 }
 
 enum BaseFieldType {
