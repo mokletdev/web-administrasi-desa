@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Combobox } from "@/components/ui/combobox";
 import {
   Dialog,
   DialogContent,
@@ -27,16 +28,16 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useZodForm } from "@/hooks/use-zod-form";
+import { DialogBaseProps } from "@/types/dialog";
 import { BaseFieldType } from "@prisma/client";
 import { useRouter } from "next/navigation";
-import { Dispatch, FC, SetStateAction, useEffect, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import { z } from "zod";
 import {
   getAllTableNames,
   getColumnNames,
   upsertFieldType,
 } from "../../actions";
-import { Combobox } from "@/components/ui/combobox";
 
 const baseFieldTypeEnum = Object.keys(BaseFieldType);
 
@@ -65,10 +66,10 @@ const createFieldTypeSchema = z
     },
   );
 
-export const CreateFieldTypeDialog: FC<{
-  open: boolean;
-  setIsOpen: Dispatch<SetStateAction<boolean>>;
-}> = ({ open, setIsOpen }) => {
+export const CreateFieldTypeDialog: FC<DialogBaseProps> = ({
+  open,
+  setIsOpen,
+}) => {
   const form = useZodForm({
     defaultValues: {
       name: "",

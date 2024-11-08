@@ -28,9 +28,10 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useZodForm } from "@/hooks/use-zod-form";
+import { DialogBaseProps } from "@/types/dialog";
 import { BaseFieldType, Prisma } from "@prisma/client";
 import { useRouter } from "next/navigation";
-import { Dispatch, FC, SetStateAction, useEffect, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import { z } from "zod";
 import {
   getAllTableNames,
@@ -65,13 +66,13 @@ const updateFieldTypeSchema = z
     },
   );
 
-export const UpdateFieldTypeDialog: FC<{
-  open: boolean;
-  setIsOpen: Dispatch<SetStateAction<boolean>>;
-  fieldTypeData: Prisma.FieldTypeGetPayload<{
-    include: { relation: true };
-  }> | null;
-}> = ({ open, setIsOpen, fieldTypeData }) => {
+export const UpdateFieldTypeDialog: FC<
+  DialogBaseProps & {
+    fieldTypeData: Prisma.FieldTypeGetPayload<{
+      include: { relation: true };
+    }> | null;
+  }
+> = ({ open, setIsOpen, fieldTypeData }) => {
   const form = useZodForm({
     values: fieldTypeData
       ? {

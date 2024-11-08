@@ -10,15 +10,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Dispatch, FC, SetStateAction } from "react";
-import { deleteFieldType } from "../../actions";
 import { useToast } from "@/hooks/use-toast";
+import { DialogBaseProps } from "@/types/dialog";
+import { FC } from "react";
+import { deleteFieldType } from "../../actions";
 
-export const ConfirmDeletionDialog: FC<{
-  open: boolean;
-  setIsOpen: Dispatch<SetStateAction<boolean>>;
-  fieldTypeIdToDelete?: number;
-}> = ({ open, setIsOpen, fieldTypeIdToDelete }) => {
+export const ConfirmDeletionDialog: FC<
+  DialogBaseProps & {
+    fieldTypeIdToDelete?: number;
+  }
+> = ({ open, setIsOpen, fieldTypeIdToDelete }) => {
   const { toast, dismiss } = useToast();
 
   return (

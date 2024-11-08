@@ -50,7 +50,7 @@ import {
 type FieldType = Prisma.FieldTypeGetPayload<{ include: { relation: true } }>;
 
 export const FieldTypeTable: FC<{
-  fieldTypes: Prisma.FieldTypeGetPayload<{ include: { relation: true } }>[];
+  fieldTypes: FieldType[];
 }> = ({ fieldTypes }) => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
