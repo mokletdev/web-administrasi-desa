@@ -5,7 +5,7 @@ import { ActionResponse, ActionResponses, ErrorCode } from "@/types/actions";
 import { BaseFieldType, Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
-export const getAllTableNames = (): ActionResponse<string[]> => {
+export const getAllTableNames = async (): Promise<ActionResponse<string[]>> => {
   try {
     const tableNames = Object.keys(prisma).filter((key: string) => {
       return (
@@ -22,7 +22,9 @@ export const getAllTableNames = (): ActionResponse<string[]> => {
   }
 };
 
-export const getColumnNames = (tableName: string): ActionResponse<string[]> => {
+export const getColumnNames = async (
+  tableName: string,
+): Promise<ActionResponse<string[]>> => {
   try {
     const modelDescription = Prisma.dmmf.datamodel.models.find(
       (model) => model.name === tableName,
@@ -78,8 +80,8 @@ export async function upsertFieldType(
     const rawId = formData.get("id");
     const id = rawId ? Number(rawId) : null;
     const name = formData.get("name") as string;
-    const placeholder = formData.get("placeholder") as string;
-    const defaultValue = formData.get("defaultValue") as string;
+    const placeholder = (formData.get("placeholder") as string) || null;
+    const defaultValue = (formData.get("defaultValue") as string) || null;
     const baseType = formData.get("baseType") as BaseFieldType;
     const targetTable = formData.get("targetTable") as string;
     const targetField = formData.get("targetField") as string;
