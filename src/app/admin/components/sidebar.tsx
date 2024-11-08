@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import {
   Sidebar,
@@ -10,7 +12,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { FormInput, Home } from "lucide-react";
+import { FormInput, Home, SquareRadical } from "lucide-react";
+import { signOut } from "next-auth/react";
 import Link from "next/link";
 
 const items = [
@@ -23,6 +26,11 @@ const items = [
     title: "Tipe Input",
     url: "/admin/field-type",
     icon: FormInput,
+  },
+  {
+    title: "Position",
+    url: "/admin/position",
+    icon: SquareRadical,
   },
 ];
 
@@ -51,7 +59,12 @@ export const AdminSidebar = () => {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <Button variant={"destructive"}>Logout</Button>
+        <Button
+          variant={"destructive"}
+          onClick={() => signOut({ callbackUrl: "/" })}
+        >
+          Logout
+        </Button>
       </SidebarFooter>
     </Sidebar>
   );
