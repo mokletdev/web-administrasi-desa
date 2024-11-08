@@ -80,7 +80,7 @@ export async function upsertFieldType(
     const name = formData.get("name") as string;
     const placeholder = formData.get("placeholder") as string;
     const defaultValue = formData.get("defaultValue") as string;
-    const baseType = formData.get("baseType") as string;
+    const baseType = formData.get("baseType") as BaseFieldType;
     const targetTable = formData.get("targetTable") as string;
     const targetField = formData.get("targetField") as string;
 
@@ -92,7 +92,7 @@ export async function upsertFieldType(
     );
     if (validationError) return validationError;
 
-    if (baseType === "RELATION" && (!targetTable || !targetField)) {
+    if (baseType === "relation" && (!targetTable || !targetField)) {
       return ActionResponses.badRequest(
         "Target table and field are required for relation type",
         !targetTable ? "targetTable" : "targetField",
@@ -104,7 +104,7 @@ export async function upsertFieldType(
         name,
         placeholder: placeholder || null,
         defaultValue: defaultValue || null,
-        baseType: baseType as BaseFieldType,
+        baseType: baseType,
       };
 
       let fieldType;
@@ -131,7 +131,7 @@ export async function upsertFieldType(
         });
       }
 
-      if (baseType === "RELATION") {
+      if (baseType === "relation") {
         const relationData = {
           targetTable,
           targetField,
