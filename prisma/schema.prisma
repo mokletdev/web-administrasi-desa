@@ -378,7 +378,6 @@ enum SignStatus {
 }
 
 enum DivisionLevel {
-  PROVINCE
   CITY
   DISTRICT
   SUBDISTRICT
