@@ -24,7 +24,10 @@ const loginSchema = z.object({
 
 export const LoginForm: FC = () => {
   const [loading, setLoading] = useState(false);
-  const form = useZodForm({ schema: loginSchema });
+  const form = useZodForm({
+    schema: loginSchema,
+    values: { email: "", password: "" },
+  });
   const { toast, dismiss } = useToast();
   const router = useRouter();
 
