@@ -5,7 +5,13 @@ export const metadata: Metadata = {
   description: "Anda tidak memiliki Akses.",
 };
 
-// TODO: Update this forbidden page
 export default function NotFound() {
-  return <h1>403. Anda tidak memiliki akses pada halaman ini!</h1>;
+  return (
+    <main className="flex h-screen w-full items-center justify-center">
+      <div className="flex flex-col items-center gap-2">
+        <h1 className="display">403</h1>
+        <p>Anda tidak memiliki akses pada halaman ini!</p>
+      </div>
+    </main>
+  );
 }

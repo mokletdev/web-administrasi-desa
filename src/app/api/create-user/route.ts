@@ -1,7 +1,7 @@
 import { generateHash } from "@/lib/bcryptjs";
 import prisma from "@/lib/prisma";
 import { UserRole } from "@prisma/client";
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 const createAdminSchema = z.object({
