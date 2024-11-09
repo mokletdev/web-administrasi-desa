@@ -59,6 +59,13 @@ export const ActionResponses = {
     };
   },
 
+  unauthorized(message = "Forbidden"): ActionResponse {
+    return {
+      success: false,
+      error: createError(ErrorCode.FORBIDDEN, message),
+    };
+  },
+
   serverError(message = "Internal server error"): ActionResponse {
     return {
       success: false,
