@@ -5,4 +5,4 @@
 
 */
 -- AlterTable
-ALTER TABLE `position` MODIFY `level` ENUM('CITY', 'DISTRICT', 'SUBDISTRICT') NOT NULL;
+ALTER TABLE `Position` MODIFY `level` ENUM('CITY', 'DISTRICT', 'SUBDISTRICT') NOT NULL;
