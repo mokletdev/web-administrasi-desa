@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useZodForm } from "@/hooks/use-zod-form";
+import { divisionLevelMap } from "@/lib/utils";
 import { DialogBaseProps } from "@/types/dialog";
 import { DivisionLevel, Position } from "@prisma/client";
 import { useRouter } from "next/navigation";
@@ -38,12 +39,6 @@ const createPositionSchema = z.object({
   title: z.string().min(1),
   level: z.enum(Object.keys(DivisionLevel) as [string, ...string[]]),
 });
-
-const levelMap = {
-  CITY: "Kota",
-  DISTRICT: "Kecamatan",
-  SUBDISTRICT: "Kelurahan",
-};
 
 export const UpdatePositionDialog: FC<
   DialogBaseProps & { positionData: Position | null }
@@ -138,7 +133,11 @@ export const UpdatePositionDialog: FC<
                       <SelectContent>
                         {Object.keys(DivisionLevel).map((l) => (
                           <SelectItem key={l} value={l}>
-                            {levelMap[l as keyof typeof levelMap]}
+                            {
+                              divisionLevelMap[
+                                l as keyof typeof divisionLevelMap
+                              ]
+                            }
                           </SelectItem>
                         ))}
                       </SelectContent>

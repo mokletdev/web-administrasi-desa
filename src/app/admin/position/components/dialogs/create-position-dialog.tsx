@@ -33,17 +33,12 @@ import { useRouter } from "next/navigation";
 import { FC, useState } from "react";
 import { z } from "zod";
 import { upsertPosition } from "../../actions";
+import { divisionLevelMap } from "@/lib/utils";
 
 const createPositionSchema = z.object({
   title: z.string().min(1),
   level: z.enum(Object.keys(DivisionLevel) as [string, ...string[]]),
 });
-
-const levelMap = {
-  CITY: "Kota",
-  DISTRICT: "Kecamatan",
-  SUBDISTRICT: "Kelurahan",
-};
 
 export const CreatePositionDialog: FC<DialogBaseProps> = ({
   open,
@@ -135,7 +130,11 @@ export const CreatePositionDialog: FC<DialogBaseProps> = ({
                       <SelectContent>
                         {Object.keys(DivisionLevel).map((l) => (
                           <SelectItem key={l} value={l}>
-                            {levelMap[l as keyof typeof levelMap]}
+                            {
+                              divisionLevelMap[
+                                l as keyof typeof divisionLevelMap
+                              ]
+                            }
                           </SelectItem>
                         ))}
                       </SelectContent>

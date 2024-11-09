@@ -44,6 +44,7 @@ import {
 import { FC, useMemo, useState } from "react";
 import { deletePosition } from "../actions";
 import { CreatePositionDialog, UpdatePositionDialog } from "./dialogs";
+import { divisionLevelMap } from "@/lib/utils";
 
 export const PositionTable: FC<{
   positions: Position[];
@@ -111,7 +112,15 @@ export const PositionTable: FC<{
             </Button>
           );
         },
-        cell: ({ row }) => <div>{row.getValue("level")}</div>,
+        cell: ({ row }) => (
+          <div>
+            {
+              divisionLevelMap[
+                row.getValue("level") as keyof typeof divisionLevelMap
+              ]
+            }
+          </div>
+        ),
         enableSorting: true,
       },
       {
@@ -180,7 +189,7 @@ export const PositionTable: FC<{
       <div className="w-full">
         <div className="flex items-center justify-between py-4">
           <Input
-            placeholder="Filter by jabatan..."
+            placeholder="Filter by nama posisi..."
             value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
             onChange={(event) =>
               table.getColumn("title")?.setFilterValue(event.target.value)
