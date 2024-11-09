@@ -204,7 +204,7 @@ export async function upsertDocumentForm(
     return ActionResponses.success(result);
   } catch (error) {
     console.error("Error in upsertDocumentForm:", error);
-    return ActionResponses.serverError("Failed to document and form");
+    return ActionResponses.serverError("Failed to save document and form");
   }
 }
 
@@ -316,7 +316,7 @@ export async function getFieldTypes(): Promise<
 
     return ActionResponses.success(fieldTypes);
   } catch (error) {
-    console.error("Error in getDocumentForm:", error);
-    return ActionResponses.serverError("Failed to fetch document and form");
+    console.error("Error in getFieldTypes:", error);
+    return ActionResponses.serverError("Failed to fetch field types");
   }
 }
