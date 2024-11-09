@@ -75,7 +75,7 @@ const validateAccess = async (documentId: string) => {
 };
 
 export async function upsertDocumentForm(
-  input: DocumentFormInput & { content: FormData },
+  input: DocumentFormInput & { content: FormData }, // formData is only used to retrieve DOCX files.
 ): Promise<ActionResponse<DocumentFormResponse>> {
   try {
     const validation = await validateAccess(input.id || "");
