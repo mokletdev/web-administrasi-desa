@@ -60,6 +60,10 @@ export const ConfirmDeletionDialog: FC<
               }
 
               dismiss(loadingToast.id);
+              toast({
+                title: "Berhasil menghapus!",
+                description: `Berhasil menghapus data dengan ID ${id}`,
+              });
               setIsOpen(false);
             }}
           >
