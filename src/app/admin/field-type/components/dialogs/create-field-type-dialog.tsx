@@ -168,6 +168,17 @@ export const CreateFieldTypeDialog: FC<DialogBaseProps> = ({
     handleTargetTableChange();
   }, [targetTable]);
 
+  useEffect(() => {
+    if (
+      baseType === "checkbox" ||
+      baseType === "relation" ||
+      baseType === "radio"
+    ) {
+      form.setValue("placeholder", undefined);
+      form.setValue("defaultValue", undefined);
+    }
+  }, [baseType]);
+
   return (
     <Dialog open={open} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-[425px]">
@@ -195,19 +206,6 @@ export const CreateFieldTypeDialog: FC<DialogBaseProps> = ({
               />
               <FormField
                 control={form.control}
-                name="placeholder"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col space-y-1.5">
-                    <FormLabel htmlFor="placeholder">Placeholder</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Placeholder input" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
                 name="baseType"
                 render={({ field }) => (
                   <FormItem>
@@ -225,23 +223,40 @@ export const CreateFieldTypeDialog: FC<DialogBaseProps> = ({
                   </FormItem>
                 )}
               />
-              {!isRelation && (
+              {baseType !== "radio" && baseType !== "checkbox" && (
                 <FormField
                   control={form.control}
-                  name="defaultValue"
+                  name="placeholder"
                   render={({ field }) => (
                     <FormItem className="flex flex-col space-y-1.5">
-                      <FormLabel htmlFor="defaultValue">
-                        Default value
-                      </FormLabel>
+                      <FormLabel htmlFor="placeholder">Placeholder</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="Default value" />
+                        <Input {...field} placeholder="Placeholder input" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               )}
+              {!isRelation &&
+                baseType !== "radio" &&
+                baseType !== "checkbox" && (
+                  <FormField
+                    control={form.control}
+                    name="defaultValue"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col space-y-1.5">
+                        <FormLabel htmlFor="defaultValue">
+                          Default value
+                        </FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Default value" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
               {isRelation && (
                 <>
                   <FormField
