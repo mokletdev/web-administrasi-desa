@@ -111,14 +111,20 @@ model SignRequest {
 }
 
 model FieldValidation {
-  id          String    @id @default(uuid())
-  type        String // e.g., "min", "max", "pattern", "format"
+  id          String              @id @default(uuid())
+  type        FieldValidationType @default(PATTERN) // e.g., "min", "max", "pattern"
   value       String // The validation value/pattern
   message     String // Custom error message
-  fieldType   FieldType @relation(fields: [fieldTypeId], references: [id])
-  fieldTypeId Int       @unique
+  fieldType   FieldType           @relation(fields: [fieldTypeId], references: [id])
+  fieldTypeId Int                 @unique
 
   @@index([fieldTypeId])
+}
+
+enum FieldValidationType {
+  MIN
+  MAX
+  PATTERN
 }
 
 model FieldRelation {
