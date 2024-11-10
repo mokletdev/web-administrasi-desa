@@ -198,19 +198,6 @@ export const UpdateFieldTypeDialog: FC<
               />
               <FormField
                 control={form.control}
-                name="placeholder"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col space-y-1.5">
-                    <FormLabel htmlFor="placeholder">Placeholder</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Placeholder input" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
                 name="baseType"
                 render={({ field }) => (
                   <FormItem>
@@ -228,6 +215,42 @@ export const UpdateFieldTypeDialog: FC<
                   </FormItem>
                 )}
               />
+              {!isRelation &&
+                baseType !== "radio" &&
+                baseType !== "checkbox" && (
+                  <FormField
+                    control={form.control}
+                    name="placeholder"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col space-y-1.5">
+                        <FormLabel htmlFor="placeholder">Placeholder</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Placeholder input" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+              {!isRelation &&
+                baseType !== "radio" &&
+                baseType !== "checkbox" && (
+                  <FormField
+                    control={form.control}
+                    name="defaultValue"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col space-y-1.5">
+                        <FormLabel htmlFor="defaultValue">
+                          Default value
+                        </FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Default value" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
               {!isRelation && (
                 <FormField
                   control={form.control}

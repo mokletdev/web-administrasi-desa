@@ -223,21 +223,23 @@ export const CreateFieldTypeDialog: FC<DialogBaseProps> = ({
                   </FormItem>
                 )}
               />
-              {baseType !== "radio" && baseType !== "checkbox" && (
-                <FormField
-                  control={form.control}
-                  name="placeholder"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col space-y-1.5">
-                      <FormLabel htmlFor="placeholder">Placeholder</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Placeholder input" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
+              {!isRelation &&
+                baseType !== "radio" &&
+                baseType !== "checkbox" && (
+                  <FormField
+                    control={form.control}
+                    name="placeholder"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col space-y-1.5">
+                        <FormLabel htmlFor="placeholder">Placeholder</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Placeholder input" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
               {!isRelation &&
                 baseType !== "radio" &&
                 baseType !== "checkbox" && (
