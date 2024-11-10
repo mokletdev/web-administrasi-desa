@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { BaseFieldType } from "@prisma/client";
 import { Plus } from "lucide-react";
-import { Dispatch, FC, SetStateAction, useEffect } from "react";
+import { Dispatch, FC, SetStateAction } from "react";
 import { Field, RenderField } from "./components/field";
 
 export const SecondStepCreateDocument: FC<{

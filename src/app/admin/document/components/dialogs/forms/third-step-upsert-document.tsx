@@ -18,7 +18,7 @@ export const ThirdStepCreateDocument: FC<{
   fieldLabels: string[];
   form: UseFormReturn<{
     content: FileList;
-    positionIds: string[];
+    positionIds: number[];
   }>;
   positions: { id: number; title: string }[];
 }> = ({ fieldLabels, form, positions }) => {
@@ -66,18 +66,13 @@ export const ThirdStepCreateDocument: FC<{
                     >
                       <FormControl>
                         <Checkbox
-                          checked={field.value?.includes(
-                            position.id.toString(),
-                          )}
+                          checked={field.value?.includes(position.id)}
                           onCheckedChange={(checked) => {
                             return checked
-                              ? field.onChange([
-                                  ...field.value,
-                                  position.id.toString(),
-                                ])
+                              ? field.onChange([...field.value, position.id])
                               : field.onChange(
                                   field.value?.filter(
-                                    (value) => value !== position.id.toString(),
+                                    (value) => value !== position.id,
                                   ),
                                 );
                           }}

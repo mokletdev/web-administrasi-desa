@@ -90,10 +90,10 @@ export async function upsertDocumentForm(
       );
     }
 
-    const contentFile = input.content.get("content") as File;
-    const contentBase64 = Buffer.from(await contentFile.arrayBuffer()).toString(
-      "base64",
-    );
+    const contentFile = input.content.get("content") as File | null;
+    const contentBase64 = contentFile
+      ? Buffer.from(await contentFile.arrayBuffer()).toString("base64")
+      : undefined;
 
     const result = await prisma.$transaction(async (tx) => {
       const document = input.id
@@ -101,13 +101,14 @@ export async function upsertDocumentForm(
             where: { id: input.id },
             data: {
               title: input.title,
-              content: contentFile ? contentBase64 : undefined,
+              content: contentBase64,
             },
           })
         : await tx.document.create({
             data: {
               title: input.title,
-              content: contentBase64,
+              // If the user's creating a new docuent, then the content would always be present
+              content: contentBase64!,
               level: input.level,
               userId: validation?.user?.id || "",
             },

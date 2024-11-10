@@ -85,7 +85,13 @@ const FileField = React.forwardRef<HTMLInputElement, FileInputProps>(
 
     return (
       <div className="flex w-full flex-col items-center justify-center py-4">
-        <p className={`mb-2 self-start font-medium text-black`}>{label}</p>
+        <p
+          className={cn(
+            `mb-2 self-start font-medium text-black ${errorMessage && "text-destructive"}`,
+          )}
+        >
+          {label}
+        </p>
         <p
           className="mb-4 self-start text-xs"
           dangerouslySetInnerHTML={{ __html: description || "" }}

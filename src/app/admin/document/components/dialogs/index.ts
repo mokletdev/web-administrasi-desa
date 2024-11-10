@@ -1,1 +1,1 @@
-export * from "./create-document-dialog";
+export * from "./upsert-document-dialog";

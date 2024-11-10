@@ -22,7 +22,7 @@ export const ConfirmDeletionDialog: FC<
     description: string;
     serverAction: (id: any) => Promise<
       ActionResponse<{
-        id: number;
+        id: any;
       }>
     >;
   }

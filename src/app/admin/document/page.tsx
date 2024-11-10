@@ -4,7 +4,23 @@ import { DocumentTable } from "./components/document-table";
 export default async function Document() {
   const [documents, fieldTypes, positions] = await prisma.$transaction([
     prisma.document.findMany({
-      include: { user: { select: { name: true } } },
+      select: {
+        id: true,
+        title: true,
+        createdAt: true,
+        level: true,
+        updatedAt: true,
+
+        form: {
+          select: {
+            fields: {
+              include: { options: { select: { id: true, value: true } } },
+            },
+          },
+        },
+        signs: { select: { positionId: true } },
+        user: { select: { name: true } },
+      },
     }),
     prisma.fieldType.findMany({
       select: { id: true, name: true, baseType: true },

@@ -36,7 +36,7 @@ export const FirstStepCreateDocumment: FC<{
         name="title"
         render={({ field }) => (
           <FormItem className="flex flex-col space-y-1.5">
-            <FormLabel htmlFor="title">Nama Posisi</FormLabel>
+            <FormLabel htmlFor="title">Nama Template Surat</FormLabel>
             <FormControl>
               <Input {...field} placeholder="Nama template surat" />
             </FormControl>

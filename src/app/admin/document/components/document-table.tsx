@@ -1,5 +1,6 @@
 "use client";
 
+import { ConfirmDeletionDialog } from "@/components/dialogs/delete-dialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -38,15 +39,34 @@ import { format } from "date-fns";
 import {
   ArrowUpDown,
   ChevronDown,
+  File,
   MoreHorizontal,
   Pencil,
   Trash,
 } from "lucide-react";
 import { FC, useMemo, useState } from "react";
-import { CreateDocumentDialog } from "./dialogs";
+import { deleteDocument } from "../actions";
+import { UpsertDocumentDialog } from "./dialogs";
+import Link from "next/link";
 
 type Document = Prisma.DocumentGetPayload<{
-  include: { user: { select: { name: true } } };
+  select: {
+    id: true;
+    title: true;
+    createdAt: true;
+    level: true;
+    updatedAt: true;
+
+    form: {
+      select: {
+        fields: {
+          include: { options: { select: { id: true; value: true } } };
+        };
+      };
+    };
+    signs: { select: { positionId: true } };
+    user: { select: { name: true } };
+  };
 }>;
 
 export const DocumentTable: FC<{
@@ -158,6 +178,12 @@ export const DocumentTable: FC<{
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <Link href={`/admin/document/${row.original.id}`}>
+                  <DropdownMenuItem>
+                    <File size={16} />
+                    Detail
+                  </DropdownMenuItem>
+                </Link>
                 <DropdownMenuItem
                   onClick={() => {
                     setSelectedRow(row.original);
@@ -210,7 +236,7 @@ export const DocumentTable: FC<{
       <div className="w-full">
         <div className="flex items-center justify-between py-4">
           <Input
-            placeholder="Filter by nama posisi..."
+            placeholder="Filter by judul..."
             value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
             onChange={(event) =>
               table.getColumn("title")?.setFilterValue(event.target.value)
@@ -305,21 +331,33 @@ export const DocumentTable: FC<{
       </div>
 
       {/* Dialogues */}
-      {/* <ConfirmDeletionDialog
+      <ConfirmDeletionDialog
         open={deleteDialogOpen}
         setIsOpen={setDeleteDialogOpen}
         description={`Anda akan menghapus Posisi dengan ID ${selectedRow?.id}. Aksi
             ini tidak bisa di undo. Ini akan secara permanen menghapus data ini
             dan menghapusnya dari server kami.`}
-        serverAction={deletePosition}
+        serverAction={deleteDocument}
         id={selectedRow?.id}
-      /> */}
-      {/* <UpdatePositionDialog
+      />
+      <UpsertDocumentDialog
         open={editDialogOpen}
         setIsOpen={setEditDialogOpen}
-        positionData={selectedRow}
-      /> */}
-      <CreateDocumentDialog
+        fieldTypes={fieldTypes}
+        positions={positions}
+        data={
+          selectedRow
+            ? {
+                id: selectedRow.id,
+                title: selectedRow.title,
+                level: selectedRow.level,
+                positionIds: selectedRow.signs.map((sign) => sign.positionId),
+                fields: selectedRow.form?.fields || [],
+              }
+            : undefined
+        }
+      />
+      <UpsertDocumentDialog
         open={createDialogOpen}
         setIsOpen={setCreateDialogOpen}
         fieldTypes={fieldTypes}

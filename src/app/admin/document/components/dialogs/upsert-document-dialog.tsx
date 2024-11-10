@@ -15,16 +15,16 @@ import { useZodForm } from "@/hooks/use-zod-form";
 import { DialogBaseProps } from "@/types/dialog";
 import { BaseFieldType, UserRole } from "@prisma/client";
 import { useRouter } from "next/navigation";
-import { FC, useMemo, useState } from "react";
+import { FC, useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { upsertDocumentForm } from "../../actions";
 import {
   documentUserRole,
   FirstStepCreateDocumment,
-} from "./forms/first-step-create-document";
+} from "./forms/first-step-upsert-document";
 import { SecondStepCreateDocument } from "./forms/second-step-create-document";
 import { Field } from "./forms/second-step-create-document/components/field";
-import { ThirdStepCreateDocument } from "./forms/third-step-create-document";
+import { ThirdStepCreateDocument } from "./forms/third-step-upsert-document";
 import { validateFields } from "@/lib/utils";
 
 const MAX_STEP = 3;
@@ -35,78 +35,94 @@ const DESCRIPTIONS = [
 ];
 
 const MAX_FILE_SIZE = 5_000_000;
-const contentSchema = z
-  .instanceof(FileList)
-  .refine((files) => {
-    return files.length !== 0;
-  }, "Template harus diupload!")
-  .refine((files) => {
-    // Select only the first file
-    const file = files[0];
-    // If file size exceed the maximum limit, then throw error
-    return !file || file?.size <= MAX_FILE_SIZE;
-  }, `Maximum file size is 15MB`)
-  .refine((files: FileList) => {
-    // Select only the first file
-    const file = files[0];
-    // If file's extension is not allowed, then throw error
-    return (
-      !file ||
-      file?.type ===
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    );
+
+const generateDocumentSchema = (isUpdating: boolean) => {
+  const contentSchema = z
+    .instanceof(FileList || File)
+    .refine((files) => {
+      return isUpdating ? true : files.length !== 0;
+    }, "Template harus diupload!")
+    .refine((files) => {
+      // Select only the first file
+      const file = files[0];
+      // If file size exceed the maximum limit, then throw error
+      if (!isUpdating) return file?.size <= MAX_FILE_SIZE;
+      return !file || file?.size <= MAX_FILE_SIZE;
+    }, `Maximum file size is 15MB`)
+    .refine((files: FileList) => {
+      // Select only the first file
+      const file = files[0];
+      // If file's extension is not allowed, then throw error
+      if (!isUpdating)
+        return (
+          file?.type ===
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        );
+      return (
+        !file ||
+        file?.type ===
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      );
+    });
+
+  return z.object({
+    title: z.string().min(1),
+    level: z.enum(documentUserRole),
+    content: contentSchema,
+    positionIds: z
+      .array(z.number())
+      .refine((value) => value.some((item) => item), {
+        message: "You have to select at least one item.",
+      }),
   });
+};
 
-const createDocumentSchema = z.object({
-  title: z.string().min(1),
-  level: z.enum(documentUserRole),
-  content: contentSchema,
-  positionIds: z
-    .array(z.string())
-    .refine((value) => value.some((item) => item), {
-      message: "You have to select at least one item.",
-    }),
-});
-
-export const CreateDocumentDialog: FC<
+export const UpsertDocumentDialog: FC<
   DialogBaseProps & {
     fieldTypes: { id: number; name: string; baseType: BaseFieldType }[];
     positions: { id: number; title: string }[];
+
+    data?: {
+      id: string;
+      title: string;
+      level: UserRole;
+      positionIds: number[];
+      fields: Field[];
+    };
   }
-> = ({ open, setIsOpen, fieldTypes, positions }) => {
+> = ({ open, setIsOpen, fieldTypes, positions, data }) => {
   const [step, setStep] = useState(1);
 
   const form = useZodForm({
     defaultValues: {
-      title: "",
-      level: "",
-      positionIds: [],
+      title: data?.title || "",
+      level: data?.level || "",
+      positionIds: data?.positionIds || [],
     },
-    schema: createDocumentSchema,
+    schema: generateDocumentSchema(data !== undefined),
   });
   const [loading, setLoading] = useState(false);
   const { toast, dismiss } = useToast();
   const router = useRouter();
 
-  const [fields, setFields] = useState<Field[]>([]);
+  const [fields, setFields] = useState<Field[]>(data?.fields || []);
 
   const onSubmit = form.handleSubmit(async (values) => {
-    if (step < MAX_STEP) {
-      return setStep(step + 1);
-    }
-
+    setIsOpen(false);
+    setStep(1);
     setLoading(true);
 
     const loadingToast = toast({
       title: "Mengirim...",
-      description: "Permintaan penambahan anda sedang diproses",
+      description: `Permintaan ${data ? "Perubahan" : "Penambahan"} anda sedang diproses`,
     });
 
     const contentFormData = new FormData();
     const { content, level, title } = values;
-    contentFormData.append("content", content[0]);
+    content[0] && contentFormData.append("content", content[0]);
 
-    const createDocumentAction = await upsertDocumentForm({
+    const upsertDocumentAction = await upsertDocumentForm({
+      id: data?.id,
       title,
       content: contentFormData,
       level: level as UserRole,
@@ -119,46 +135,62 @@ export const CreateDocumentDialog: FC<
           options: field.options,
         })),
       },
-      signs: [],
+      signs: values.positionIds.map((positionId) => ({ positionId })),
     });
-    if (createDocumentAction.error) {
+
+    if (upsertDocumentAction.error) {
       dismiss(loadingToast.id);
-      return toast({
-        title: "Gagal Menambahkan!",
-        description: `Gagal menambah data posisi (${createDocumentAction.error.message})`,
+      toast({
+        title: `Gagal ${data ? "Mengubah" : "Menambahkan"}!`,
+        description: `Gagal ${data ? "mengubah" : "menambahkan"} data template surat (${upsertDocumentAction.error.message})`,
       });
+      return setLoading(false);
     }
 
     dismiss(loadingToast.id);
     toast({
-      title: "Berhasil Menambahkan!",
-      description: `Berhasil menambahkan data posisi baru`,
+      title: `Berhasil ${data ? "Mengubah" : "Menambahkan"}!`,
+      description: `Berhasil ${data ? "mengubah" : "menambahkan"} data template surat baru`,
     });
     form.reset();
     setLoading(false);
-    setIsOpen(false);
     return router.refresh();
   });
 
-  // const forms = useMemo(
-  //   () => [
-  //     <FirstStepCreateDocumment form={form as any} />,
-  //     <SecondStepCreateDocument
-  //       fieldTypes={fieldTypes}
-  //       fields={fields}
-  //       setFields={setFields}
-  //     />,
-  //     <ThirdStepCreateDocument
-  //       fieldLabels={fields.map((field) => field.label)}
-  //       form={form as any}
-  //       positions={positions}
-  //     />,
-  //   ],
-  //   [fields, fieldTypes],
-  // );
+  useEffect(() => {
+    form.reset({
+      title: data?.title || "",
+      level: data?.level || "",
+      positionIds: data?.positionIds || [],
+    });
+    setFields(data?.fields || []);
+  }, [form.reset, data]);
+
+  const forms = useMemo(
+    () => [
+      <FirstStepCreateDocumment form={form as any} />,
+      <SecondStepCreateDocument
+        fieldTypes={fieldTypes}
+        fields={fields}
+        setFields={setFields}
+      />,
+      <ThirdStepCreateDocument
+        fieldLabels={fields.map((field) => field.label)}
+        form={form as any}
+        positions={positions}
+      />,
+    ],
+    [form, fields, fieldTypes],
+  );
 
   return (
-    <Dialog open={open} onOpenChange={setIsOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        setIsOpen(v);
+        setStep(1);
+      }}
+    >
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Tambahkan Template Surat</DialogTitle>
@@ -174,42 +206,27 @@ export const CreateDocumentDialog: FC<
                 <h4>Tahap {step}</h4>
                 <p>{DESCRIPTIONS[step - 1]}</p>
               </div>
-              {step === 1 && <FirstStepCreateDocumment form={form as any} />}
-              {step === 2 && (
-                <SecondStepCreateDocument
-                  fieldTypes={fieldTypes}
-                  fields={fields}
-                  setFields={setFields}
-                />
-              )}
-              {step === 3 && (
-                <ThirdStepCreateDocument
-                  fieldLabels={fields.map((field) => field.label)}
-                  form={form as any}
-                  positions={positions}
-                />
-              )}
+              {step < MAX_STEP + 1 ? forms[step - 1] : undefined}
             </div>
             <DialogFooter>
               {step > 1 && (
                 <Button
                   variant={"outline"}
                   type="button"
-                  onClick={() => setStep(step - 1)}
+                  onClick={() => setStep((currentStep) => currentStep - 1)}
                   disabled={loading}
                 >
                   Kembali
                 </Button>
               )}
               <Button
-                variant={"default"}
-                type={step < MAX_STEP ? "button" : "submit"}
+                type={step <= MAX_STEP ? "button" : "submit"}
                 onClick={
-                  step < MAX_STEP
+                  step <= MAX_STEP
                     ? async () => {
                         const fieldsToTrigger: string[][] = [
                           ["title", "level"],
-                          ["title", "level"],
+                          [],
                           ["content", "positionIds"],
                         ];
 
@@ -230,15 +247,13 @@ export const CreateDocumentDialog: FC<
                               .map((fieldType) => fieldType.id),
                           );
 
-                        if (step !== 2) {
-                          isValid && setStep(step + 1);
-                        } else {
-                          isFieldsValid && setStep(step + 1);
+                        if ((step === 2 && isFieldsValid) || isValid) {
+                          setStep((currentStep) => currentStep + 1);
                         }
                       }
                     : undefined
                 }
-                disabled={loading}
+                variant={"default"}
               >
                 {step < MAX_STEP ? "Selanjutnya" : "Simpan"}
               </Button>
