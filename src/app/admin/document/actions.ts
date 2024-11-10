@@ -1,3 +1,5 @@
+"use server";
+
 import { getServerSession } from "@/lib/next-auth";
 import prisma from "@/lib/prisma";
 import { ActionResponse, ActionResponses } from "@/types/actions";
@@ -313,6 +315,8 @@ export async function getFieldTypes(): Promise<
     const fieldTypes = await prisma.fieldType.findMany({
       select: { id: true, name: true },
     });
+
+    console.log(fieldTypes);
 
     return ActionResponses.success(fieldTypes);
   } catch (error) {
