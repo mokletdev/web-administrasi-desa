@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { divisionLevelMap } from "@/lib/utils";
+import { roleLevelMap } from "@/lib/utils";
 import { BaseFieldType, Prisma } from "@prisma/client";
 import {
   ColumnDef,
@@ -52,7 +52,8 @@ type Document = Prisma.DocumentGetPayload<{
 export const DocumentTable: FC<{
   documents: Document[];
   fieldTypes: { id: number; name: string; baseType: BaseFieldType }[];
-}> = ({ documents, fieldTypes }) => {
+  positions: { id: number; title: string }[];
+}> = ({ documents, fieldTypes, positions }) => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -100,11 +101,7 @@ export const DocumentTable: FC<{
         },
         cell: ({ row }) => (
           <div>
-            {
-              divisionLevelMap[
-                row.getValue("level") as keyof typeof divisionLevelMap
-              ]
-            }
+            {roleLevelMap[row.getValue("level") as keyof typeof roleLevelMap]}
           </div>
         ),
         enableSorting: true,
@@ -124,7 +121,7 @@ export const DocumentTable: FC<{
             </Button>
           );
         },
-        cell: ({ row }) => <div>{row.getValue("user.name")}</div>,
+        cell: ({ row }) => <div>{row.original.user.name}</div>,
         enableSorting: true,
       },
       {
@@ -143,7 +140,7 @@ export const DocumentTable: FC<{
           );
         },
         cell: ({ row }) => (
-          <div>{format(row.getValue("createdAt"), "yyyy-MM-dd")}</div>
+          <div>{format(row.getValue("createdAt"), "yyyy-MM-dd HH:mm")}</div>
         ),
         enableSorting: true,
       },
@@ -326,6 +323,7 @@ export const DocumentTable: FC<{
         open={createDialogOpen}
         setIsOpen={setCreateDialogOpen}
         fieldTypes={fieldTypes}
+        positions={positions}
       />
     </>
   );

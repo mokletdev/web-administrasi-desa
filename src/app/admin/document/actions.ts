@@ -9,7 +9,6 @@ import { revalidatePath } from "next/cache";
 export interface DocumentFormInput {
   id?: string;
   title: string;
-  content: string;
   level: UserRole;
   signs: Array<{
     positionId: number;
@@ -212,7 +211,7 @@ export async function upsertDocumentForm(
 
 export async function getDocumentForm(
   id: string,
-): Promise<ActionResponse<DocumentFormInput>> {
+): Promise<ActionResponse<DocumentFormInput & { content: string }>> {
   try {
     const validation = await validateAccess(id);
     if (!validation.allowed) {
@@ -239,7 +238,7 @@ export async function getDocumentForm(
       return ActionResponses.notFound("Document not found");
     }
 
-    const documentForm: DocumentFormInput = {
+    const documentForm: DocumentFormInput & { content: string } = {
       id: document.id,
       title: document.title,
       content: document.content,
@@ -315,8 +314,6 @@ export async function getFieldTypes(): Promise<
     const fieldTypes = await prisma.fieldType.findMany({
       select: { id: true, name: true },
     });
-
-    console.log(fieldTypes);
 
     return ActionResponses.success(fieldTypes);
   } catch (error) {

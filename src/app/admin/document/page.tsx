@@ -2,13 +2,14 @@ import prisma from "@/lib/prisma";
 import { DocumentTable } from "./components/document-table";
 
 export default async function Document() {
-  const [documents, fieldTypes] = await prisma.$transaction([
+  const [documents, fieldTypes, positions] = await prisma.$transaction([
     prisma.document.findMany({
       include: { user: { select: { name: true } } },
     }),
     prisma.fieldType.findMany({
       select: { id: true, name: true, baseType: true },
     }),
+    prisma.position.findMany({ select: { id: true, title: true } }),
   ]);
 
   return (
@@ -21,7 +22,11 @@ export default async function Document() {
           earum ipsum tempore!
         </p>
       </div>
-      <DocumentTable documents={documents} fieldTypes={fieldTypes} />
+      <DocumentTable
+        documents={documents}
+        fieldTypes={fieldTypes}
+        positions={positions}
+      />
     </>
   );
 }

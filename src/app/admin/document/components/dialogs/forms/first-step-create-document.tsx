@@ -27,7 +27,6 @@ export const FirstStepCreateDocumment: FC<{
   form: UseFormReturn<{
     title: string;
     level: string;
-    content: string;
   }>;
 }> = ({ form }) => {
   return (
