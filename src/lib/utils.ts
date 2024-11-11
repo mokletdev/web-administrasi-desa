@@ -120,7 +120,6 @@ export const downloadBase64File = (base64Data: string, filename: string) => {
   URL.revokeObjectURL(url);
 };
 
-// Helper function to convert base64 string to a Blob
 export const base64ToBlob = (base64Data: string) => {
   const byteCharacters = atob(base64Data);
   const byteNumbers = Array.from(byteCharacters, (char) => char.charCodeAt(0));

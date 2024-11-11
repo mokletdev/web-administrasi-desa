@@ -12,7 +12,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { Home } from "lucide-react";
+import { File, Home, NotepadText } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
 
@@ -22,6 +22,16 @@ const items = [
     url: "/dashboard",
     icon: Home,
   },
+  {
+    title: "Persuratan",
+    url: "/dashboard/document",
+    icon: File,
+  },
+  {
+    title: "Riwayat Permintaan",
+    url: "/dashboard/request",
+    icon: NotepadText,
+  },
 ];
 
 export const DashboardSidebar = () => {
@@ -30,7 +40,7 @@ export const DashboardSidebar = () => {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>
-            <h4>Dasbor</h4>
+            <h4>Dashboard</h4>
           </SidebarGroupLabel>
           <SidebarGroupContent className="mt-4">
             <SidebarMenu>
