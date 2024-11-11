@@ -1,11 +1,11 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Forbidden",
+  title: "Unauthorized",
   description: "Anda tidak memiliki Akses.",
 };
 
-export default function NotFound() {
+export default function Unauthorized() {
   return (
     <main className="flex h-screen w-full items-center justify-center">
       <div className="flex flex-col items-center gap-2">

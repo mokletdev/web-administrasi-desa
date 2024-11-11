@@ -13,6 +13,7 @@ model City {
   districts   District[]
   submissions Submission[]
   users       User[]
+  officials   Official[]
 
   @@index([name])
 }
@@ -25,6 +26,7 @@ model District {
   subDistricts SubDistrict[]
   submissions  Submission[]
   users        User[]
+  officials    Official[]
 
   @@index([cityId])
   @@index([name])
@@ -38,44 +40,67 @@ model SubDistrict {
   submissions Submission[]
   users       User[]
   penduduk    Penduduk[]
+  officials   Official[]
 
   @@index([districtId])
   @@index([name])
 }
 
-model Document {
-  id        String         @id @default(uuid())
-  title     String
-  content   String         @db.LongText
-  status    DocumentStatus @default(PENDING_APPROVAL)
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
-  level     UserRole
-  user      User           @relation(fields: [userId], references: [id])
-  form      Form?
-  signs     Sign[]
-  userId    String
-  approvals Approval[]
+model Position {
+  id    Int           @id @default(autoincrement())
+  title String // e.g., "Kepala Kecamatan", "Lurah"
+  level DivisionLevel
+
+  officials Official[]
+  Sign      Sign[]
+}
+
+model Official {
+  id            String       @id @default(uuid())
+  userId        String
+  positionId    Int
+  cityId        Int? // Optional, if the position is at the City level
+  districtId    Int? // Optional, if the position is at the District level
+  subDistrictId Int? // Optional, if the position is at the Subdistrict level
+  city          City?        @relation(fields: [cityId], references: [id])
+  district      District?    @relation(fields: [districtId], references: [id])
+  subDistrict   SubDistrict? @relation(fields: [subDistrictId], references: [id])
+  position      Position     @relation(fields: [positionId], references: [id])
+  user          User         @relation(fields: [userId], references: [id])
 
   @@index([userId])
-  @@index([status])
+  @@index([positionId])
+}
+
+model Document {
+  id        String   @id @default(uuid())
+  title     String
+  content   String   @db.LongText
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String
+  level     UserRole
+  user      User     @relation(fields: [userId], references: [id])
+  form      Form?
+  signs     Sign[]
+
+  @@index([userId])
 }
 
 model Sign {
-  id       String   @id @default(uuid())
-  document Document @relation(fields: [documentId], references: [id])
-  user     User     @relation(fields: [userId], references: [id])
-
+  id         String @id @default(uuid())
   documentId String
-  userId     String
+  positionId Int
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  position Position @relation(fields: [positionId], references: [id], onDelete: Cascade)
 
   @@index([documentId])
-  @@index([userId])
 }
 
 model SignRequest {
   id         String     @id @default(uuid())
-  submission Submission @relation(fields: [submissionId], references: [id])
+  submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
   user       User       @relation(fields: [userId], references: [id])
   status     SignStatus @default(REQUESTED)
 
@@ -86,14 +111,20 @@ model SignRequest {
 }
 
 model FieldValidation {
-  id          String    @id @default(uuid())
-  type        String // e.g., "min", "max", "pattern", "format"
+  id          String              @id @default(uuid())
+  type        FieldValidationType @default(PATTERN) // e.g., "min", "max", "pattern"
   value       String // The validation value/pattern
   message     String // Custom error message
-  fieldType   FieldType @relation(fields: [fieldTypeId], references: [id])
-  fieldTypeId Int       @unique
+  fieldType   FieldType           @relation(fields: [fieldTypeId], references: [id])
+  fieldTypeId Int                 @unique
 
   @@index([fieldTypeId])
+}
+
+enum FieldValidationType {
+  MIN
+  MAX
+  PATTERN
 }
 
 model FieldRelation {
@@ -135,7 +166,7 @@ model Field {
 
 model Form {
   id          String       @id @default(uuid())
-  document    Document     @relation(fields: [documentId], references: [id])
+  document    Document     @relation(fields: [documentId], references: [id], onDelete: Cascade)
   fields      Field[]
   submissions Submission[]
   documentId  String       @unique
@@ -158,12 +189,14 @@ model Submission {
   id            String            @id @default(uuid()) @db.Char(36)
   form          Form              @relation(fields: [formId], references: [id], onDelete: Cascade)
   formId        String
+  status        DocumentStatus    @default(PENDING_APPROVAL)
   user          User              @relation(fields: [userId], references: [id])
   userId        String
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
   fields        SubmissionField[]
   signRequests  SignRequest[]
+  approvals     Approval[]
   city          City?             @relation(fields: [cityId], references: [id])
   cityId        Int?
   district      District?         @relation(fields: [districtId], references: [id])
@@ -187,14 +220,14 @@ model SubmissionField {
 
 model Approval {
   id           String         @id @default(uuid())
-  documentId   String
-  document     Document       @relation(fields: [documentId], references: [id])
   approvedById String?
   approvedBy   User?          @relation(fields: [approvedById], references: [id])
   status       ApprovalStatus @default(PENDING)
   approvedAt   DateTime?
+  Submission   Submission?    @relation(fields: [submissionId], references: [id])
+  submissionId String?        @db.Char(36)
 
-  @@index([documentId])
+  @@index([submissionId])
 }
 
 model User {
@@ -215,9 +248,9 @@ model User {
   penduduk      Penduduk?     @relation(fields: [NIK], references: [no_nik])
   forms         Form[]
   submissions   Submission[]
-  signs         Sign[]
   signRequests  SignRequest[]
   documents     Document[]
+  officials     Official[]
 
   @@index([cityId])
   @@index([districtId])
@@ -348,6 +381,12 @@ enum SignStatus {
   REQUESTED
   SIGNED
   REJECTED
+}
+
+enum DivisionLevel {
+  CITY
+  DISTRICT
+  SUBDISTRICT
 }
 
 enum BaseFieldType {

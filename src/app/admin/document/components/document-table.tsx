@@ -1,5 +1,6 @@
 "use client";
 
+import { ConfirmDeletionDialog } from "@/components/dialogs/delete-dialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -19,7 +20,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Prisma } from "@prisma/client";
+import { roleLevelMap } from "@/lib/utils";
+import { BaseFieldType, Prisma } from "@prisma/client";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -33,37 +35,59 @@ import {
   useReactTable,
   VisibilityState,
 } from "@tanstack/react-table";
+import { format } from "date-fns";
 import {
   ArrowUpDown,
   ChevronDown,
+  File,
   MoreHorizontal,
   Pencil,
   Trash,
 } from "lucide-react";
 import { FC, useMemo, useState } from "react";
-import { CreateFieldTypeDialog, UpdateFieldTypeDialog } from "./dialogs";
-import { ConfirmDeletionDialog } from "@/components/dialogs/delete-dialog";
-import { deleteFieldType } from "../actions";
+import { deleteDocument } from "../actions";
+import { UpsertDocumentDialog } from "./dialogs";
+import Link from "next/link";
 
-type FieldType = Prisma.FieldTypeGetPayload<{ include: { relation: true } }>;
+type Document = Prisma.DocumentGetPayload<{
+  select: {
+    id: true;
+    title: true;
+    createdAt: true;
+    level: true;
+    updatedAt: true;
 
-export const FieldTypeTable: FC<{
-  fieldTypes: FieldType[];
-}> = ({ fieldTypes }) => {
+    form: {
+      select: {
+        fields: {
+          include: { options: { select: { id: true; value: true } } };
+        };
+      };
+    };
+    signs: { select: { positionId: true } };
+    user: { select: { name: true } };
+  };
+}>;
+
+export const DocumentTable: FC<{
+  documents: Document[];
+  fieldTypes: { id: number; name: string; baseType: BaseFieldType }[];
+  positions: { id: number; title: string }[];
+}> = ({ documents, fieldTypes, positions }) => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  const [selectedRow, setSelectedRow] = useState<FieldType | null>(null);
+  const [selectedRow, setSelectedRow] = useState<Document | null>(null);
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
-  const columns: ColumnDef<FieldType>[] = useMemo(
-    (): ColumnDef<FieldType>[] => [
+  const columns: ColumnDef<Document>[] = useMemo(
+    (): ColumnDef<Document>[] => [
       {
-        accessorKey: "id",
+        accessorKey: "title",
         header: ({ column }) => {
           return (
             <Button
@@ -72,16 +96,16 @@ export const FieldTypeTable: FC<{
                 column.toggleSorting(column.getIsSorted() === "asc")
               }
             >
-              ID
+              Judul Surat
               <ArrowUpDown />
             </Button>
           );
         },
-        cell: ({ row }) => <div>{row.getValue("id")}</div>,
+        cell: ({ row }) => <div>{row.getValue("title")}</div>,
         enableSorting: true,
       },
       {
-        accessorKey: "name",
+        accessorKey: "level",
         header: ({ column }) => {
           return (
             <Button
@@ -90,16 +114,20 @@ export const FieldTypeTable: FC<{
                 column.toggleSorting(column.getIsSorted() === "asc")
               }
             >
-              Name
+              Tingkat Surat
               <ArrowUpDown />
             </Button>
           );
         },
-        cell: ({ row }) => <div>{row.getValue("name")}</div>,
+        cell: ({ row }) => (
+          <div>
+            {roleLevelMap[row.getValue("level") as keyof typeof roleLevelMap]}
+          </div>
+        ),
         enableSorting: true,
       },
       {
-        accessorKey: "baseType",
+        id: "createdBy",
         header: ({ column }) => {
           return (
             <Button
@@ -108,16 +136,16 @@ export const FieldTypeTable: FC<{
                 column.toggleSorting(column.getIsSorted() === "asc")
               }
             >
-              Base Type
+              Dibuat oleh
               <ArrowUpDown />
             </Button>
           );
         },
-        cell: ({ row }) => <div>{row.getValue("baseType")}</div>,
+        cell: ({ row }) => <div>{row.original.user.name}</div>,
         enableSorting: true,
       },
       {
-        accessorKey: "placeholder",
+        accessorKey: "createdAt",
         header: ({ column }) => {
           return (
             <Button
@@ -126,30 +154,14 @@ export const FieldTypeTable: FC<{
                 column.toggleSorting(column.getIsSorted() === "asc")
               }
             >
-              Placeholder
+              Dibuat pada
               <ArrowUpDown />
             </Button>
           );
         },
-        cell: ({ row }) => <div>{row.getValue("placeholder") || "-"}</div>,
-        enableSorting: true,
-      },
-      {
-        accessorKey: "defaultValue",
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="outline"
-              onClick={() =>
-                column.toggleSorting(column.getIsSorted() === "asc")
-              }
-            >
-              Default Value
-              <ArrowUpDown />
-            </Button>
-          );
-        },
-        cell: ({ row }) => <div>{row.getValue("defaultValue") || "-"}</div>,
+        cell: ({ row }) => (
+          <div>{format(row.getValue("createdAt"), "yyyy-MM-dd HH:mm")}</div>
+        ),
         enableSorting: true,
       },
       {
@@ -166,6 +178,12 @@ export const FieldTypeTable: FC<{
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <Link href={`/admin/document/${row.original.id}`}>
+                  <DropdownMenuItem>
+                    <File size={16} />
+                    Detail
+                  </DropdownMenuItem>
+                </Link>
                 <DropdownMenuItem
                   onClick={() => {
                     setSelectedRow(row.original);
@@ -195,7 +213,7 @@ export const FieldTypeTable: FC<{
   );
 
   const table = useReactTable({
-    data: fieldTypes,
+    data: documents,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -218,10 +236,10 @@ export const FieldTypeTable: FC<{
       <div className="w-full">
         <div className="flex items-center justify-between py-4">
           <Input
-            placeholder="Filter by name..."
-            value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+            placeholder="Filter by judul..."
+            value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
             onChange={(event) =>
-              table.getColumn("name")?.setFilterValue(event.target.value)
+              table.getColumn("title")?.setFilterValue(event.target.value)
             }
             className="max-w-sm"
           />
@@ -316,20 +334,34 @@ export const FieldTypeTable: FC<{
       <ConfirmDeletionDialog
         open={deleteDialogOpen}
         setIsOpen={setDeleteDialogOpen}
-        description={`Anda akan menghapus Tipe Input dengan ID ${selectedRow?.id}. Aksi
+        description={`Anda akan menghapus Dokumen dengan judul ${selectedRow?.title}. Aksi
             ini tidak bisa di undo. Ini akan secara permanen menghapus data ini
             dan menghapusnya dari server kami.`}
-        serverAction={deleteFieldType}
+        serverAction={deleteDocument}
         id={selectedRow?.id}
       />
-      <UpdateFieldTypeDialog
+      <UpsertDocumentDialog
         open={editDialogOpen}
         setIsOpen={setEditDialogOpen}
-        fieldTypeData={selectedRow}
+        fieldTypes={fieldTypes}
+        positions={positions}
+        data={
+          selectedRow
+            ? {
+                id: selectedRow.id,
+                title: selectedRow.title,
+                level: selectedRow.level,
+                positionIds: selectedRow.signs.map((sign) => sign.positionId),
+                fields: selectedRow.form?.fields || [],
+              }
+            : undefined
+        }
       />
-      <CreateFieldTypeDialog
+      <UpsertDocumentDialog
         open={createDialogOpen}
         setIsOpen={setCreateDialogOpen}
+        fieldTypes={fieldTypes}
+        positions={positions}
       />
     </>
   );

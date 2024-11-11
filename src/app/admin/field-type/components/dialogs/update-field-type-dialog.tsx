@@ -28,9 +28,10 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useZodForm } from "@/hooks/use-zod-form";
+import { DialogBaseProps } from "@/types/dialog";
 import { BaseFieldType, Prisma } from "@prisma/client";
 import { useRouter } from "next/navigation";
-import { Dispatch, FC, SetStateAction, useEffect, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import { z } from "zod";
 import {
   getAllTableNames,
@@ -65,13 +66,13 @@ const updateFieldTypeSchema = z
     },
   );
 
-export const UpdateFieldTypeDialog: FC<{
-  open: boolean;
-  setIsOpen: Dispatch<SetStateAction<boolean>>;
-  fieldTypeData: Prisma.FieldTypeGetPayload<{
-    include: { relation: true };
-  }> | null;
-}> = ({ open, setIsOpen, fieldTypeData }) => {
+export const UpdateFieldTypeDialog: FC<
+  DialogBaseProps & {
+    fieldTypeData: Prisma.FieldTypeGetPayload<{
+      include: { relation: true };
+    }> | null;
+  }
+> = ({ open, setIsOpen, fieldTypeData }) => {
   const form = useZodForm({
     values: fieldTypeData
       ? {
@@ -109,7 +110,7 @@ export const UpdateFieldTypeDialog: FC<{
     data.append("id", id.toString());
     data.append("name", name);
     data.append("baseType", baseType);
-    defaultValue && data.append("defaultValue", defaultValue);
+    defaultValue && !isRelation && data.append("defaultValue", defaultValue);
     placeholder && data.append("placeholder", placeholder);
 
     const updateFieldTypeAction = await upsertFieldType(data);
@@ -153,7 +154,7 @@ export const UpdateFieldTypeDialog: FC<{
     } else {
       setIsRelation(false);
     }
-  }, [baseType]);
+  }, [baseType, fieldTypeData]);
 
   // Handle target table change
   useEffect(() => {
@@ -168,7 +169,7 @@ export const UpdateFieldTypeDialog: FC<{
     };
 
     handleTargetTableChange();
-  }, [targetTable]);
+  }, [targetTable, fieldTypeData]);
 
   return (
     <Dialog open={open} onOpenChange={setIsOpen}>
@@ -197,32 +198,6 @@ export const UpdateFieldTypeDialog: FC<{
               />
               <FormField
                 control={form.control}
-                name="placeholder"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col space-y-1.5">
-                    <FormLabel htmlFor="placeholder">Placeholder</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Placeholder input" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="defaultValue"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col space-y-1.5">
-                    <FormLabel htmlFor="defaultValue">Default value</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Default value" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
                 name="baseType"
                 render={({ field }) => (
                   <FormItem>
@@ -240,6 +215,59 @@ export const UpdateFieldTypeDialog: FC<{
                   </FormItem>
                 )}
               />
+              {!isRelation &&
+                baseType !== "radio" &&
+                baseType !== "checkbox" && (
+                  <FormField
+                    control={form.control}
+                    name="placeholder"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col space-y-1.5">
+                        <FormLabel htmlFor="placeholder">Placeholder</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Placeholder input" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+              {!isRelation &&
+                baseType !== "radio" &&
+                baseType !== "checkbox" && (
+                  <FormField
+                    control={form.control}
+                    name="defaultValue"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col space-y-1.5">
+                        <FormLabel htmlFor="defaultValue">
+                          Default value
+                        </FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Default value" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+              {!isRelation && (
+                <FormField
+                  control={form.control}
+                  name="defaultValue"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col space-y-1.5">
+                      <FormLabel htmlFor="defaultValue">
+                        Default value
+                      </FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Default value" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
               {isRelation && (
                 <>
                   <FormField

@@ -1,5 +1,6 @@
 "use client";
 
+import { ConfirmDeletionDialog } from "@/components/dialogs/delete-dialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -19,7 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Prisma } from "@prisma/client";
+import { Position } from "@prisma/client";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -41,27 +42,25 @@ import {
   Trash,
 } from "lucide-react";
 import { FC, useMemo, useState } from "react";
-import { CreateFieldTypeDialog, UpdateFieldTypeDialog } from "./dialogs";
-import { ConfirmDeletionDialog } from "@/components/dialogs/delete-dialog";
-import { deleteFieldType } from "../actions";
+import { deletePosition } from "../actions";
+import { CreatePositionDialog, UpdatePositionDialog } from "./dialogs";
+import { divisionLevelMap } from "@/lib/utils";
 
-type FieldType = Prisma.FieldTypeGetPayload<{ include: { relation: true } }>;
-
-export const FieldTypeTable: FC<{
-  fieldTypes: FieldType[];
-}> = ({ fieldTypes }) => {
+export const PositionTable: FC<{
+  positions: Position[];
+}> = ({ positions }) => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  const [selectedRow, setSelectedRow] = useState<FieldType | null>(null);
+  const [selectedRow, setSelectedRow] = useState<Position | null>(null);
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
-  const columns: ColumnDef<FieldType>[] = useMemo(
-    (): ColumnDef<FieldType>[] => [
+  const columns: ColumnDef<Position>[] = useMemo(
+    (): ColumnDef<Position>[] => [
       {
         accessorKey: "id",
         header: ({ column }) => {
@@ -81,7 +80,7 @@ export const FieldTypeTable: FC<{
         enableSorting: true,
       },
       {
-        accessorKey: "name",
+        accessorKey: "title",
         header: ({ column }) => {
           return (
             <Button
@@ -90,16 +89,16 @@ export const FieldTypeTable: FC<{
                 column.toggleSorting(column.getIsSorted() === "asc")
               }
             >
-              Name
+              Nama Posisi
               <ArrowUpDown />
             </Button>
           );
         },
-        cell: ({ row }) => <div>{row.getValue("name")}</div>,
+        cell: ({ row }) => <div>{row.getValue("title")}</div>,
         enableSorting: true,
       },
       {
-        accessorKey: "baseType",
+        accessorKey: "level",
         header: ({ column }) => {
           return (
             <Button
@@ -108,48 +107,20 @@ export const FieldTypeTable: FC<{
                 column.toggleSorting(column.getIsSorted() === "asc")
               }
             >
-              Base Type
+              Tingkat Jabatan
               <ArrowUpDown />
             </Button>
           );
         },
-        cell: ({ row }) => <div>{row.getValue("baseType")}</div>,
-        enableSorting: true,
-      },
-      {
-        accessorKey: "placeholder",
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="outline"
-              onClick={() =>
-                column.toggleSorting(column.getIsSorted() === "asc")
-              }
-            >
-              Placeholder
-              <ArrowUpDown />
-            </Button>
-          );
-        },
-        cell: ({ row }) => <div>{row.getValue("placeholder") || "-"}</div>,
-        enableSorting: true,
-      },
-      {
-        accessorKey: "defaultValue",
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="outline"
-              onClick={() =>
-                column.toggleSorting(column.getIsSorted() === "asc")
-              }
-            >
-              Default Value
-              <ArrowUpDown />
-            </Button>
-          );
-        },
-        cell: ({ row }) => <div>{row.getValue("defaultValue") || "-"}</div>,
+        cell: ({ row }) => (
+          <div>
+            {
+              divisionLevelMap[
+                row.getValue("level") as keyof typeof divisionLevelMap
+              ]
+            }
+          </div>
+        ),
         enableSorting: true,
       },
       {
@@ -195,7 +166,7 @@ export const FieldTypeTable: FC<{
   );
 
   const table = useReactTable({
-    data: fieldTypes,
+    data: positions,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -218,10 +189,10 @@ export const FieldTypeTable: FC<{
       <div className="w-full">
         <div className="flex items-center justify-between py-4">
           <Input
-            placeholder="Filter by name..."
-            value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+            placeholder="Filter by nama posisi..."
+            value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
             onChange={(event) =>
-              table.getColumn("name")?.setFilterValue(event.target.value)
+              table.getColumn("title")?.setFilterValue(event.target.value)
             }
             className="max-w-sm"
           />
@@ -316,18 +287,18 @@ export const FieldTypeTable: FC<{
       <ConfirmDeletionDialog
         open={deleteDialogOpen}
         setIsOpen={setDeleteDialogOpen}
-        description={`Anda akan menghapus Tipe Input dengan ID ${selectedRow?.id}. Aksi
+        description={`Anda akan menghapus Posisi dengan ID ${selectedRow?.id}. Aksi
             ini tidak bisa di undo. Ini akan secara permanen menghapus data ini
             dan menghapusnya dari server kami.`}
-        serverAction={deleteFieldType}
+        serverAction={deletePosition}
         id={selectedRow?.id}
       />
-      <UpdateFieldTypeDialog
+      <UpdatePositionDialog
         open={editDialogOpen}
         setIsOpen={setEditDialogOpen}
-        fieldTypeData={selectedRow}
+        positionData={selectedRow}
       />
-      <CreateFieldTypeDialog
+      <CreatePositionDialog
         open={createDialogOpen}
         setIsOpen={setCreateDialogOpen}
       />

@@ -1,5 +1,5 @@
 import { PageContainer } from "@/components/layouts/PageContainer";
-import { LoginForm } from "./components/form";
+import { LoginForm } from "./components/login-form";
 
 export default function Login() {
   return (

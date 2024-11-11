@@ -114,5 +114,5 @@ h4 {
 }
 
 p {
-  @apply text-base leading-[18px] text-neutral-400;
+  @apply text-sm leading-[18px] text-muted-foreground;
 }

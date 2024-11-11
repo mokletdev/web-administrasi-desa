@@ -55,9 +55,10 @@ export const Combobox: React.FC<{
                   key={option.value}
                   value={option.value}
                   onSelect={(currentValue) => {
-                    onChange(currentValue === value ? "" : currentValue);
+                    onChange(currentValue);
                     setOpen(false);
                   }}
+                  keywords={[option.label]}
                 >
                   {option.label}
                   <Check

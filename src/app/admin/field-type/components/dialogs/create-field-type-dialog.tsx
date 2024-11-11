@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Combobox } from "@/components/ui/combobox";
 import {
   Dialog,
   DialogContent,
@@ -27,16 +28,16 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useZodForm } from "@/hooks/use-zod-form";
+import { DialogBaseProps } from "@/types/dialog";
 import { BaseFieldType } from "@prisma/client";
 import { useRouter } from "next/navigation";
-import { Dispatch, FC, SetStateAction, useEffect, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import { z } from "zod";
 import {
   getAllTableNames,
   getColumnNames,
   upsertFieldType,
 } from "../../actions";
-import { Combobox } from "@/components/ui/combobox";
 
 const baseFieldTypeEnum = Object.keys(BaseFieldType);
 
@@ -65,10 +66,10 @@ const createFieldTypeSchema = z
     },
   );
 
-export const CreateFieldTypeDialog: FC<{
-  open: boolean;
-  setIsOpen: Dispatch<SetStateAction<boolean>>;
-}> = ({ open, setIsOpen }) => {
+export const CreateFieldTypeDialog: FC<DialogBaseProps> = ({
+  open,
+  setIsOpen,
+}) => {
   const form = useZodForm({
     defaultValues: {
       name: "",
@@ -105,7 +106,7 @@ export const CreateFieldTypeDialog: FC<{
     } = fields;
     data.append("name", name);
     data.append("baseType", baseType);
-    defaultValue && data.append("defaultValue", defaultValue);
+    defaultValue && !isRelation && data.append("defaultValue", defaultValue);
     placeholder && data.append("placeholder", placeholder);
     targetTable && data.append("targetTable", targetTable);
     targetField && data.append("targetField", targetField);
@@ -167,6 +168,17 @@ export const CreateFieldTypeDialog: FC<{
     handleTargetTableChange();
   }, [targetTable]);
 
+  useEffect(() => {
+    if (
+      baseType === "checkbox" ||
+      baseType === "relation" ||
+      baseType === "radio"
+    ) {
+      form.setValue("placeholder", undefined);
+      form.setValue("defaultValue", undefined);
+    }
+  }, [baseType]);
+
   return (
     <Dialog open={open} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-[425px]">
@@ -194,32 +206,6 @@ export const CreateFieldTypeDialog: FC<{
               />
               <FormField
                 control={form.control}
-                name="placeholder"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col space-y-1.5">
-                    <FormLabel htmlFor="placeholder">Placeholder</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Placeholder input" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="defaultValue"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col space-y-1.5">
-                    <FormLabel htmlFor="defaultValue">Default value</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Default value" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
                 name="baseType"
                 render={({ field }) => (
                   <FormItem>
@@ -237,6 +223,42 @@ export const CreateFieldTypeDialog: FC<{
                   </FormItem>
                 )}
               />
+              {!isRelation &&
+                baseType !== "radio" &&
+                baseType !== "checkbox" && (
+                  <FormField
+                    control={form.control}
+                    name="placeholder"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col space-y-1.5">
+                        <FormLabel htmlFor="placeholder">Placeholder</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Placeholder input" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+              {!isRelation &&
+                baseType !== "radio" &&
+                baseType !== "checkbox" && (
+                  <FormField
+                    control={form.control}
+                    name="defaultValue"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col space-y-1.5">
+                        <FormLabel htmlFor="defaultValue">
+                          Default value
+                        </FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Default value" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
               {isRelation && (
                 <>
                   <FormField

@@ -22,7 +22,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           }
           className={cn(
             "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
-            className
+            className,
           )}
           ref={ref}
           {...props}
@@ -38,7 +38,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         )}
       </div>
     );
-  }
+  },
 );
 Input.displayName = "Input";
 
@@ -50,17 +50,21 @@ interface FileInputProps {
   accept: string;
   errorMessage?: string;
   description?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 const FileField = React.forwardRef<HTMLInputElement, FileInputProps>(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  ({ label, errorMessage, register, name, accept, description }, _ref) => {
+  (
+    { label, errorMessage, register, name, accept, description, onChange },
+    _ref,
+  ) => {
     const [fileName, setFileName] = React.useState<string>("");
-    const { onChange } = register(name);
+    const { onChange: rhfOnChange } = register(name);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
-      onChange(e);
+      rhfOnChange(e);
       if (file) {
         setFileName(file.name);
       }
@@ -69,7 +73,7 @@ const FileField = React.forwardRef<HTMLInputElement, FileInputProps>(
     const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
       e.preventDefault();
       const file = e.dataTransfer.files?.[0];
-      onChange(e);
+      rhfOnChange(e);
       if (file) {
         setFileName(file.name);
       }
@@ -82,9 +86,9 @@ const FileField = React.forwardRef<HTMLInputElement, FileInputProps>(
     return (
       <div className="flex w-full flex-col items-center justify-center py-4">
         <p
-          className={`mb-2 self-start ${
-            errorMessage ? "text-primary-400" : "text-black"
-          }`}
+          className={cn(
+            `mb-2 self-start font-medium text-black ${errorMessage && "text-destructive"}`,
+          )}
         >
           {label}
         </p>
@@ -96,7 +100,7 @@ const FileField = React.forwardRef<HTMLInputElement, FileInputProps>(
           htmlFor={name}
           className={cn(
             "relative w-full cursor-pointer rounded-lg border-2 border-dashed px-6 py-4 transition-all duration-300 hover:cursor-pointer hover:border-solid focus:outline-none",
-            errorMessage ? "border-primary-400" : "border-neutral-400"
+            errorMessage ? "border-primary-400" : "border-neutral-400",
           )}
           onDrop={handleDrop}
           onDragOver={handleDragOver}
@@ -113,7 +117,7 @@ const FileField = React.forwardRef<HTMLInputElement, FileInputProps>(
             accept={accept}
             className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
             {...register(name)}
-            onChange={handleFileChange}
+            onChange={onChange === undefined ? handleFileChange : onChange}
           />
         </label>
 
@@ -131,7 +135,7 @@ const FileField = React.forwardRef<HTMLInputElement, FileInputProps>(
         )}
       </div>
     );
-  }
+  },
 );
 FileField.displayName = "FileField";
 
@@ -148,7 +152,7 @@ const DateField = ({
         variant={"outline"}
         className={cn(
           "w-full justify-start text-left font-normal",
-          !date && "text-muted-foreground"
+          !date && "text-muted-foreground",
         )}
       >
         <CalendarIcon className="mr-2 h-4 w-4" />
