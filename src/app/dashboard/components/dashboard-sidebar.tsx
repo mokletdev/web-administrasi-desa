@@ -12,7 +12,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { Home } from "lucide-react";
+import { File, Home, NotepadText } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
 
@@ -21,6 +21,16 @@ const items = [
     title: "Beranda",
     url: "/dashboard",
     icon: Home,
+  },
+  {
+    title: "Persuratan",
+    url: "/dashboard/document",
+    icon: File,
+  },
+  {
+    title: "Riwayat Permintaan",
+    url: "/dashboard/request",
+    icon: NotepadText,
   },
 ];
 
