@@ -42,6 +42,14 @@ export const POST = async (req: NextRequest) => {
       );
     }
 
+    // Check email existence
+    const findUserByEmail = await prisma.user.findUnique({ where: { email } });
+    if (findUserByEmail)
+      return NextResponse.json(
+        { status: 403, message: "Email is already in use!" },
+        { status: 403 },
+      );
+
     const createdAdmin = await prisma.user.create({
       data: { email, name, username, role, password: generateHash(password) },
     });
