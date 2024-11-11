@@ -231,26 +231,29 @@ model Approval {
 }
 
 model User {
-  id            String        @id @default(uuid())
-  username      String        @unique
-  email         String        @unique
-  name          String
-  password      String
-  role          UserRole
+  id        String     @id @default(uuid())
+  username  String     @unique
+  email     String     @unique
+  name      String
+  password  String
+  role      UserRole
+  approvals Approval[]
+
+  NIK           String?
   cityId        Int?
   districtId    Int?
   subDistrictId Int?
-  NIK           String?
-  subDistrict   SubDistrict?  @relation(fields: [subDistrictId], references: [id])
-  approvals     Approval[]
-  city          City?         @relation(fields: [cityId], references: [id])
-  district      District?     @relation(fields: [districtId], references: [id])
-  penduduk      Penduduk?     @relation(fields: [NIK], references: [no_nik])
-  forms         Form[]
-  submissions   Submission[]
-  signRequests  SignRequest[]
-  documents     Document[]
-  officials     Official[]
+
+  subDistrict SubDistrict? @relation(fields: [subDistrictId], references: [id])
+  city        City?        @relation(fields: [cityId], references: [id])
+  district    District?    @relation(fields: [districtId], references: [id])
+  penduduk    Penduduk?    @relation(fields: [NIK], references: [no_nik])
+
+  forms        Form[]
+  submissions  Submission[]
+  signRequests SignRequest[]
+  documents    Document[]
+  officials    Official[]
 
   @@index([cityId])
   @@index([districtId])
