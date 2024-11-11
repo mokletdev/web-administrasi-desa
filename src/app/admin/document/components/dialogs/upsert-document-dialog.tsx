@@ -38,18 +38,22 @@ const MAX_FILE_SIZE = 5_000_000;
 
 const generateDocumentSchema = (isUpdating: boolean) => {
   const contentSchema = z
-    .instanceof(FileList || File)
+    .instanceof(FileList)
+    .or(z.undefined())
     .refine((files) => {
+      if (!files) return false;
       return isUpdating ? true : files.length !== 0;
     }, "Template harus diupload!")
     .refine((files) => {
+      if (!files) return true;
       // Select only the first file
       const file = files[0];
       // If file size exceed the maximum limit, then throw error
       if (!isUpdating) return file?.size <= MAX_FILE_SIZE;
       return !file || file?.size <= MAX_FILE_SIZE;
     }, `Maximum file size is 15MB`)
-    .refine((files: FileList) => {
+    .refine((files) => {
+      if (!files) return true;
       // Select only the first file
       const file = files[0];
       // If file's extension is not allowed, then throw error
@@ -119,7 +123,7 @@ export const UpsertDocumentDialog: FC<
 
     const contentFormData = new FormData();
     const { content, level, title } = values;
-    content[0] && contentFormData.append("content", content[0]);
+    content && content[0] && contentFormData.append("content", content[0]);
 
     const upsertDocumentAction = await upsertDocumentForm({
       id: data?.id,

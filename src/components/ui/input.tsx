@@ -87,7 +87,7 @@ const FileField = React.forwardRef<HTMLInputElement, FileInputProps>(
       <div className="flex w-full flex-col items-center justify-center py-4">
         <p
           className={cn(
-            `mb-2 self-start font-medium text-black ${errorMessage && "text-destructive"}`,
+            `mb-2 self-start font-medium text-black ${errorMessage && !fileName && "text-destructive"}`,
           )}
         >
           {label}
@@ -126,7 +126,7 @@ const FileField = React.forwardRef<HTMLInputElement, FileInputProps>(
             <p className="text-sm text-neutral-700">{fileName}</p>
           </div>
         )}
-        {errorMessage && (
+        {errorMessage && !fileName && (
           <div className="mt-4 text-center">
             <p className="text-primary-400 mt-[6px] text-sm text-red-500">
               {errorMessage}
