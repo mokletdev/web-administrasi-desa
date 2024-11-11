@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { roleLevelMap } from "@/lib/utils";
 import { FC } from "react";
 import { UseFormReturn } from "react-hook-form";
 
@@ -59,7 +60,7 @@ export const FirstStepCreateDocumment: FC<{
               <SelectContent>
                 {documentUserRole.map((l) => (
                   <SelectItem key={l} value={l}>
-                    {l}
+                    {roleLevelMap[l as keyof typeof roleLevelMap]}
                   </SelectItem>
                 ))}
               </SelectContent>
