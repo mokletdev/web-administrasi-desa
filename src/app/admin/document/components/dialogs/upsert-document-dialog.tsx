@@ -153,6 +153,7 @@ export const UpsertDocumentDialog: FC<
       description: `Berhasil ${data ? "mengubah" : "menambahkan"} data template surat baru`,
     });
     form.reset();
+    setFields([]);
     setLoading(false);
     return router.refresh();
   });
