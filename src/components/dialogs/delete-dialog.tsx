@@ -1,6 +1,5 @@
 "use client";
 
-import { deleteFieldType } from "@/app/admin/field-type/actions";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,10 +46,7 @@ export const ConfirmDeletionDialog: FC<
                 description: "Permintaan penghapusan data anda sedang diproses",
               });
 
-              const data = new FormData();
-
-              data.append("id", id.toString());
-              const deleteAction = await serverAction(data);
+              const deleteAction = await serverAction(id);
               if (deleteAction.error) {
                 dismiss(loadingToast.id);
                 return toast({

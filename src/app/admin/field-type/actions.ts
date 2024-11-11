@@ -192,11 +192,9 @@ export async function upsertFieldType(
 }
 
 export async function deleteFieldType(
-  formData: FormData,
+  id: number,
 ): Promise<ActionResponse<{ id: number }>> {
   try {
-    const id = Number(formData.get("id"));
-
     if (!id) {
       return ActionResponses.badRequest("ID is required", "id");
     }

@@ -51,11 +51,9 @@ export async function upsertPosition(
 }
 
 export async function deletePosition(
-  formData: FormData,
+  id: number,
 ): Promise<ActionResponse<{ id: number }>> {
   try {
-    const id = Number(formData.get("id"));
-
     if (!id) {
       return ActionResponses.badRequest("ID is required", "id");
     }

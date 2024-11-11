@@ -274,6 +274,10 @@ export async function deleteDocument(
   documentId: string,
 ): Promise<ActionResponse<{ id: string }>> {
   try {
+    if (!documentId) {
+      return ActionResponses.badRequest("ID is required", "id");
+    }
+
     const session = await getServerSession();
     if (!session?.user) {
       return ActionResponses.unauthorized();
