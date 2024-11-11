@@ -16,6 +16,10 @@ type ProtectedRouteConfig = {
 
 const PROTECTED_ROUTES: ProtectedRouteConfig[] = [
   { path: "/admin", roles: ["SUPERADMIN"] },
+  {
+    path: "/dashboard",
+    roles: ["CITIZEN", "CITY_ADMIN", "DISTRICT_ADMIN", "SUBDISTRICT_ADMIN"],
+  },
 ];
 
 export default withAuth(
