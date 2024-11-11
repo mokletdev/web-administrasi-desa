@@ -40,7 +40,7 @@ export const DashboardSidebar = () => {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>
-            <h4>Dasbor</h4>
+            <h4>Dashboard</h4>
           </SidebarGroupLabel>
           <SidebarGroupContent className="mt-4">
             <SidebarMenu>
