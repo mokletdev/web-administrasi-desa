@@ -92,15 +92,15 @@ model Sign {
   documentId String
   positionId Int
 
-  document Document @relation(fields: [documentId], references: [id])
-  position Position @relation(fields: [positionId], references: [id])
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  position Position @relation(fields: [positionId], references: [id], onDelete: Cascade)
 
   @@index([documentId])
 }
 
 model SignRequest {
   id         String     @id @default(uuid())
-  submission Submission @relation(fields: [submissionId], references: [id])
+  submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
   user       User       @relation(fields: [userId], references: [id])
   status     SignStatus @default(REQUESTED)
 
@@ -111,14 +111,20 @@ model SignRequest {
 }
 
 model FieldValidation {
-  id          String    @id @default(uuid())
-  type        String // e.g., "min", "max", "pattern", "format"
+  id          String              @id @default(uuid())
+  type        FieldValidationType @default(PATTERN) // e.g., "min", "max", "pattern"
   value       String // The validation value/pattern
   message     String // Custom error message
-  fieldType   FieldType @relation(fields: [fieldTypeId], references: [id])
-  fieldTypeId Int       @unique
+  fieldType   FieldType           @relation(fields: [fieldTypeId], references: [id])
+  fieldTypeId Int                 @unique
 
   @@index([fieldTypeId])
+}
+
+enum FieldValidationType {
+  MIN
+  MAX
+  PATTERN
 }
 
 model FieldRelation {
@@ -160,7 +166,7 @@ model Field {
 
 model Form {
   id          String       @id @default(uuid())
-  document    Document     @relation(fields: [documentId], references: [id])
+  document    Document     @relation(fields: [documentId], references: [id], onDelete: Cascade)
   fields      Field[]
   submissions Submission[]
   documentId  String       @unique

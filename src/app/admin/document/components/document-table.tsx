@@ -334,7 +334,7 @@ export const DocumentTable: FC<{
       <ConfirmDeletionDialog
         open={deleteDialogOpen}
         setIsOpen={setDeleteDialogOpen}
-        description={`Anda akan menghapus Posisi dengan ID ${selectedRow?.id}. Aksi
+        description={`Anda akan menghapus Dokumen dengan judul ${selectedRow?.title}. Aksi
             ini tidak bisa di undo. Ini akan secara permanen menghapus data ini
             dan menghapusnya dari server kami.`}
         serverAction={deleteDocument}
