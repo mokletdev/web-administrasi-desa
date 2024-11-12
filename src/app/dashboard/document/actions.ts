@@ -3,6 +3,7 @@
 import { ActionResponse, ActionResponses } from "@/types/actions";
 import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
 
 export async function autoComplete({
   value,
@@ -141,6 +142,8 @@ export async function deleteSubmission(
     await prisma.submission.delete({
       where: { id },
     });
+
+    revalidatePath("/dashboard/request");
 
     return ActionResponses.success({ id });
   } catch (error) {

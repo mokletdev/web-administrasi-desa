@@ -1,5 +1,6 @@
 "use client";
 
+import { ConfirmDeletionDialog } from "@/components/dialogs/delete-dialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -33,6 +34,7 @@ import {
 import { format } from "date-fns";
 import { ArrowUpDown, ChevronDown, Download } from "lucide-react";
 import { FC, useMemo, useState } from "react";
+import { deleteSubmission } from "../../document/actions";
 
 type Submission = Prisma.SubmissionGetPayload<{
   select: {
@@ -278,13 +280,13 @@ export const RequestHistoryTable: FC<{
         </div>
       </div>
 
-      {/* <ConfirmDeletionDialog
+      <ConfirmDeletionDialog
         id={selectedRow?.id}
         description="Apakah anda yakin ingin membatalkan pengajuan surat ini? Aksi anda tidak akan bisa dibatalkan."
         open={deleteDialogOpen}
         setIsOpen={setDeleteDialogOpen}
-        serverAction={}
-      /> */}
+        serverAction={deleteSubmission}
+      />
     </>
   );
 };
