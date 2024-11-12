@@ -1,7 +1,5 @@
 import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
-import { patchDocument, PatchType, TextRun } from "docx";
-import { normalizeVariableName } from "@/lib/utils";
 
 export const GET = async (
   req: NextRequest,
