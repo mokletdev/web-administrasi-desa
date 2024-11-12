@@ -110,6 +110,9 @@ export async function submitForm({
       },
     });
 
+    revalidatePath("/admin/submission");
+    revalidatePath("/dashboard/request");
+
     return ActionResponses.success({ submissionId: newSubmission.id });
   } catch (error) {
     console.error("Error in submitForm:", error);
