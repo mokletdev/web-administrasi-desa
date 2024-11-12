@@ -17,7 +17,13 @@ type ProtectedRouteConfig = {
 const PROTECTED_ROUTES: ProtectedRouteConfig[] = [
   {
     path: "/admin",
-    roles: ["SUPERADMIN", "CITY_ADMIN", "DISTRICT_ADMIN", "SUBDISTRICT_ADMIN"],
+    roles: [
+      "SUPERADMIN",
+      "CITY_ADMIN",
+      "DISTRICT_ADMIN",
+      "SUBDISTRICT_ADMIN",
+      "OFFICIAL",
+    ],
   },
   {
     path: "/dashboard",
