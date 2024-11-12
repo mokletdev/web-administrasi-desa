@@ -4,6 +4,7 @@ import { DynamicForm } from "./components/dynamic-form";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { getServerSession } from "@/lib/next-auth";
 
 export default async function RequestDocument({
   params,
@@ -23,6 +24,8 @@ export default async function RequestDocument({
   });
 
   if (!form) return notFound();
+
+  const session = await getServerSession();
 
   return (
     <>
@@ -46,7 +49,11 @@ export default async function RequestDocument({
           </p>
         </div>
       </div>
-      <DynamicForm fields={form.fields} />
+      <DynamicForm
+        fields={form.fields}
+        formId={form.id}
+        userId={session?.user?.id!}
+      />
     </>
   );
 }

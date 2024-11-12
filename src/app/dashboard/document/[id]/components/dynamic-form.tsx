@@ -6,9 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
 import { Prisma } from "@prisma/client";
-import { FC, ReactNode } from "react";
+import { useRouter } from "next/navigation";
+import { FC, ReactNode, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { submitForm } from "../../actions";
 
 type Field = Prisma.FieldGetPayload<{
   include: { options: true; fieldType: true };
@@ -18,20 +21,55 @@ const InputContainer: FC<{ children?: ReactNode }> = ({ children }) => {
   return <div className="mb-4 flex flex-col gap-y-1">{children}</div>;
 };
 
-export const DynamicForm = ({ fields }: { fields: Field[] }) => {
+export const DynamicForm: FC<{
+  fields: Field[];
+  formId: string;
+  userId: string;
+}> = ({ fields, formId, userId }) => {
   const {
     control,
     handleSubmit,
     formState: { errors },
   } = useForm();
+  const [loading, setLoading] = useState(false);
+  const { toast, dismiss } = useToast();
+  const router = useRouter();
 
   const onSubmit = handleSubmit(async (data) => {
-    // TODO: Handle form submission logic
-    alert(`Form Data Submitted: ${JSON.stringify(data)}`);
+    setLoading(true);
+
+    const loadingToast = toast({
+      title: "Mengirim...",
+      description: "Permintaan pengajuan surat anda sedang diproses",
+    });
+
+    const answers = Object.entries(data).map(([key, value]) => ({
+      name: key,
+      value: Array.isArray(value) ? value.join(", ") : value, // Handle checkboxes if needed
+    }));
+
+    const submissionResult = await submitForm({ userId, formId, answers });
+
+    if (submissionResult?.error) {
+      setLoading(false);
+      dismiss(loadingToast.id);
+      return toast({
+        title: "Gagal Mengirim!",
+        description: `Gagal mengirim data (${submissionResult.error.message})`,
+      });
+    }
+
+    dismiss(loadingToast.id);
+    toast({
+      title: "Berhasil Menambahkan!",
+      description: `Berhasil mengirim data formulir pengajuan surat. Anda akan diarahkan ke riwayat permintaan anda.`,
+    });
+    setLoading(false);
+    return router.push("/dashboard/request");
   });
 
   const renderField = (field: Field) => {
-    const { fieldType, label, required, options } = field;
+    const { id, fieldType, label, required, options } = field;
 
     switch (fieldType.baseType) {
       case "text":
@@ -41,12 +79,13 @@ export const DynamicForm = ({ fields }: { fields: Field[] }) => {
           <InputContainer key={field.id}>
             <Label>{label}</Label>
             <Controller
-              name={label}
+              name={id.toString()}
               control={control}
               rules={{
                 required,
                 // validate: (value) => validateField(validations, value),
               }}
+              defaultValue={""}
               render={({ field }) => (
                 <Input {...field} type={fieldType.baseType} />
               )}
@@ -64,12 +103,13 @@ export const DynamicForm = ({ fields }: { fields: Field[] }) => {
           <InputContainer key={field.id}>
             <Label>{label}</Label>
             <Controller
-              name={label}
+              name={id.toString()}
               control={control}
               rules={{
                 required,
                 // validate: (value) => validateField(validations, value),
               }}
+              defaultValue={""}
               render={({ field }) => <Textarea {...field} rows={6} />}
             />
             {errors[label] && (
@@ -85,7 +125,7 @@ export const DynamicForm = ({ fields }: { fields: Field[] }) => {
           <InputContainer key={field.id}>
             <Label className="mb-2">{label}</Label>
             <Controller
-              name={label}
+              name={id.toString()}
               control={control}
               rules={{ required }}
               render={({ field }) => (
@@ -121,7 +161,7 @@ export const DynamicForm = ({ fields }: { fields: Field[] }) => {
             {options?.map((option) => (
               <div key={option.id} className="my-2 flex items-center gap-x-2">
                 <Controller
-                  name={label}
+                  name={id.toString()}
                   control={control}
                   defaultValue={[]}
                   render={({ field }) => {
@@ -153,7 +193,27 @@ export const DynamicForm = ({ fields }: { fields: Field[] }) => {
         );
 
       case "relation":
-        return <InputContainer key={field.id}></InputContainer>;
+        // TODO: Handle autofill and auto-complete by relation
+        return (
+          <InputContainer key={field.id}>
+            <Label>{label}</Label>
+            <Controller
+              name={id.toString()}
+              control={control}
+              rules={{
+                required,
+                // validate: (value) => validateField(validations, value),
+              }}
+              defaultValue={""}
+              render={({ field }) => <Input {...field} type={"text"} />}
+            />
+            {errors[label] && (
+              <span className="text-red-500">
+                {errors[label]?.message?.toString()}
+              </span>
+            )}
+          </InputContainer>
+        );
 
       default:
         return null;
@@ -194,7 +254,13 @@ export const DynamicForm = ({ fields }: { fields: Field[] }) => {
   return (
     <form onSubmit={onSubmit} className="w-full space-y-6">
       {fields.map((field) => renderField(field))}
-      <Button type="submit" variant={"default"} className="w-full">
+      <Button
+        type="submit"
+        variant={"default"}
+        className="w-full"
+        disabled={loading}
+        size={"lg"}
+      >
         Submit
       </Button>
     </form>

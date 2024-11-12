@@ -85,11 +85,7 @@ export async function submitForm({
         );
       }
 
-      if (
-        answer?.value &&
-        (field.fieldType.baseType === "radio" ||
-          field.fieldType.baseType === "checkbox")
-      ) {
+      if (answer?.value && field.fieldType.baseType === "radio") {
         const invalidOption = !field.options.some(
           (option) => option.value === answer.value,
         );
