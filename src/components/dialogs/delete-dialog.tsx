@@ -63,7 +63,7 @@ export const ConfirmDeletionDialog: FC<
               setIsOpen(false);
             }}
           >
-            Continue
+            Konfirmasi
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

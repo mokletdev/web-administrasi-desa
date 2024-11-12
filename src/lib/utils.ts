@@ -44,6 +44,14 @@ export const roleLevelMap = {
   SUBDISTRICT_ADMIN: "Kelurahan",
 };
 
+export const submissionStatusMap = {
+  PENDING_APPROVAL: "Menunggu Persetujuan",
+  APPROVED: "Disetujui",
+  REJECTED: "Ditolak",
+  READY_FOR_SIGNATURE: "Menunggu Tanda Tangan",
+  SIGNED: "Telah di Tanda Tangan",
+};
+
 export const fileToBase64 = (file: File) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -120,7 +128,6 @@ export const downloadBase64File = (base64Data: string, filename: string) => {
   URL.revokeObjectURL(url);
 };
 
-// Helper function to convert base64 string to a Blob
 export const base64ToBlob = (base64Data: string) => {
   const byteCharacters = atob(base64Data);
   const byteNumbers = Array.from(byteCharacters, (char) => char.charCodeAt(0));

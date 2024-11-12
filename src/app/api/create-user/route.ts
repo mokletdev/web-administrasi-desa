@@ -43,10 +43,12 @@ export const POST = async (req: NextRequest) => {
     }
 
     // Check email existence
-    const findUserByEmail = await prisma.user.findUnique({ where: { email } });
-    if (findUserByEmail)
+    const findExistingUser = await prisma.user.findFirst({
+      where: { OR: [{ email }, { username }] },
+    });
+    if (findExistingUser)
       return NextResponse.json(
-        { status: 403, message: "Email is already in use!" },
+        { status: 403, message: `Email or username is already in use!` },
         { status: 403 },
       );
 
@@ -65,6 +67,7 @@ export const POST = async (req: NextRequest) => {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (e) {
+    console.log(e);
     return NextResponse.json(
       { status: 500, message: "Internal server error!" },
       { status: 500 },
