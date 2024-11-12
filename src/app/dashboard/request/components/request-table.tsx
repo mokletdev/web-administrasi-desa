@@ -150,7 +150,7 @@ export const RequestHistoryTable: FC<{
                 <Button
                   variant={"default"}
                   onClick={() => {
-                    // TODO: Download populated content as PDF
+                    window.open(`/api/download-doc/${row.original.id}`);
                   }}
                 >
                   Download

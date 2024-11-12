@@ -19,8 +19,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { submissionStatusMap } from "@/lib/utils";
-import { Prisma, User } from "@prisma/client";
+import { useToast } from "@/hooks/use-toast";
+import { Prisma } from "@prisma/client";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -37,14 +37,13 @@ import {
 import { format } from "date-fns";
 import {
   ArrowUpDown,
+  Check,
   ChevronDown,
   MoreHorizontal,
-  Check,
   X,
 } from "lucide-react";
-import { FC, useMemo, useState } from "react";
-import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { FC, useMemo, useState } from "react";
 import { handleApproval, handleSign } from "../actions";
 
 type Submission = Prisma.SubmissionGetPayload<{
@@ -52,14 +51,14 @@ type Submission = Prisma.SubmissionGetPayload<{
     approvals: true;
     signRequests: true;
     form: { select: { document: { select: { title: true } } } };
+    user: { select: { name: true } };
   };
 }>;
 
 export const SubmissionTable: FC<{
   submissions: Submission[];
-  user: User;
   isOfficial: boolean;
-}> = ({ submissions, user, isOfficial }) => {
+}> = ({ submissions, isOfficial }) => {
   const { dismiss, toast } = useToast();
   const router = useRouter();
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -135,7 +134,7 @@ export const SubmissionTable: FC<{
         enableSorting: true,
       },
       {
-        accessorKey: "status",
+        id: "submittedBy",
         header: ({ column }) => {
           return (
             <Button
@@ -144,19 +143,28 @@ export const SubmissionTable: FC<{
                 column.toggleSorting(column.getIsSorted() === "asc")
               }
             >
-              Status Pengajuan
+              Diajukan Oleh
               <ArrowUpDown />
             </Button>
           );
         },
+        cell: ({ row }) => <div>{row.original.user.name}</div>,
+        enableSorting: true,
+      },
+      {
+        id: "preview",
+        header: ({}) => {
+          return <Button variant="outline">Preview</Button>;
+        },
         cell: ({ row }) => (
-          <div>
-            {
-              submissionStatusMap[
-                row.original.status as keyof typeof submissionStatusMap
-              ]
-            }
-          </div>
+          <Button
+            variant={"default"}
+            onClick={() => {
+              window.open(`/api/download-doc/${row.original.id}`);
+            }}
+          >
+            Lihat Preview
+          </Button>
         ),
         enableSorting: true,
       },
@@ -229,7 +237,7 @@ export const SubmissionTable: FC<{
         },
       },
     ],
-    [],
+    [isOfficial],
   );
 
   const table = useReactTable({

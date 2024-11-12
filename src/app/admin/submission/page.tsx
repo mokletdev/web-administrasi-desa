@@ -37,11 +37,7 @@ export default async function SubmissionPage() {
           earum ipsum tempore!
         </p>
       </div>
-      <SubmissionTable
-        submissions={submissions.data}
-        user={user}
-        isOfficial={isOfficial}
-      />
+      <SubmissionTable submissions={submissions.data} isOfficial={isOfficial} />
     </>
   );
 }

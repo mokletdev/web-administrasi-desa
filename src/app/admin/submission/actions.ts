@@ -12,6 +12,7 @@ export const getSubmissionsForOfficial = async (): Promise<
         approvals: true;
         signRequests: true;
         form: { select: { document: { select: { title: true } } } };
+        user: { select: { name: true } };
       };
     }>[]
   >
@@ -34,6 +35,7 @@ export const getSubmissionsForOfficial = async (): Promise<
         approvals: true,
         signRequests: true,
         form: { select: { document: { select: { title: true } } } },
+        user: { select: { name: true } },
       },
       orderBy: {
         createdAt: "desc",
@@ -54,6 +56,7 @@ export const getSubmissions = async (): Promise<
         approvals: true;
         signRequests: true;
         form: { select: { document: { select: { title: true } } } };
+        user: { select: { name: true } };
       };
     }>[]
   >
@@ -195,6 +198,7 @@ export const getSubmissions = async (): Promise<
         approvals: true,
         signRequests: true,
         form: { select: { document: { select: { title: true } } } },
+        user: { select: { name: true } },
       },
       orderBy: {
         createdAt: "desc",
