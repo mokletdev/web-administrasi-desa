@@ -2,11 +2,13 @@ import { getServerSession } from "@/lib/next-auth";
 import prisma from "@/lib/prisma";
 import { DivisionLevel, Official, Position, User } from "@prisma/client";
 import { OfficialTable } from "./components/official-table";
+import { notFound } from "next/navigation";
 
-const getDivisionLevel = (user: User): DivisionLevel => {
+const getDivisionLevel = (user: User): DivisionLevel | null => {
   if (user.cityId) return "CITY";
   if (user.districtId) return "DISTRICT";
-  else return "SUBDISTRICT";
+  if (user.subDistrictId) return "SUBDISTRICT";
+  else return null;
 };
 
 export default async function OfficialManagement() {
@@ -18,6 +20,7 @@ export default async function OfficialManagement() {
   });
 
   const divisionLevel = getDivisionLevel(tryGetUser!);
+  if (!divisionLevel) return notFound();
   let res: ({ officials: Official[] } & Position)[] = [];
 
   if (
@@ -58,6 +61,7 @@ export default async function OfficialManagement() {
       districtId: divisionLevel === "DISTRICT" ? tryGetUser?.districtId : null,
       subDistrictId:
         divisionLevel === "SUBDISTRICT" ? tryGetUser?.subDistrictId : null,
+      role: { notIn: ["SUPERADMIN"] },
     },
     include: {
       official: true,

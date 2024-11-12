@@ -20,9 +20,6 @@ export default async function upsertOfficial(
     if (!positionId || !officials || !disconnectOficials)
       return ActionResponses.serverError("Official(s) must be selected!");
 
-    console.log("aselole1");
-    console.log(officials.map((i) => ({ id: i.value })));
-
     await prisma.position.update({
       where: {
         id: positionId,
@@ -40,7 +37,7 @@ export default async function upsertOfficial(
         },
       },
     });
-    console.log("aselole2");
+
     revalidatePath("/admin/official");
     return ActionResponses.success({ id: positionId });
   } catch (e) {
