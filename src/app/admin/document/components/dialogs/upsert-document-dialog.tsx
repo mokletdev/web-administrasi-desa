@@ -38,7 +38,8 @@ const MAX_FILE_SIZE = 5_000_000;
 
 const generateDocumentSchema = (isUpdating: boolean) => {
   const contentSchema = z
-    .instanceof(FileList)
+    .instanceof(File, { message: "Please upload a file." })
+    .array()
     .or(z.undefined())
     .refine((files) => {
       if (!files) return false;
