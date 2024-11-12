@@ -90,7 +90,7 @@ export const DocumentTable: FC<{
       {
         id: "actions",
         header: ({}) => {
-          return <Button variant="outline">Aksi</Button>;
+          return <Button variant="outline">Pengajuan</Button>;
         },
         cell: ({ row }) => {
           return (
@@ -99,10 +99,11 @@ export const DocumentTable: FC<{
               className={buttonVariants({ variant: "default" })}
             >
               <ArrowUpFromLine size={16} />
-              Pengajuan
+              Ajukan Pembuatan
             </Link>
           );
         },
+        enableHiding: false,
       },
     ],
     [],
