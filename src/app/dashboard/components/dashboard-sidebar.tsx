@@ -28,7 +28,7 @@ const items = [
     icon: File,
   },
   {
-    title: "Riwayat Permintaan",
+    title: "Riwayat Pengajuan",
     url: "/dashboard/request",
     icon: NotepadText,
   },

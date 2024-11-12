@@ -35,6 +35,7 @@ import { format } from "date-fns";
 import { ArrowUpDown, ChevronDown, Download } from "lucide-react";
 import { FC, useMemo, useState } from "react";
 import { deleteSubmission } from "../../document/actions";
+import { submissionStatusMap } from "@/lib/utils";
 
 type Submission = Prisma.SubmissionGetPayload<{
   select: {
@@ -126,7 +127,15 @@ export const RequestHistoryTable: FC<{
             </Button>
           );
         },
-        cell: ({ row }) => <div>{row.getValue("status")}</div>,
+        cell: ({ row }) => (
+          <div>
+            {
+              submissionStatusMap[
+                row.getValue("status") as keyof typeof submissionStatusMap
+              ]
+            }
+          </div>
+        ),
         enableSorting: true,
       },
       {

@@ -67,7 +67,7 @@ export const ConfirmationDialog: FC<
               dismiss(loadingToast.id);
               toast({
                 title: "Berhasil Menambahkan!",
-                description: `Berhasil mengirim data formulir pengajuan surat. Anda akan diarahkan ke riwayat permintaan anda.`,
+                description: `Berhasil mengirim data formulir pengajuan surat. Anda akan diarahkan ke halaman riwayat pengajuan anda.`,
               });
               setLoading(false);
               return router.push("/dashboard/request");

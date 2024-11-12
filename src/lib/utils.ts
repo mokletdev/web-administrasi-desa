@@ -44,6 +44,14 @@ export const roleLevelMap = {
   SUBDISTRICT_ADMIN: "Kelurahan",
 };
 
+export const submissionStatusMap = {
+  PENDING_APPROVAL: "Menunggu Persetujuan",
+  APPROVED: "Disetujui",
+  REJECTED: "Ditolak",
+  READY_FOR_SIGNATURE: "Menunggu Tanda Tangan",
+  SIGNED: "Telah di Tanda Tangan",
+};
+
 export const fileToBase64 = (file: File) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
