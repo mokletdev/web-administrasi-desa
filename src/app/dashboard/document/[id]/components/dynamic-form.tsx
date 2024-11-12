@@ -6,12 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
 import { Prisma } from "@prisma/client";
-import { useRouter } from "next/navigation";
 import { FC, ReactNode, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { submitForm } from "../../actions";
+import { ConfirmationDialog } from "./confirmation-dialog";
 
 type Field = Prisma.FieldGetPayload<{
   include: { options: true; fieldType: true };
@@ -19,6 +17,10 @@ type Field = Prisma.FieldGetPayload<{
 
 const InputContainer: FC<{ children?: ReactNode }> = ({ children }) => {
   return <div className="mb-4 flex flex-col gap-y-1">{children}</div>;
+};
+
+const RequiredMark: FC = () => {
+  return <span className="font-bold text-destructive"> *</span>;
 };
 
 export const DynamicForm: FC<{
@@ -32,40 +34,19 @@ export const DynamicForm: FC<{
     formState: { errors },
   } = useForm();
   const [loading, setLoading] = useState(false);
-  const { toast, dismiss } = useToast();
-  const router = useRouter();
+  const [confirmationOpen, setConfirmationOpen] = useState(false);
+  const [answers, setAnswers] = useState<{ name: string; value: string }[]>([]);
 
   const onSubmit = handleSubmit(async (data) => {
-    setLoading(true);
-
-    const loadingToast = toast({
-      title: "Mengirim...",
-      description: "Permintaan pengajuan surat anda sedang diproses",
-    });
-
     const answers = Object.entries(data).map(([key, value]) => ({
       name: key,
       value: Array.isArray(value) ? value.join(", ") : value, // Handle checkboxes if needed
     }));
 
-    const submissionResult = await submitForm({ userId, formId, answers });
+    setAnswers(answers);
 
-    if (submissionResult?.error) {
-      setLoading(false);
-      dismiss(loadingToast.id);
-      return toast({
-        title: "Gagal Mengirim!",
-        description: `Gagal mengirim data (${submissionResult.error.message})`,
-      });
-    }
-
-    dismiss(loadingToast.id);
-    toast({
-      title: "Berhasil Menambahkan!",
-      description: `Berhasil mengirim data formulir pengajuan surat. Anda akan diarahkan ke riwayat permintaan anda.`,
-    });
-    setLoading(false);
-    return router.push("/dashboard/request");
+    // Activate confirmation dialog
+    return setConfirmationOpen(true);
   });
 
   const renderField = (field: Field) => {
@@ -77,7 +58,10 @@ export const DynamicForm: FC<{
       case "password":
         return (
           <InputContainer key={field.id}>
-            <Label>{label}</Label>
+            <Label>
+              {label}
+              {required && <RequiredMark />}
+            </Label>
             <Controller
               name={id.toString()}
               control={control}
@@ -101,7 +85,10 @@ export const DynamicForm: FC<{
       case "longtext":
         return (
           <InputContainer key={field.id}>
-            <Label>{label}</Label>
+            <Label>
+              {label}
+              {required && <RequiredMark />}
+            </Label>
             <Controller
               name={id.toString()}
               control={control}
@@ -123,7 +110,10 @@ export const DynamicForm: FC<{
       case "radio":
         return (
           <InputContainer key={field.id}>
-            <Label className="mb-2">{label}</Label>
+            <Label className="mb-2">
+              {label}
+              {required && <RequiredMark />}
+            </Label>
             <Controller
               name={id.toString()}
               control={control}
@@ -157,7 +147,10 @@ export const DynamicForm: FC<{
       case "checkbox":
         return (
           <InputContainer key={field.id}>
-            <Label>{label}</Label>
+            <Label>
+              {label}
+              {required && <RequiredMark />}
+            </Label>
             {options?.map((option) => (
               <div key={option.id} className="my-2 flex items-center gap-x-2">
                 <Controller
@@ -196,7 +189,10 @@ export const DynamicForm: FC<{
         // TODO: Handle autofill and auto-complete by relation
         return (
           <InputContainer key={field.id}>
-            <Label>{label}</Label>
+            <Label>
+              {label}
+              {required && <RequiredMark />}
+            </Label>
             <Controller
               name={id.toString()}
               control={control}
@@ -252,17 +248,27 @@ export const DynamicForm: FC<{
   // };
 
   return (
-    <form onSubmit={onSubmit} className="w-full space-y-6">
-      {fields.map((field) => renderField(field))}
-      <Button
-        type="submit"
-        variant={"default"}
-        className="w-full"
-        disabled={loading}
-        size={"lg"}
-      >
-        Submit
-      </Button>
-    </form>
+    <>
+      <form onSubmit={onSubmit} className="w-full space-y-6">
+        {fields.map((field) => renderField(field))}
+        <Button
+          type="submit"
+          variant={"default"}
+          className="w-full"
+          disabled={loading}
+          size={"lg"}
+        >
+          Submit
+        </Button>
+      </form>
+      <ConfirmationDialog
+        open={confirmationOpen}
+        setIsOpen={setConfirmationOpen}
+        setLoading={setLoading}
+        formId={formId}
+        userId={userId}
+        answers={answers}
+      />
+    </>
   );
 };

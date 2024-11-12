@@ -45,7 +45,9 @@ export default async function RequestDocument({
           <p>
             Untuk mengajukan pembuatan {form.document.title}, anda perlu mengisi
             kolom-kolom dibawah ini. Pastikan data yang anda isi sesuai agar
-            menghindari ketidaksesuaian data yang akan ditinjau nantinya.
+            menghindari ketidaksesuaian data yang akan ditinjau nantinya. Kolom
+            yang wajib diisi ditandai dengan simbol{" "}
+            <span className="font-bold text-foreground">" * "</span>
           </p>
         </div>
       </div>
