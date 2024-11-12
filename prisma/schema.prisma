@@ -13,7 +13,6 @@ model City {
   districts   District[]
   submissions Submission[]
   users       User[]
-  officials   Official[]
 
   @@index([name])
 }
@@ -26,7 +25,6 @@ model District {
   subDistricts SubDistrict[]
   submissions  Submission[]
   users        User[]
-  officials    Official[]
 
   @@index([cityId])
   @@index([name])
@@ -40,7 +38,6 @@ model SubDistrict {
   submissions Submission[]
   users       User[]
   penduduk    Penduduk[]
-  officials   Official[]
 
   @@index([districtId])
   @@index([name])
@@ -56,19 +53,12 @@ model Position {
 }
 
 model Official {
-  id            String       @id @default(uuid())
-  userId        String
-  positionId    Int
-  cityId        Int? // Optional, if the position is at the City level
-  districtId    Int? // Optional, if the position is at the District level
-  subDistrictId Int? // Optional, if the position is at the Subdistrict level
-  city          City?        @relation(fields: [cityId], references: [id])
-  district      District?    @relation(fields: [districtId], references: [id])
-  subDistrict   SubDistrict? @relation(fields: [subDistrictId], references: [id])
-  position      Position     @relation(fields: [positionId], references: [id])
-  user          User         @relation(fields: [userId], references: [id])
+  id         String   @id @default(uuid())
+  positionId Int
+  position   Position @relation(fields: [positionId], references: [id])
+  user       User?    @relation(fields: [userId], references: [id])
+  userId     String?  @unique
 
-  @@index([userId])
   @@index([positionId])
 }
 
@@ -250,7 +240,7 @@ model User {
   submissions   Submission[]
   signRequests  SignRequest[]
   documents     Document[]
-  officials     Official[]
+  official      Official?
 
   @@index([cityId])
   @@index([districtId])
