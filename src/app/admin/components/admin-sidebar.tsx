@@ -12,39 +12,56 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { File, Folder, FormInput, Home, SquareRadical } from "lucide-react";
-import { signOut } from "next-auth/react";
+import {
+  File,
+  Folder,
+  FormInput,
+  Home,
+  SquareRadical,
+  UserCheck,
+} from "lucide-react";
+import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
-
-const items = [
-  {
-    title: "Beranda",
-    url: "/admin",
-    icon: Home,
-  },
-  {
-    title: "Tipe Input",
-    url: "/admin/field-type",
-    icon: FormInput,
-  },
-  {
-    title: "Posisi Jabatan",
-    url: "/admin/position",
-    icon: SquareRadical,
-  },
-  {
-    title: "Template Surat",
-    url: "/admin/document",
-    icon: File,
-  },
-  {
-    title: "Ajuan Surat",
-    url: "/admin/submission",
-    icon: Folder,
-  },
-];
+import { useMemo } from "react";
 
 export const AdminSidebar = () => {
+  const { data } = useSession();
+  const items = useMemo(
+    () => [
+      {
+        title: "Beranda",
+        url: "/admin",
+        icon: Home,
+      },
+      {
+        title: "Tipe Input",
+        url: "/admin/field-type",
+        icon: FormInput,
+      },
+      {
+        title: "Posisi Jabatan",
+        url: "/admin/position",
+        icon: SquareRadical,
+      },
+      {
+        title: "Template Surat",
+        url: "/admin/document",
+        icon: File,
+      },
+      {
+        title: "Pejabat",
+        url: "/admin/official",
+        icon: UserCheck,
+      },
+      {
+        title: "Ajuan Surat",
+        url: "/admin/submission",
+        icon: Folder,
+      },
+    ],
+    [data],
+  );
+
   return (
     <Sidebar>
       <SidebarContent>
@@ -54,16 +71,24 @@ export const AdminSidebar = () => {
           </SidebarGroupLabel>
           <SidebarGroupContent className="mt-4">
             <SidebarMenu>
-              {items.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <Link href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {items
+                .filter(
+                  (item) =>
+                    !(
+                      data?.user?.role === "SUPERADMIN" &&
+                      item.title === "Pejabat"
+                    ),
+                )
+                .map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <Link href={item.url}>
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

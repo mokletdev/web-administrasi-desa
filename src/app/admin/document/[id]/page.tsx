@@ -32,7 +32,7 @@ export default async function DocumentDetail({
   return (
     <div className="flex flex-col divide-y divide-foreground">
       <Link
-        href={"/dashboard/document"}
+        href={"/admin/document"}
         className={buttonVariants({
           variant: "ghost",
           className: "mb-4 w-fit",

@@ -54,9 +54,22 @@ export async function submitForm({
 }): Promise<ActionResponse<{ submissionId: string }>> {
   try {
     const session = await getServerSession();
-    const form = await prisma.form.findFirst({
+    const form = await prisma.form.findUnique({
       where: { id: formId },
-      include: { fields: { include: { options: true, fieldType: true } } },
+      include: {
+        fields: { include: { options: true, fieldType: true } },
+        document: {
+          select: {
+            signs: {
+              select: {
+                position: {
+                  select: { officials: { select: { userId: true } } },
+                },
+              },
+            },
+          },
+        },
+      },
     });
 
     const { user: sessionUser } = session!;
@@ -118,10 +131,21 @@ export async function submitForm({
         formId,
         fields: { createMany: { data: fieldsCreate } },
 
+        signRequests: {
+          createMany: {
+            data: form.document.signs
+              .map((sign) =>
+                sign.position.officials.map((official) => official.userId!),
+              )
+              .flat()
+              .map((userId) => ({ userId })),
+          },
+        },
+
         // To identify what instance the user is from
-        cityId: user.cityId,
-        districtId: user.districtId,
-        subDistrictId: user.subDistrictId,
+        cityId: user?.cityId,
+        districtId: user?.districtId,
+        subDistrictId: user?.subDistrictId,
       },
     });
 
