@@ -12,7 +12,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { File, FormInput, Home, SquareRadical } from "lucide-react";
+import { File, FormInput, Home, SquareRadical, UserCheck } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
 
@@ -36,6 +36,11 @@ const items = [
     title: "Template Surat",
     url: "/admin/document",
     icon: File,
+  },
+  {
+    title: "Pejabat",
+    url: "/admin/official",
+    icon: UserCheck,
   },
 ];
 
