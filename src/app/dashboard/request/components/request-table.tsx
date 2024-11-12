@@ -16,6 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { stringifyDate } from "@/lib/utils";
 import { Prisma } from "@prisma/client";
 import {
   ColumnDef,
@@ -30,27 +31,29 @@ import {
   useReactTable,
   VisibilityState,
 } from "@tanstack/react-table";
-import { ArrowUpDown, ArrowUpFromLine, ChevronDown } from "lucide-react";
+import { ArrowUpDown, ChevronDown, Download } from "lucide-react";
 import Link from "next/link";
 import { FC, useMemo, useState } from "react";
 
-type Document = Prisma.DocumentGetPayload<{
+type Submission = Prisma.SubmissionGetPayload<{
   select: {
     id: true;
-    title: true;
+    status: true;
+    createdAt: true;
+    form: { select: { document: { select: { title: true } } } };
   };
 }>;
 
-export const DocumentTable: FC<{
-  documents: Document[];
-}> = ({ documents }) => {
+export const RequestHistoryTable: FC<{
+  submissions: Submission[];
+}> = ({ submissions }) => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
-  const columns: ColumnDef<Document>[] = useMemo(
-    (): ColumnDef<Document>[] => [
+  const columns: ColumnDef<Submission>[] = useMemo(
+    (): ColumnDef<Submission>[] => [
       {
         id: "index",
         header: ({ column }) => {
@@ -70,7 +73,7 @@ export const DocumentTable: FC<{
         enableSorting: true,
       },
       {
-        accessorKey: "title",
+        id: "title",
         header: ({ column }) => {
           return (
             <Button
@@ -84,23 +87,57 @@ export const DocumentTable: FC<{
             </Button>
           );
         },
-        cell: ({ row }) => <div>{row.getValue("title")}</div>,
+        cell: ({ row }) => <div>{row.original.form.document.title}</div>,
+        enableSorting: true,
+      },
+      {
+        accessorKey: "createdAt",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="outline"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              Dikirim Pada
+              <ArrowUpDown />
+            </Button>
+          );
+        },
+        cell: ({ row }) => (
+          <div>{stringifyDate(row.getValue("createdAt"))}</div>
+        ),
         enableSorting: true,
       },
       {
         id: "actions",
         header: ({}) => {
-          return <Button variant="outline">Pengajuan</Button>;
+          return <Button variant="outline">Aksi</Button>;
         },
         cell: ({ row }) => {
           return (
-            <Link
-              href={`/dashboard/document/${row.original.id}`}
-              className={buttonVariants({ variant: "default" })}
-            >
-              <ArrowUpFromLine size={16} />
-              Ajukan Pembuatan
-            </Link>
+            <div className="flex items-center gap-2">
+              {row.original.status === "APPROVED" && (
+                <Link
+                  href={`/dashboard/request/${row.original.id}`}
+                  className={buttonVariants({ variant: "default" })}
+                >
+                  Download
+                  <Download size={16} />
+                </Link>
+              )}
+              {row.original.status === "PENDING_APPROVAL" && (
+                <Button
+                  onClick={() => {
+                    // TODO: Handle submission deletion if not approved yet
+                  }}
+                  variant={"destructive"}
+                >
+                  Batalkan
+                </Button>
+              )}
+            </div>
           );
         },
         enableHiding: false,
@@ -110,7 +147,7 @@ export const DocumentTable: FC<{
   );
 
   const table = useReactTable({
-    data: documents,
+    data: submissions,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
