@@ -4,6 +4,7 @@ import { ActionResponse, ActionResponses } from "@/types/actions";
 import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { getServerSession } from "@/lib/next-auth";
 
 export async function autoComplete({
   value,
@@ -52,10 +53,19 @@ export async function submitForm({
   answers: { name: string; value: string }[];
 }): Promise<ActionResponse<{ submissionId: string }>> {
   try {
+    const session = await getServerSession();
     const form = await prisma.form.findFirst({
       where: { id: formId },
       include: { fields: { include: { options: true, fieldType: true } } },
     });
+
+    const { user: sessionUser } = session!;
+    const user = await prisma.user.findUnique({
+      where: { id: sessionUser?.id },
+    });
+    if (!user) {
+      return ActionResponses.notFound("User not found");
+    }
 
     if (!form) {
       return ActionResponses.notFound("Form not Found");
@@ -107,6 +117,11 @@ export async function submitForm({
         userId,
         formId,
         fields: { createMany: { data: fieldsCreate } },
+
+        // To identify what instance the user is from
+        cityId: user.cityId,
+        districtId: user.districtId,
+        subDistrictId: user.subDistrictId,
       },
     });
 
