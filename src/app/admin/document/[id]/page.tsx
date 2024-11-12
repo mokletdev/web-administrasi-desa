@@ -1,5 +1,8 @@
+import { buttonVariants } from "@/components/ui/button";
 import prisma from "@/lib/prisma";
 import { roleLevelMap, stringifyDate } from "@/lib/utils";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DownloadTemplateButton } from "./components/download-template-button";
 
@@ -28,6 +31,16 @@ export default async function DocumentDetail({
 
   return (
     <div className="flex flex-col divide-y divide-foreground">
+      <Link
+        href={"/dashboard/document"}
+        className={buttonVariants({
+          variant: "ghost",
+          className: "mb-4 w-fit",
+        })}
+      >
+        <ArrowLeft />
+        Kembali
+      </Link>
       <div className="pb-8">
         <div className="mb-8 flex flex-col justify-between gap-2 md:flex-row md:items-center">
           <h1>Template Surat</h1>
