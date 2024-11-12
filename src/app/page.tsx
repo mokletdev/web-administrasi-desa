@@ -8,5 +8,5 @@ export default async function Root() {
     return redirect("/auth/login");
   }
 
-  return redirect("/admin");
+  return redirect(session.user.role === "CITIZEN" ? "/dashboard" : "/admin");
 }
