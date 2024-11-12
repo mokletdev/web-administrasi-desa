@@ -25,6 +25,11 @@ export const getSubmissions = async (): Promise<
 
     const { user } = session;
 
+    const userLevel = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { cityId: true, subDistrictId: true, districtId: true },
+    });
+
     const submissions = await prisma.submission.findMany({
       where: {
         OR: [
@@ -68,9 +73,7 @@ export const getSubmissions = async (): Promise<
                 },
               },
               {
-                cityId: {
-                  not: null,
-                },
+                cityId: userLevel?.cityId,
               },
             ],
           },
@@ -104,9 +107,7 @@ export const getSubmissions = async (): Promise<
                 },
               },
               {
-                districtId: {
-                  not: null,
-                },
+                districtId: userLevel?.districtId,
               },
             ],
           },
@@ -128,9 +129,7 @@ export const getSubmissions = async (): Promise<
                 },
               },
               {
-                subDistrictId: {
-                  not: null,
-                },
+                subDistrictId: userLevel?.subDistrictId,
               },
             ],
           },
