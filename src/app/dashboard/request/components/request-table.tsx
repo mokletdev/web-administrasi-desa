@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -16,7 +16,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { stringifyDate } from "@/lib/utils";
 import { Prisma } from "@prisma/client";
 import {
   ColumnDef,
@@ -31,8 +30,8 @@ import {
   useReactTable,
   VisibilityState,
 } from "@tanstack/react-table";
+import { format } from "date-fns";
 import { ArrowUpDown, ChevronDown, Download } from "lucide-react";
-import Link from "next/link";
 import { FC, useMemo, useState } from "react";
 
 type Submission = Prisma.SubmissionGetPayload<{
@@ -52,28 +51,27 @@ export const RequestHistoryTable: FC<{
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedRow, setSelectedRow] = useState<Submission>();
+
   const columns: ColumnDef<Submission>[] = useMemo(
     (): ColumnDef<Submission>[] => [
       {
         id: "index",
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="outline"
-              onClick={() =>
-                column.toggleSorting(column.getIsSorted() === "asc")
-              }
-            >
-              Nomor
-              <ArrowUpDown />
-            </Button>
-          );
+
+        header: ({}) => {
+          return <Button variant="outline">Nomor</Button>;
         },
         cell: ({ row }) => <div>{row.index + 1}</div>,
         enableSorting: true,
       },
       {
         id: "title",
+        accessorFn: ({
+          form: {
+            document: { title },
+          },
+        }) => title,
         header: ({ column }) => {
           return (
             <Button
@@ -89,6 +87,7 @@ export const RequestHistoryTable: FC<{
         },
         cell: ({ row }) => <div>{row.original.form.document.title}</div>,
         enableSorting: true,
+        enableColumnFilter: true,
       },
       {
         accessorKey: "createdAt",
@@ -100,14 +99,32 @@ export const RequestHistoryTable: FC<{
                 column.toggleSorting(column.getIsSorted() === "asc")
               }
             >
-              Dikirim Pada
+              Diajukan Pada
               <ArrowUpDown />
             </Button>
           );
         },
         cell: ({ row }) => (
-          <div>{stringifyDate(row.getValue("createdAt"))}</div>
+          <div>{format(row.getValue("createdAt"), "yyyy-MM-dd HH:mm")}</div>
         ),
+        enableSorting: true,
+      },
+      {
+        accessorKey: "status",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="outline"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              Status
+              <ArrowUpDown />
+            </Button>
+          );
+        },
+        cell: ({ row }) => <div>{row.getValue("status")}</div>,
         enableSorting: true,
       },
       {
@@ -119,18 +136,21 @@ export const RequestHistoryTable: FC<{
           return (
             <div className="flex items-center gap-2">
               {row.original.status === "APPROVED" && (
-                <Link
-                  href={`/dashboard/request/${row.original.id}`}
-                  className={buttonVariants({ variant: "default" })}
+                <Button
+                  variant={"default"}
+                  onClick={() => {
+                    // TODO: Download populated content as PDF
+                  }}
                 >
                   Download
                   <Download size={16} />
-                </Link>
+                </Button>
               )}
               {row.original.status === "PENDING_APPROVAL" && (
                 <Button
                   onClick={() => {
-                    // TODO: Handle submission deletion if not approved yet
+                    setSelectedRow(row.original);
+                    setDeleteDialogOpen(true);
                   }}
                   variant={"destructive"}
                 >
@@ -257,6 +277,14 @@ export const RequestHistoryTable: FC<{
           </Table>
         </div>
       </div>
+
+      {/* <ConfirmDeletionDialog
+        id={selectedRow?.id}
+        description="Apakah anda yakin ingin membatalkan pengajuan surat ini? Aksi anda tidak akan bisa dibatalkan."
+        open={deleteDialogOpen}
+        setIsOpen={setDeleteDialogOpen}
+        serverAction={}
+      /> */}
     </>
   );
 };

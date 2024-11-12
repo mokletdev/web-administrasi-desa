@@ -1,5 +1,5 @@
-import prisma from "@/lib/prisma";
 import { getServerSession } from "@/lib/next-auth";
+import prisma from "@/lib/prisma";
 import { RequestHistoryTable } from "./components/request-table";
 
 export default async function RequestsHistory() {
@@ -10,7 +10,9 @@ export default async function RequestsHistory() {
       id: true,
       status: true,
       createdAt: true,
-      form: { select: { document: { select: { title: true } } } },
+      form: {
+        select: { document: { select: { title: true } } },
+      },
     },
   });
 
