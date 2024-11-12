@@ -1,17 +1,14 @@
-import { Button } from "@/components/ui/button";
 import prisma from "@/lib/prisma";
 import { roleLevelMap, stringifyDate } from "@/lib/utils";
-import { Download } from "lucide-react";
 import { notFound } from "next/navigation";
 import { DownloadTemplateButton } from "./components/download-template-button";
 
 export default async function DocumentDetail({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const { id } = params;
-
+  const { id } = await params;
   if (!id) return notFound();
 
   const document = await prisma.document.findUnique({
