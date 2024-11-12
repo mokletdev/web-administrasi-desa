@@ -106,16 +106,26 @@ export const UpdateFieldTypeDialog: FC<
 
     const data = new FormData();
     const { id } = fieldTypeData!;
-    const { name, baseType, defaultValue, placeholder } = fields;
+    const {
+      name,
+      baseType,
+      defaultValue,
+      placeholder,
+      targetTable,
+      targetField,
+    } = fields;
     data.append("id", id.toString());
     data.append("name", name);
     data.append("baseType", baseType);
     defaultValue && !isRelation && data.append("defaultValue", defaultValue);
     placeholder && data.append("placeholder", placeholder);
+    targetTable && data.append("targetTable", targetTable);
+    targetField && data.append("targetField", targetField);
 
     const updateFieldTypeAction = await upsertFieldType(data);
     if (updateFieldTypeAction.error) {
       dismiss(loadingToast.id);
+      setLoading(false);
       return toast({
         title: "Gagal Mengubah!",
         description: `Gagal mengubah data tipe input dengan ID ${fieldTypeData?.id} (${updateFieldTypeAction.error.message})`,
