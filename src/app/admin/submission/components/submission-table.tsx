@@ -41,6 +41,7 @@ import {
   MoreHorizontal,
   Check,
   X,
+  Eye,
 } from "lucide-react";
 import { FC, useMemo, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -174,33 +175,45 @@ export const SubmissionTable: FC<{
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuItem
+                  onClick={() => {
+                    window.open("/api/download-doc/" + row.original.id);
+                  }}
+                >
+                  <Eye size={16} />
+                  Preview
+                </DropdownMenuItem>
                 {!isOfficial ? (
                   <>
-                    <DropdownMenuItem
-                      onClick={async () => {
-                        await onApprovalChange(
-                          row.original.form.document.title,
-                          row.original.id,
-                          "ACCEPT",
-                        );
-                      }}
-                    >
-                      <Check size={16} />
-                      Setujui
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={async () => {
-                        await onApprovalChange(
-                          row.original.form.document.title,
-                          row.original.id,
-                          "REJECT",
-                        );
-                      }}
-                    >
-                      <X size={16} />
-                      Tolak
-                    </DropdownMenuItem>
+                    {row.original.status === "PENDING_APPROVAL" && (
+                      <>
+                        <DropdownMenuItem
+                          onClick={async () => {
+                            await onApprovalChange(
+                              row.original.form.document.title,
+                              row.original.id,
+                              "ACCEPT",
+                            );
+                          }}
+                        >
+                          <Check size={16} />
+                          Setujui
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={async () => {
+                            await onApprovalChange(
+                              row.original.form.document.title,
+                              row.original.id,
+                              "REJECT",
+                            );
+                          }}
+                        >
+                          <X size={16} />
+                          Tolak
+                        </DropdownMenuItem>
+                      </>
+                    )}
                   </>
                 ) : (
                   <>
