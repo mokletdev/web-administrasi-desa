@@ -35,7 +35,7 @@ import { format } from "date-fns";
 import { ArrowUpDown, ChevronDown, Download } from "lucide-react";
 import { FC, useMemo, useState } from "react";
 import { deleteSubmission } from "../../document/actions";
-import { submissionStatusMap } from "@/lib/utils";
+import { downloadFile, submissionStatusMap } from "@/lib/utils";
 
 type Submission = Prisma.SubmissionGetPayload<{
   select: {
@@ -150,7 +150,10 @@ export const RequestHistoryTable: FC<{
                 <Button
                   variant={"default"}
                   onClick={() => {
-                    // TODO: Download populated content as PDF
+                    downloadFile(
+                      "/api/download-doc/" + row.original.id,
+                      `${row.original.form.document.title}`,
+                    );
                   }}
                 >
                   Download
