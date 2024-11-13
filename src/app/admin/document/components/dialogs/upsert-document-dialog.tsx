@@ -38,8 +38,7 @@ const MAX_FILE_SIZE = 5_000_000;
 
 const generateDocumentSchema = (isUpdating: boolean) => {
   const contentSchema = z
-    .instanceof(File, { message: "Please upload a file." })
-    .array()
+    .instanceof(FileList, { message: "Please upload a file." })
     .or(z.undefined())
     .refine((files) => {
       if (!files) return false;
@@ -119,7 +118,9 @@ export const UpsertDocumentDialog: FC<
 
     const loadingToast = toast({
       title: "Mengirim...",
-      description: `Permintaan ${data ? "Perubahan" : "Penambahan"} anda sedang diproses`,
+      description: `Permintaan ${
+        data ? "Perubahan" : "Penambahan"
+      } anda sedang diproses`,
     });
 
     const contentFormData = new FormData();
@@ -147,7 +148,9 @@ export const UpsertDocumentDialog: FC<
       dismiss(loadingToast.id);
       toast({
         title: `Gagal ${data ? "Mengubah" : "Menambahkan"}!`,
-        description: `Gagal ${data ? "mengubah" : "menambahkan"} data template surat (${upsertDocumentAction.error.message})`,
+        description: `Gagal ${
+          data ? "mengubah" : "menambahkan"
+        } data template surat (${upsertDocumentAction.error.message})`,
       });
       return setLoading(false);
     }
@@ -155,7 +158,9 @@ export const UpsertDocumentDialog: FC<
     dismiss(loadingToast.id);
     toast({
       title: `Berhasil ${data ? "Mengubah" : "Menambahkan"}!`,
-      description: `Berhasil ${data ? "mengubah" : "menambahkan"} data template surat baru`,
+      description: `Berhasil ${
+        data ? "mengubah" : "menambahkan"
+      } data template surat baru`,
     });
     form.reset();
     setFields([]);
@@ -174,13 +179,15 @@ export const UpsertDocumentDialog: FC<
 
   const forms = useMemo(
     () => [
-      <FirstStepCreateDocumment form={form as any} />,
+      <FirstStepCreateDocumment key={1} form={form as any} />,
       <SecondStepCreateDocument
+        key={2}
         fieldTypes={fieldTypes}
         fields={fields}
         setFields={setFields}
       />,
       <ThirdStepCreateDocument
+        key={3}
         fieldLabels={fields.map((field) => field.label)}
         form={form as any}
         positions={positions}

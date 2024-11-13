@@ -95,111 +95,114 @@ export async function upsertDocumentForm(
       ? Buffer.from(await contentFile.arrayBuffer()).toString("base64")
       : undefined;
 
-    const result = await prisma.$transaction(async (tx) => {
-      const document = input.id
-        ? await tx.document.update({
-            where: { id: input.id },
-            data: {
-              title: input.title,
-              content: contentBase64,
-            },
-          })
-        : await tx.document.create({
-            data: {
-              title: input.title,
-              // If the user's creating a new docuent, then the content would always be present
-              content: contentBase64!,
-              level: input.level,
-              userId: validation?.user?.id || "",
-            },
-          });
+    const result = await prisma.$transaction(
+      async (tx) => {
+        const document = input.id
+          ? await tx.document.update({
+              where: { id: input.id },
+              data: {
+                title: input.title,
+                content: contentBase64,
+              },
+            })
+          : await tx.document.create({
+              data: {
+                title: input.title,
+                // If the user's creating a new docuent, then the content would always be present
+                content: contentBase64!,
+                level: input.level,
+                userId: validation?.user?.id || "",
+              },
+            });
 
-      if (input.signs?.length) {
-        if (input.id) {
-          await tx.sign.deleteMany({
-            where: { documentId: document.id },
+        if (input.signs?.length) {
+          if (input.id) {
+            await tx.sign.deleteMany({
+              where: { documentId: document.id },
+            });
+          }
+
+          await tx.sign.createMany({
+            data: input.signs.map((sign) => ({
+              documentId: document.id,
+              positionId: sign.positionId,
+            })),
           });
         }
 
-        await tx.sign.createMany({
-          data: input.signs.map((sign) => ({
-            documentId: document.id,
-            positionId: sign.positionId,
-          })),
-        });
-      }
+        let form = validation.document?.form;
 
-      let form = validation.document?.form;
-
-      if (!form) {
-        form = await tx.form.create({
-          data: {
-            documentId: document.id,
-            userId: validation.user?.id || "",
-          },
-          include: {
-            submissions: { select: { id: true } },
-            fields: {
-              include: { options: true },
-              orderBy: { fieldNumber: "asc" },
+        if (!form) {
+          form = await tx.form.create({
+            data: {
+              documentId: document.id,
+              userId: validation.user?.id || "",
             },
-          },
-        });
-      }
-
-      if (input.form.fields?.length) {
-        if (form.fields?.length) {
-          const keepFieldIds = input.form.fields
-            .map((f) => f.id)
-            .filter((id) => id !== undefined) as number[];
-
-          await tx.field.deleteMany({
-            where: {
-              formId: form.id,
-              id: { notIn: keepFieldIds },
+            include: {
+              submissions: { select: { id: true } },
+              fields: {
+                include: { options: true },
+                orderBy: { fieldNumber: "asc" },
+              },
             },
           });
         }
 
-        await Promise.all(
-          input.form.fields.map(async (field, index) => {
-            const fieldData = {
-              label: field.label,
-              required: field.required,
-              fieldTypeId: field.fieldTypeId,
-              fieldNumber: index + 1,
-              formId: form?.id || "",
-            };
+        if (input.form.fields?.length) {
+          if (form.fields?.length) {
+            const keepFieldIds = input.form.fields
+              .map((f) => f.id)
+              .filter((id) => id !== undefined) as number[];
 
-            const upsertedField = field.id
-              ? await tx.field.update({
-                  where: { id: field.id },
-                  data: fieldData,
-                })
-              : await tx.field.create({
-                  data: fieldData,
-                });
+            await tx.field.deleteMany({
+              where: {
+                formId: form.id,
+                id: { notIn: keepFieldIds },
+              },
+            });
+          }
 
-            if (field.options?.length) {
-              if (field.id) {
-                await tx.fieldOption.deleteMany({
-                  where: { fieldId: upsertedField.id },
+          await Promise.all(
+            input.form.fields.map(async (field, index) => {
+              const fieldData = {
+                label: field.label,
+                required: field.required,
+                fieldTypeId: field.fieldTypeId,
+                fieldNumber: index + 1,
+                formId: form?.id || "",
+              };
+
+              const upsertedField = field.id
+                ? await tx.field.update({
+                    where: { id: field.id },
+                    data: fieldData,
+                  })
+                : await tx.field.create({
+                    data: fieldData,
+                  });
+
+              if (field.options?.length) {
+                if (field.id) {
+                  await tx.fieldOption.deleteMany({
+                    where: { fieldId: upsertedField.id },
+                  });
+                }
+
+                await tx.fieldOption.createMany({
+                  data: field.options.map((option) => ({
+                    value: option.value,
+                    fieldId: upsertedField.id,
+                  })),
                 });
               }
+            }),
+          );
+        }
 
-              await tx.fieldOption.createMany({
-                data: field.options.map((option) => ({
-                  value: option.value,
-                  fieldId: upsertedField.id,
-                })),
-              });
-            }
-          }),
-        );
-      }
-
-      return { documentId: document.id, formId: form.id };
-    });
+        return { documentId: document.id, formId: form.id };
+      },
+      { timeout: 20000, maxWait: 20000 },
+    );
 
     revalidatePath("/admin/document");
     revalidatePath("/admin/document/[id]");

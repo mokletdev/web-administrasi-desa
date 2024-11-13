@@ -101,72 +101,75 @@ export async function upsertFieldType(
       );
     }
 
-    const result = await prisma.$transaction(async (tx) => {
-      const fieldTypeData = {
-        name,
-        placeholder: placeholder || null,
-        defaultValue: defaultValue || null,
-        baseType: baseType,
-      };
-
-      let fieldType: Prisma.FieldTypeGetPayload<{
-        include: { relation: true };
-      }>;
-
-      if (id) {
-        const existing = await tx.fieldType.findUnique({
-          where: { id },
-          include: { relation: true },
-        });
-
-        if (!existing) {
-          throw new Error(ErrorCode.NOT_FOUND);
-        }
-
-        fieldType = await tx.fieldType.update({
-          where: { id },
-          data: fieldTypeData,
-          include: { relation: true },
-        });
-      } else {
-        fieldType = await tx.fieldType.create({
-          data: fieldTypeData,
-          include: { relation: true },
-        });
-      }
-
-      if (baseType === "relation") {
-        const relationData = {
-          targetTable,
-          targetField,
+    const result = await prisma.$transaction(
+      async (tx) => {
+        const fieldTypeData = {
+          name,
+          placeholder: placeholder || null,
+          defaultValue: defaultValue || null,
+          baseType: baseType,
         };
 
-        if (fieldType.relation) {
-          await tx.fieldRelation.update({
-            where: { fieldTypeId: fieldType.id },
-            data: relationData,
+        let fieldType: Prisma.FieldTypeGetPayload<{
+          include: { relation: true };
+        }>;
+
+        if (id) {
+          const existing = await tx.fieldType.findUnique({
+            where: { id },
+            include: { relation: true },
+          });
+
+          if (!existing) {
+            throw new Error(ErrorCode.NOT_FOUND);
+          }
+
+          fieldType = await tx.fieldType.update({
+            where: { id },
+            data: fieldTypeData,
+            include: { relation: true },
           });
         } else {
-          await tx.fieldRelation.create({
-            data: {
-              ...relationData,
-              fieldTypeId: fieldType.id,
-            },
+          fieldType = await tx.fieldType.create({
+            data: fieldTypeData,
+            include: { relation: true },
           });
         }
-      } else if (fieldType.relation) {
-        await tx.fieldRelation.delete({
-          where: { fieldTypeId: fieldType.id },
+
+        if (baseType === "relation") {
+          const relationData = {
+            targetTable,
+            targetField,
+          };
+
+          if (fieldType.relation) {
+            await tx.fieldRelation.update({
+              where: { fieldTypeId: fieldType.id },
+              data: relationData,
+            });
+          } else {
+            await tx.fieldRelation.create({
+              data: {
+                ...relationData,
+                fieldTypeId: fieldType.id,
+              },
+            });
+          }
+        } else if (fieldType.relation) {
+          await tx.fieldRelation.delete({
+            where: { fieldTypeId: fieldType.id },
+          });
+        }
+
+        const updatedFieldType = await tx.fieldType.findUniqueOrThrow({
+          where: { id: fieldType.id },
+          include: { relation: true },
         });
-      }
 
-      const updatedFieldType = await tx.fieldType.findUniqueOrThrow({
-        where: { id: fieldType.id },
-        include: { relation: true },
-      });
-
-      return updatedFieldType;
-    });
+        return updatedFieldType;
+      },
+      { timeout: 20000, maxWait: 20000 },
+    );
     const responseData: FieldTypeResponse = {
       id: result.id,
       name: result.name,
@@ -204,19 +207,22 @@ export async function deleteFieldType(
       return ActionResponses.badRequest("ID is required", "id");
     }
 
-    await prisma.$transaction(async (tx) => {
-      const fieldType = await tx.fieldType.findUnique({
-        where: { id },
-      });
+    await prisma.$transaction(
+      async (tx) => {
+        const fieldType = await tx.fieldType.findUnique({
+          where: { id },
+        });
 
-      if (!fieldType) {
-        throw new Error(ErrorCode.NOT_FOUND);
-      }
+        if (!fieldType) {
+          throw new Error(ErrorCode.NOT_FOUND);
+        }
 
-      await tx.fieldType.delete({
-        where: { id },
-      });
-    });
+        await tx.fieldType.delete({
+          where: { id },
+        });
+      },
+      { timeout: 20000, maxWait: 20000 },
+    );
 
     revalidatePath("/admin/field-type");
     return ActionResponses.success({ id });
@@ -274,42 +280,45 @@ export async function upsertFieldValidation(
 
     const validationInputError = validateInputValidation(value, message);
     if (validationInputError) return validationInputError;
-    const result = await prisma.$transaction(async (tx) => {
-      const fieldValidationData = {
-        id: id,
-        fieldTypeid: fieldId,
-        message: message,
-        value: value,
-        fieldType: { connect: { id: fieldId } },
-      };
+    const result = await prisma.$transaction(
+      async (tx) => {
+        const fieldValidationData = {
+          id: id,
+          fieldTypeid: fieldId,
+          message: message,
+          value: value,
+          fieldType: { connect: { id: fieldId } },
+        };
 
-      let fieldValidation: Prisma.FieldValidationGetPayload<{}>;
+        let fieldValidation: Prisma.FieldValidationGetPayload<{}>;
 
-      if (id) {
-        const existing = await tx.fieldValidation.findUnique({
+        if (id) {
+          const existing = await tx.fieldValidation.findUnique({
+            where: { id: id },
+          });
+
+          if (!existing) {
+            throw new Error(ErrorCode.NOT_FOUND);
+          }
+
+          fieldValidation = await tx.fieldValidation.update({
+            where: { id },
+            data: fieldValidationData,
+          });
+        } else {
+          fieldValidation = await tx.fieldValidation.create({
+            data: fieldValidationData,
+          });
+        }
+
+        const updatedFieldType = await tx.fieldValidation.findUniqueOrThrow({
           where: { id: id },
         });
 
-        if (!existing) {
-          throw new Error(ErrorCode.NOT_FOUND);
-        }
-
-        fieldValidation = await tx.fieldValidation.update({
-          where: { id },
-          data: fieldValidationData,
-        });
-      } else {
-        fieldValidation = await tx.fieldValidation.create({
-          data: fieldValidationData,
-        });
-      }
-
-      const updatedFieldType = await tx.fieldValidation.findUniqueOrThrow({
-        where: { id: id },
-      });
-
-      return updatedFieldType;
-    });
+        return updatedFieldType;
+      },
+      { timeout: 20000, maxWait: 20000 },
+    );
     const responseData: FieldValidation = {
       id: result.id,
       type: result.type,
