@@ -71,7 +71,10 @@ export const fileToDataURL = (file: File) => {
 };
 
 export const normalizeVariableName = (value: string) => {
-  return value.toLowerCase().replace(" ", "_");
+  return value
+    .toLowerCase()
+    .replace(/ /g, "_")
+    .replace(/[^\w\s]/gi, "");
 };
 
 export const validateFields = (
