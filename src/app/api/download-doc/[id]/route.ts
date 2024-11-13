@@ -51,7 +51,7 @@ export const GET = async (
   } catch (e) {
     console.log(e);
     return NextResponse.json(
-      { status: 500, message: "Internal server error!", e },
+      { status: 500, message: "Internal server error!" },
       { status: 500 },
     );
   }
