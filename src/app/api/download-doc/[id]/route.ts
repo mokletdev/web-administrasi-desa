@@ -27,13 +27,30 @@ export const GET = async (
         },
         { status: 404 },
       );
-    const fileBlob = new Blob([
-      Buffer.from(data.form.document.content, "base64"),
-    ]);
+
+    const bufferDocx = Buffer.from(data.form.document.content, "base64");
+
+    let patches: any = {};
+
+    for (let i = 0; i < data.fields.length; i++) {
+      const field = data.fields[i];
+      const normal = normalizeVariableName(field.field.label);
+
+      patches[normal] = {
+        type: PatchType.PARAGRAPH,
+        children: [new TextRun(field.value)],
+      };
+    }
+
+    const doc = await patchDocument({
+      outputType: "blob",
+      data: bufferDocx,
+      patches,
+    });
     const formData = new FormData();
     formData.append(
       "file",
-      new File([fileBlob as unknown as BlobPart], `${data.id}.docx`),
+      new File([doc as unknown as BlobPart], `${data.id}.docx`),
     );
 
     const tryGetPdf = await (
