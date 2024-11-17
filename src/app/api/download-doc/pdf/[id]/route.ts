@@ -12,10 +12,14 @@ export const GET = async (
     const data = await prisma.submission.findUnique({
       where: { id },
       include: {
-        fields: { include: { field: { select: { label: true } } } },
-        form: {
-          include: { document: { select: { content: true, title: true } } },
+        fields: {
+          include: {
+            field: {
+              select: { label: true, fieldType: { select: { label: true } } },
+            },
+          },
         },
+        template: { select: { content: true, title: true } },
       },
     });
 
@@ -27,13 +31,14 @@ export const GET = async (
         { status: 404 },
       );
 
-    const bufferDocx = Buffer.from(data.form.document.content, "base64");
+    const bufferDocx = Buffer.from(data.template.content, "base64");
 
     let patches: any = {};
 
-    for (let i = 0; i < data.fields.length; i++) {
-      const field = data.fields[i];
-      const normal = normalizeVariableName(field.field.label);
+    for (const field of data.fields) {
+      const normal = normalizeVariableName(
+        field.field.label ?? field.field.fieldType.label,
+      );
 
       patches[normal] = {
         type: PatchType.PARAGRAPH,
@@ -51,7 +56,7 @@ export const GET = async (
 
     headers.set(
       "Content-Disposition",
-      `attachment; filename=${data.form.document.title}.docx`,
+      `attachment; filename=${data.template.title}.docx`,
     );
 
     return new NextResponse(doc, { status: 200, statusText: "OK", headers });

@@ -33,7 +33,7 @@ export const stringifyDate = (date: Date) => {
 };
 
 export const divisionLevelMap = {
-  CITY: "Kota",
+  CITY: "Kabupaten/Kota",
   DISTRICT: "Kecamatan",
   SUBDISTRICT: "Kelurahan",
 };

@@ -1,12 +1,17 @@
 {
   "name": "administrasi-desa",
   "version": "0.1.0",
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "prisma generate && next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "generate": "prisma generate && prisma generate --schema prisma/sistemdesa.prisma",
+    "seed": "prisma db seed"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -55,6 +60,7 @@
     "@types/node": "^20",
     "@types/react": "npm:types-react@19.0.0-rc.1",
     "@types/react-dom": "npm:types-react-dom@19.0.0-rc.1",
+    "dotenv-cli": "^7.4.2",
     "eslint": "^8",
     "eslint-config-next": "15.0.3",
     "postcss": "^8",

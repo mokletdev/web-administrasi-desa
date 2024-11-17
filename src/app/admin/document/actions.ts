@@ -38,7 +38,7 @@ const validateAccess = async (documentId: string) => {
     return { allowed: false, error: ActionResponses.unauthorized() };
   }
 
-  if (session.user.role !== "SUPERADMIN") {
+  if (session.user.role === "CITIZEN") {
     return { allowed: false, error: ActionResponses.unauthorized() };
   }
 
