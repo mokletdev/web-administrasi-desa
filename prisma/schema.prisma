@@ -9,7 +9,7 @@ datasource db {
 
 model AdministrativeUnit {
   id                  String               @id @default(uuid())
-  name                String               @unique
+  name                String
   administrativeLevel AdministrativeLevel
   parents             AdministrativeUnit[] @relation("ParentChild")
   children            AdministrativeUnit[] @relation("ParentChild")
