@@ -3,45 +3,36 @@
 import prisma from "@/lib/prisma";
 import { ActionResponses } from "@/types/actions";
 import { revalidatePath } from "next/cache";
-import { MultiValue } from "react-select";
 
 export default async function upsertOfficial(
-  positionId: number,
-  officials: MultiValue<{
-    label: string;
-    value: string;
-  }>,
-  disconnectOficials: {
-    label: string;
-    value: string;
-  }[],
+  name: string | undefined,
+  administrativeUnitId: string | undefined,
+  userId: string | undefined,
 ) {
   try {
-    if (!positionId || !officials || !disconnectOficials)
-      return ActionResponses.serverError("Official(s) must be selected!");
+    if (!name || !administrativeUnitId || !userId)
+      return ActionResponses.serverError("data harus diisi semua!");
+    const tryUpsertOfficial = await prisma.official.create({
+      data: {
+        name,
+        administrativeUnitId,
+        userId,
+      },
+    });
 
-    await prisma.position.update({
+    await prisma.user.update({
       where: {
-        id: positionId,
+        id: userId,
       },
       data: {
-        officials: {
-          connectOrCreate: officials.map((i) => ({
-            create: { userId: i.value },
-            where: { userId: i.value },
-          })),
-          deleteMany:
-            disconnectOficials.length > 0
-              ? disconnectOficials.map((j) => ({ userId: j.value }))
-              : [],
-        },
+        role: "OFFICIAL",
       },
     });
 
     revalidatePath("/admin/official");
-    return ActionResponses.success({ id: positionId });
+    return ActionResponses.success({ id: tryUpsertOfficial.id });
   } catch (e) {
-    console.error("Error getting column names:", e);
+    console.error(e);
     return ActionResponses.serverError();
   }
 }

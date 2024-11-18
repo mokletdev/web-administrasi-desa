@@ -18,7 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Official, Position, User } from "@prisma/client";
+import { Prisma, User } from "@prisma/client";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -32,34 +32,62 @@ import {
   useReactTable,
   VisibilityState,
 } from "@tanstack/react-table";
-import { ArrowUpDown, ChevronDown, MoreHorizontal, Pencil } from "lucide-react";
+import {
+  ArrowUpDown,
+  ChevronDown,
+  MoreHorizontal,
+  Pencil,
+  Trash,
+} from "lucide-react";
 import { FC, useMemo, useState } from "react";
-import { UpdateOfficialDialog } from "./dialogs";
+import { CreateOfficialDialog } from "./dialogs";
+
+type Official = Prisma.OfficialGetPayload<{
+  include: {
+    user: true;
+  };
+}>;
 
 export const OfficialTable: FC<{
-  positions: ({
-    officials: ((Official & { user: User }) & { user: User })[];
-  } & Position)[];
-  officials: ({ official: Official } & User)[];
-}> = ({ positions, officials }) => {
+  officials: Official[];
+  usersInArea: User[];
+  unitId: string;
+}> = ({ officials, usersInArea, unitId }) => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
-  const [selectedRow, setSelectedRow] = useState<
-    ({ officials: (Official & { user: User })[] } & Position) | null
-  >(null);
+  const [selectedRow, setSelectedRow] = useState<Official | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
-  const columns: ColumnDef<
-    { officials: (Official & { user: User })[] } & Position
-  >[] = useMemo(
-    (): ColumnDef<
-      { officials: (Official & { user: User })[] } & Position
-    >[] => [
+  const userSelection = usersInArea.filter(
+    (a) => !officials.some((b) => a.id === b.user?.id),
+  );
+
+  const columns: ColumnDef<Official>[] = useMemo(
+    (): ColumnDef<Official>[] => [
       {
-        accessorKey: "title",
+        accessorKey: "name",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="outline"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              Nama Pejabat
+              <ArrowUpDown />
+            </Button>
+          );
+        },
+        cell: ({ row }) => <div>{row.original.user?.name}</div>,
+        enableSorting: true,
+      },
+      {
+        id: "title",
         header: ({ column }) => {
           return (
             <Button
@@ -73,25 +101,7 @@ export const OfficialTable: FC<{
             </Button>
           );
         },
-        cell: ({ row }) => <div>{row.getValue("title")}</div>,
-        enableSorting: true,
-      },
-      {
-        id: "count",
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="outline"
-              onClick={() =>
-                column.toggleSorting(column.getIsSorted() === "asc")
-              }
-            >
-              Jumlah Pejabat
-              <ArrowUpDown />
-            </Button>
-          );
-        },
-        cell: ({ row }) => <div>{row.original.officials.length}</div>,
+        cell: ({ row }) => <div>{row.original.name}</div>,
         enableSorting: true,
       },
       {
@@ -114,6 +124,15 @@ export const OfficialTable: FC<{
                     setEditDialogOpen(() => true);
                   }}
                 >
+                  <Trash size={16} />
+                  Hapus
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setSelectedRow(() => row.original);
+                    setEditDialogOpen(() => true);
+                  }}
+                >
                   <Pencil size={16} />
                   Edit
                 </DropdownMenuItem>
@@ -127,7 +146,7 @@ export const OfficialTable: FC<{
   );
 
   const table = useReactTable({
-    data: positions,
+    data: officials,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -184,6 +203,12 @@ export const OfficialTable: FC<{
                   })}
               </DropdownMenuContent>
             </DropdownMenu>
+            <Button
+              variant={"default"}
+              onClick={() => setCreateDialogOpen(true)}
+            >
+              Tambah
+            </Button>
           </div>
         </div>
         <div className="rounded-md border">
@@ -240,11 +265,17 @@ export const OfficialTable: FC<{
 
       {/* Dialogues */}
 
-      <UpdateOfficialDialog
+      {/* <UpdateOfficialDialog
         open={editDialogOpen}
         setIsOpen={setEditDialogOpen}
         officialData={selectedRow}
         officials={officials}
+      /> */}
+      <CreateOfficialDialog
+        userInArea={userSelection}
+        open={createDialogOpen}
+        setIsOpen={setCreateDialogOpen}
+        unitId={unitId}
       />
     </>
   );

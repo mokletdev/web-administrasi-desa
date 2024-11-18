@@ -1,72 +1,44 @@
 import { getServerSession } from "@/lib/next-auth";
 import prisma from "@/lib/prisma";
-import { DivisionLevel, Official, Position, User } from "@prisma/client";
-import { OfficialTable } from "./components/official-table";
+import { Official, Prisma, User } from "@prisma/client";
 import { notFound } from "next/navigation";
-
-const getDivisionLevel = (user: User): DivisionLevel | null => {
-  if (user.cityId) return "CITY";
-  if (user.districtId) return "DISTRICT";
-  if (user.subDistrictId) return "SUBDISTRICT";
-  else return null;
-};
+import { OfficialTable } from "./components/official-table";
 
 export default async function OfficialManagement() {
-  const user = await getServerSession();
-  const tryGetUser = await prisma.user.findUnique({
+  const session = await getServerSession();
+
+  type unitType = Prisma.AdministrativeUnitGetPayload<{
+    include: {
+      officials: {
+        include: {
+          user: true;
+        };
+      };
+      users: true;
+    };
+  }>;
+  const user = await prisma.user.findUnique({
     where: {
-      id: user?.user?.id,
+      id: session?.user?.id,
     },
   });
 
-  const divisionLevel = getDivisionLevel(tryGetUser!);
-  if (!divisionLevel) return notFound();
-  let res: ({ officials: Official[] } & Position)[] = [];
-
-  if (
-    tryGetUser?.cityId ||
-    tryGetUser?.districtId ||
-    tryGetUser?.subDistrictId
-  ) {
-    res = await prisma.position.findMany({
-      where: {
-        level: divisionLevel,
-        officials: {
-          every: {
-            user: {
-              cityId: divisionLevel === "CITY" ? tryGetUser?.cityId : null,
-              districtId:
-                divisionLevel === "DISTRICT" ? tryGetUser?.districtId : null,
-              subDistrictId:
-                divisionLevel === "SUBDISTRICT"
-                  ? tryGetUser?.subDistrictId
-                  : null,
-            },
-          },
-        },
-      },
-      include: {
-        officials: {
-          include: {
-            user: true,
-          },
-        },
-      },
-    });
-  }
-
-  const officials = await prisma.user.findMany({
+  if (!user || !user.administrativeUnitId) return notFound();
+  const unit: unitType | null = await prisma.administrativeUnit.findUnique({
     where: {
-      cityId: divisionLevel === "CITY" ? tryGetUser?.cityId : null,
-      districtId: divisionLevel === "DISTRICT" ? tryGetUser?.districtId : null,
-      subDistrictId:
-        divisionLevel === "SUBDISTRICT" ? tryGetUser?.subDistrictId : null,
-      role: { notIn: ["SUPERADMIN"] },
+      id: user.administrativeUnitId,
     },
     include: {
-      official: true,
+      officials: {
+        include: {
+          user: true,
+        },
+      },
+      users: true,
     },
   });
+
+  if (!unit) return notFound();
 
   return (
     <>
@@ -79,12 +51,9 @@ export default async function OfficialManagement() {
         </p>
       </div>
       <OfficialTable
-        positions={
-          res as unknown as ({
-            officials: ((Official & { user: User }) & { user: User })[];
-          } & Position)[]
-        }
-        officials={officials as unknown as ({ official: Official } & User)[]}
+        usersInArea={unit.users}
+        officials={unit.officials}
+        unitId={unit.id}
       />
     </>
   );
