@@ -41,6 +41,8 @@ import {
 } from "lucide-react";
 import { FC, useMemo, useState } from "react";
 import { CreateOfficialDialog } from "./dialogs";
+import { ConfirmDeletionDialog } from "@/components/dialogs/delete-dialog";
+import { deleteOfficial } from "../action";
 
 type Official = Prisma.OfficialGetPayload<{
   include: {
@@ -59,15 +61,34 @@ export const OfficialTable: FC<{
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
   const [selectedRow, setSelectedRow] = useState<Official | null>(null);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   const userSelection = usersInArea.filter(
-    (a) => !officials.some((b) => a.id === b.user?.id),
+    (a) => !officials.some((b) => a.id === b.user?.id) && a.role !== "OFFICIAL",
   );
 
   const columns: ColumnDef<Official>[] = useMemo(
     (): ColumnDef<Official>[] => [
+      {
+        id: "title",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="outline"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              Nama Jabatan
+              <ArrowUpDown />
+            </Button>
+          );
+        },
+        cell: ({ row }) => <div>{row.original.name}</div>,
+        enableSorting: true,
+        accessorFn: (row) => row.name,
+      },
       {
         accessorKey: "name",
         header: ({ column }) => {
@@ -87,24 +108,6 @@ export const OfficialTable: FC<{
         enableSorting: true,
       },
       {
-        id: "title",
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="outline"
-              onClick={() =>
-                column.toggleSorting(column.getIsSorted() === "asc")
-              }
-            >
-              Nama Jabatan
-              <ArrowUpDown />
-            </Button>
-          );
-        },
-        cell: ({ row }) => <div>{row.original.name}</div>,
-        enableSorting: true,
-      },
-      {
         id: "actions",
         enableHiding: false,
         cell: ({ row }) => {
@@ -121,20 +124,11 @@ export const OfficialTable: FC<{
                 <DropdownMenuItem
                   onClick={() => {
                     setSelectedRow(() => row.original);
-                    setEditDialogOpen(() => true);
+                    setDeleteDialogOpen(() => true);
                   }}
                 >
                   <Trash size={16} />
                   Hapus
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setSelectedRow(() => row.original);
-                    setEditDialogOpen(() => true);
-                  }}
-                >
-                  <Pencil size={16} />
-                  Edit
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -265,12 +259,13 @@ export const OfficialTable: FC<{
 
       {/* Dialogues */}
 
-      {/* <UpdateOfficialDialog
-        open={editDialogOpen}
-        setIsOpen={setEditDialogOpen}
-        officialData={selectedRow}
-        officials={officials}
-      /> */}
+      <ConfirmDeletionDialog
+        open={deleteDialogOpen}
+        setIsOpen={setDeleteDialogOpen}
+        description={"Ini akan menghapus Jabatan ini!"}
+        id={selectedRow?.id}
+        serverAction={deleteOfficial}
+      />
       <CreateOfficialDialog
         userInArea={userSelection}
         open={createDialogOpen}

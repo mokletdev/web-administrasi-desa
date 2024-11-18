@@ -5,34 +5,40 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DownloadTemplateButton } from "./components/download-template-button";
+import { UpdateServiceForm } from "./components/update-service-form";
+import { TemplateTable } from "./components/template-table";
+import { AdministrativeLevel } from "@prisma/client";
+import { divisionLevelMap } from "@/lib/utils";
 
-export default async function DocumentDetail({
+// For templates and level skipping
+const getLevelAndBelow = (level: AdministrativeLevel) => {
+  const levels = ["SUBDISTRICT", "DISTRICT", "CITY"];
+  const indexToSlice = levels.indexOf(level);
+  // Reverse the sliced array to get a top-to-bottom level sorting
+  return levels.slice(0, indexToSlice + 1).reverse();
+};
+
+export default async function ServiceDetail({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  if (!id) return notFound();
 
-  const document = await prisma.document.findUnique({
+  const service = await prisma.administrativeService.findUnique({
     where: { id },
     include: {
-      user: { select: { name: true, email: true } },
-      form: {
-        select: {
-          fields: { include: { fieldType: true, options: true } },
-          submissions: { select: { id: true } },
-        },
-      },
+      templates: { include: { signs: true, fields: true } },
+      administrativeUnit: true,
     },
   });
 
-  if (!document) return notFound();
+  if (!service) return notFound();
 
   return (
-    <div className="flex flex-col divide-y divide-foreground">
+    <div className="flex flex-col">
       <Link
-        href={"/admin/document"}
+        href={"/admin/service"}
         className={buttonVariants({
           variant: "ghost",
           className: "mb-4 w-fit",
@@ -42,61 +48,27 @@ export default async function DocumentDetail({
         Kembali
       </Link>
       <div className="pb-8">
-        <div className="mb-8 flex flex-col justify-between gap-2 md:flex-row md:items-center">
-          <h1>Template Surat</h1>
-          <DownloadTemplateButton
-            base64={document.content}
-            filename={`${document.title}.docx`}
-          />
+        <div className="flex flex-col gap-y-1.5">
+          <h5 className="font-bold text-black">Lingkup Layanan</h5>
+          <h2 className="mb-4 font-light">
+            {service.administrativeUnit?.name}
+          </h2>
         </div>
-        <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2">
-          <div className="flex flex-col gap-y-1.5">
-            <h5 className="font-bold text-black">Judul Dokumen</h5>
-            <h2 className="mb-4 font-light">{document.title}</h2>
-          </div>
-          <div className="flex flex-col gap-y-1.5">
-            <h5 className="font-bold text-black">Tingkat Dokumen</h5>
-            <h2 className="mb-4 font-light">
-              Tingkat{" "}
-              {roleLevelMap[document.level as keyof typeof roleLevelMap]}
-            </h2>
-          </div>
-          <div className="flex flex-col gap-y-1.5">
-            <h5 className="font-bold text-black">Dibuat Pada</h5>
-            <h2 className="mb-4 font-light">
-              {stringifyDate(document.createdAt)}
-            </h2>
-          </div>
-          <div className="flex flex-col gap-y-1.5">
-            <h5 className="font-bold text-black">Dibuat Oleh</h5>
-            <div>
-              <h2 className="font-light">{document.user.name}</h2>
-              <p>({document.user.email})</p>
-            </div>
-          </div>
-          <div className="flex flex-col gap-y-1.5">
-            <h5 className="font-bold text-black">Jumlah Input</h5>
-            <h2 className="font-light">{document.form?.fields.length} Buah</h2>
-          </div>
-          <div className="flex flex-col gap-y-1.5">
-            <h5 className="font-bold text-black">Jumlah Pengiriman</h5>
-            <h2 className="font-light">
-              {document.form?.submissions.length} Buah
-            </h2>
-          </div>
-        </div>
-      </div>
-      <div className="pt-8">
-        <h1 className="mb-8">Data-data yang diperlukan</h1>
-        <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2">
-          {document.form?.fields.map((field) => (
-            <div key={field.id} className="flex flex-col gap-y-1.5">
-              <h5 className="font-bold text-black">
-                {field.fieldNumber}. {field.label}
-              </h5>
+        <UpdateServiceForm name={service.name} id={service.id} />
+        <div className="flex flex-col gap-y-6 mt-12 divide-y-2 divide-y-foreground">
+          {getLevelAndBelow(
+            service.administrativeUnit!.administrativeLevel,
+          ).map((level) => (
+            <div key={level} className="flex flex-col gap-y-1.5 py-4">
               <h2 className="mb-4 font-light">
-                {field.fieldType.name} ({field.fieldType.baseType}){" "}
+                Template Surat Tingkat{" "}
+                {divisionLevelMap[level as keyof typeof divisionLevelMap]}
               </h2>
+              <TemplateTable
+                templates={service.templates.filter(
+                  (template) => template.level === level,
+                )}
+              />
             </div>
           ))}
         </div>

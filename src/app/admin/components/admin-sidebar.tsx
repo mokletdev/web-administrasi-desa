@@ -18,6 +18,7 @@ import {
   FormInput,
   Home,
   SquareRadical,
+  Network,
   UserCheck,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
@@ -39,14 +40,9 @@ export const AdminSidebar = () => {
         icon: FormInput,
       },
       {
-        title: "Posisi Jabatan",
-        url: "/admin/position",
-        icon: SquareRadical,
-      },
-      {
-        title: "Template Surat",
-        url: "/admin/document",
-        icon: File,
+        title: "Layanan",
+        url: "/admin/service",
+        icon: Network,
       },
       {
         title: "Pejabat",

@@ -28,6 +28,53 @@ export interface DocumentFormInput {
   };
 }
 
+export const upsertService = async (
+  name: string,
+  id?: string,
+): Promise<ActionResponse<{ id: string }>> => {
+  try {
+    const session = await getServerSession();
+    if (!session?.user) {
+      return ActionResponses.unauthorized();
+    }
+
+    if (session.user.role === "CITIZEN") {
+      return ActionResponses.unauthorized();
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+    });
+
+    if (!user || !user.administrativeUnitId) {
+      return ActionResponses.unauthorized();
+    }
+
+    let service;
+    if (!id) {
+      service = await prisma.administrativeService.create({
+        data: {
+          name,
+          createdById: user.id,
+          administrativeUnitId: user.administrativeUnitId,
+        },
+      });
+    } else {
+      service = await prisma.administrativeService.update({
+        where: { id },
+        data: {
+          name,
+        },
+      });
+    }
+
+    return ActionResponses.success({ id: service.id });
+  } catch (error) {
+    console.error("Error in createService:", error);
+    return ActionResponses.serverError("Failed to createService");
+  }
+};
+
 interface DocumentFormResponse {
   documentId: string;
   formId: string;

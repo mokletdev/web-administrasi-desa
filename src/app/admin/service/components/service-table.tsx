@@ -46,55 +46,36 @@ import {
 } from "lucide-react";
 import { FC, useMemo, useState } from "react";
 import { deleteDocument } from "../actions";
-import { UpsertDocumentDialog } from "./dialogs";
 import Link from "next/link";
+import { CreateServiceDialog } from "./dialogs";
 
-type Template = Prisma.AdministrativeServiceGetPayload<{
+type Service = Prisma.AdministrativeServiceGetPayload<{
   select: {
     id: true;
     name: true;
-    templates: {
-      select: {
-        id: true;
-        level: true;
-      };
-    };
     createdAt: true;
     updateAt: true;
     createdBy: true;
   };
 }>;
 
-type TemplateDetail = Prisma.AdministrativeServiceGetPayload<{
-  include: {
-    templates: {
-      include: { signs: true };
-    };
-  };
-}>;
-
 export const ServiceTable: FC<{
-  templates: Template[];
-  fieldTypes: {
-    id: number;
-    baseType: BaseFieldType;
-    label: string;
-  }[];
-}> = ({ templates, fieldTypes }) => {
+  services: Service[];
+}> = ({ services }) => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  const [selectedRow, setSelectedRow] = useState<TemplateDetail | null>(null);
+  const [selectedRow, setSelectedRow] = useState<Service | null>(null);
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
-  const columns: ColumnDef<Template>[] = useMemo(
-    (): ColumnDef<Template>[] => [
+  const columns: ColumnDef<Service>[] = useMemo(
+    (): ColumnDef<Service>[] => [
       {
-        accessorKey: "title",
+        accessorKey: "name",
         header: ({ column }) => {
           return (
             <Button
@@ -108,29 +89,8 @@ export const ServiceTable: FC<{
             </Button>
           );
         },
-        cell: ({ row }) => <div>{row.getValue("title")}</div>,
-        enableSorting: true,
-      },
-      {
-        accessorKey: "level",
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="outline"
-              onClick={() =>
-                column.toggleSorting(column.getIsSorted() === "asc")
-              }
-            >
-              Tingkat Surat
-              <ArrowUpDown />
-            </Button>
-          );
-        },
-        cell: ({ row }) => (
-          <div>
-            {roleLevelMap[row.getValue("level") as keyof typeof roleLevelMap]}
-          </div>
-        ),
+        accessorFn: (row) => row.name,
+        cell: ({ row }) => <div>{row.getValue("name")}</div>,
         enableSorting: true,
       },
       {
@@ -218,7 +178,7 @@ export const ServiceTable: FC<{
   );
 
   const table = useReactTable({
-    data: templates,
+    data: services,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -242,9 +202,9 @@ export const ServiceTable: FC<{
         <div className="flex items-center justify-between py-4">
           <Input
             placeholder="Filter by judul..."
-            value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
+            value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
             onChange={(event) =>
-              table.getColumn("title")?.setFilterValue(event.target.value)
+              table.getColumn("name")?.setFilterValue(event.target.value)
             }
             className="max-w-sm"
           />
@@ -339,35 +299,16 @@ export const ServiceTable: FC<{
       <ConfirmDeletionDialog
         open={deleteDialogOpen}
         setIsOpen={setDeleteDialogOpen}
-        description={`Anda akan menghapus Dokumen dengan judul ${selectedRow?.name}. Aksi
+        description={`Anda akan menghapus Layanan dengan judul ${selectedRow?.name}. Aksi
             ini tidak bisa di undo. Ini akan secara permanen menghapus data ini
             dan menghapusnya dari server kami.`}
         serverAction={deleteDocument}
         id={selectedRow?.id}
       />
-      {/* <UpsertDocumentDialog
-        open={editDialogOpen}
-        setIsOpen={setEditDialogOpen}
-        fieldTypes={fieldTypes}
-        positions={positions}
-        data={
-          selectedRow
-            ? {
-                id: selectedRow.id,
-                title: selectedRow.title,
-                level: selectedRow.level,
-                positionIds: selectedRow.signs.map((sign) => sign.positionId),
-                fields: selectedRow.form?.fields || [],
-              }
-            : undefined
-        }
-      /> */}
-      {/* <UpsertDocumentDialog
+      <CreateServiceDialog
         open={createDialogOpen}
         setIsOpen={setCreateDialogOpen}
-        fieldTypes={fieldTypes}
-        positions={positions}
-      /> */}
+      />
     </>
   );
 };

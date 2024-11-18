@@ -4,10 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "prisma generate && next build",
+    "build": "prisma:generate && next build",
     "start": "next start",
     "lint": "next lint",
-    "generate": "prisma generate && prisma generate --schema prisma/sistemdesa.prisma",
+    "prisma:generate": "prisma generate && prisma generate --schema prisma/sistemdesa.prisma",
     "seed:region": "tsx prisma/seeders/seed-region.ts"
   },
   "dependencies": {
