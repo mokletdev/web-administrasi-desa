@@ -2,7 +2,6 @@ import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { patchDocument, PatchType, TextRun } from "docx";
 import { normalizeVariableName } from "@/lib/utils";
-import { Blob } from "buffer";
 
 export const GET = async (
   req: NextRequest,
@@ -13,14 +12,18 @@ export const GET = async (
     const data = await prisma.submission.findUnique({
       where: { id },
       include: {
-        fields: { include: { field: { select: { label: true } } } },
-        form: {
-          include: { document: { select: { content: true, title: true } } },
+        fields: {
+          include: {
+            field: {
+              select: { label: true, fieldType: { select: { label: true } } },
+            },
+          },
         },
+        template: { select: { content: true, title: true } },
       },
     });
 
-    if (!data || !data.form)
+    if (!data)
       return NextResponse.json(
         {
           status: 404,
@@ -28,13 +31,14 @@ export const GET = async (
         { status: 404 },
       );
 
-    const bufferDocx = Buffer.from(data.form.document.content, "base64");
+    const bufferDocx = Buffer.from(data.template.content, "base64");
 
     let patches: any = {};
 
-    for (let i = 0; i < data.fields.length; i++) {
-      const field = data.fields[i];
-      const normal = normalizeVariableName(field.field.label);
+    for (const field of data.fields) {
+      const normal = normalizeVariableName(
+        field.field.label || field.field.fieldType.label,
+      );
 
       patches[normal] = {
         type: PatchType.PARAGRAPH,
