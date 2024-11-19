@@ -3,7 +3,7 @@
 import { getServerSession } from "@/lib/next-auth";
 import prisma from "@/lib/prisma";
 import { ActionResponse, ActionResponses } from "@/types/actions";
-import { Prisma, UserRole } from "@prisma/client";
+import { Prisma, Skip, UserRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 export interface DocumentFormInput {
@@ -67,6 +67,34 @@ export const upsertService = async (
         },
       });
     }
+
+    return ActionResponses.success({ id: service.id });
+  } catch (error) {
+    console.error("Error in createService:", error);
+    return ActionResponses.serverError("Failed to createService");
+  }
+};
+
+export const setSkip = async (
+  id: string,
+  skip?: Skip,
+): Promise<ActionResponse<{ id: string }>> => {
+  try {
+    const session = await getServerSession();
+    if (!session?.user) {
+      return ActionResponses.unauthorized();
+    }
+
+    if (session.user.role === "CITIZEN") {
+      return ActionResponses.unauthorized();
+    }
+
+    const service = await prisma.administrativeService.update({
+      where: { id },
+      data: {
+        skipStep: skip || null,
+      },
+    });
 
     return ActionResponses.success({ id: service.id });
   } catch (error) {
