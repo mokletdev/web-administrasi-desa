@@ -45,9 +45,9 @@ import {
   Trash,
 } from "lucide-react";
 import { FC, useMemo, useState } from "react";
-import { deleteDocument } from "../actions";
 import Link from "next/link";
 import { CreateServiceDialog } from "./dialogs";
+import { deleteService } from "../actions";
 
 type Service = Prisma.AdministrativeServiceGetPayload<{
   select: {
@@ -302,7 +302,7 @@ export const ServiceTable: FC<{
         description={`Anda akan menghapus Layanan dengan judul ${selectedRow?.name}. Aksi
             ini tidak bisa di undo. Ini akan secara permanen menghapus data ini
             dan menghapusnya dari server kami.`}
-        serverAction={deleteDocument}
+        serverAction={deleteService}
         id={selectedRow?.id}
       />
       <CreateServiceDialog

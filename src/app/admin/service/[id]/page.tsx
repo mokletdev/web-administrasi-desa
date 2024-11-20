@@ -9,14 +9,9 @@ import { UpdateServiceForm } from "./components/update-service-form";
 import { TemplateTable } from "./components/template-table";
 import { AdministrativeLevel } from "@prisma/client";
 import { divisionLevelMap } from "@/lib/utils";
+import TempalateTableGroup from "./components/template-table-group";
 
 // For templates and level skipping
-const getLevelAndBelow = (level: AdministrativeLevel) => {
-  const levels = ["SUBDISTRICT", "DISTRICT", "CITY"];
-  const indexToSlice = levels.indexOf(level);
-  // Reverse the sliced array to get a top-to-bottom level sorting
-  return levels.slice(0, indexToSlice + 1).reverse();
-};
 
 export default async function ServiceDetail({
   params,
@@ -55,23 +50,7 @@ export default async function ServiceDetail({
           </h2>
         </div>
         <UpdateServiceForm name={service.name} id={service.id} />
-        <div className="flex flex-col gap-y-6 mt-12 divide-y-2 divide-y-foreground">
-          {getLevelAndBelow(
-            service.administrativeUnit!.administrativeLevel,
-          ).map((level) => (
-            <div key={level} className="flex flex-col gap-y-1.5 py-4">
-              <h2 className="mb-4 font-light">
-                Template Surat Tingkat{" "}
-                {divisionLevelMap[level as keyof typeof divisionLevelMap]}
-              </h2>
-              <TemplateTable
-                templates={service.templates.filter(
-                  (template) => template.level === level,
-                )}
-              />
-            </div>
-          ))}
-        </div>
+        <TempalateTableGroup service={service} />
       </div>
     </div>
   );

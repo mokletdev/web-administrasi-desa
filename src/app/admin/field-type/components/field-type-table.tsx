@@ -81,7 +81,7 @@ export const FieldTypeTable: FC<{
         enableSorting: true,
       },
       {
-        accessorKey: "name",
+        accessorKey: "label",
         header: ({ column }) => {
           return (
             <Button
@@ -90,12 +90,12 @@ export const FieldTypeTable: FC<{
                 column.toggleSorting(column.getIsSorted() === "asc")
               }
             >
-              Name
+              Label
               <ArrowUpDown />
             </Button>
           );
         },
-        cell: ({ row }) => <div>{row.getValue("name")}</div>,
+        cell: ({ row }) => <div>{row.getValue("label")}</div>,
         enableSorting: true,
       },
       {
@@ -200,7 +200,6 @@ export const FieldTypeTable: FC<{
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
@@ -218,10 +217,10 @@ export const FieldTypeTable: FC<{
       <div className="w-full">
         <div className="flex items-center justify-between py-4">
           <Input
-            placeholder="Filter by name..."
-            value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+            placeholder="Filter by label..."
+            value={(table.getColumn("label")?.getFilterValue() as string) ?? ""}
             onChange={(event) =>
-              table.getColumn("name")?.setFilterValue(event.target.value)
+              table.getColumn("label")?.setFilterValue(event.target.value)
             }
             className="max-w-sm"
           />
@@ -316,8 +315,7 @@ export const FieldTypeTable: FC<{
       <ConfirmDeletionDialog
         open={deleteDialogOpen}
         setIsOpen={setDeleteDialogOpen}
-        description={`Anda akan menghapus Tipe Input dengan ID ${selectedRow?.id}. Aksi
-            ini tidak bisa di undo. Ini akan secara permanen menghapus data ini
+        description={`Anda akan menghapus Tipe Input dengan ID ${selectedRow?.id}. Ini akan secara permanen menghapus data ini
             dan menghapusnya dari server kami.`}
         serverAction={deleteFieldType}
         id={selectedRow?.id}

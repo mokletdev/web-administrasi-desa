@@ -6,6 +6,8 @@ export default async function FieldTypeManagement() {
     include: { relation: true },
   });
 
+  console.log(fieldTypes);
+
   return (
     <>
       <div className="mb-8 flex flex-col gap-2">

@@ -1,5 +1,8 @@
 import { PrismaClient } from "@prisma/client";
-import { PrismaClient as SistemDesa } from "@/../prisma/client/sistem-desa";
+import {
+  PrismaClient as SistemDesa,
+  Prisma as SistemDesaPrisma,
+} from "@/../prisma/client/sistem-desa";
 
 // Extend the NodeJS Global interface to include the prisma instance.
 declare global {
@@ -39,4 +42,4 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 export default prisma;
-export { sistemdesa };
+export { sistemdesa, SistemDesa as SistemDesaClient, SistemDesaPrisma };

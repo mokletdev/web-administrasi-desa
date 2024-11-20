@@ -1,8 +1,9 @@
-// app/actions/convertToPdf.ts
+"use server";
+
 import { google } from "googleapis";
 import { GoogleAuth } from "google-auth-library";
 import { Readable } from "stream";
-import { ActionResponses } from "@/types/actions";
+import { ActionResponse, ActionResponses } from "@/types/actions";
 
 const CREDENTIALS = {
   type: process.env.GOOGLE_TYPE,
@@ -17,7 +18,14 @@ const CREDENTIALS = {
   client_x509_cert_url: process.env.GOOGLE_CLIENT_CERT_URL,
 };
 
-export async function convertToPdf(file: Buffer) {
+export async function convertToPdf(
+  data: FormData,
+): Promise<ActionResponse<string>> {
+  const file = data.get("content") as File | null;
+  if (!file) {
+    return ActionResponses.badRequest("Content does not exist!", "content");
+  }
+
   try {
     const auth = new GoogleAuth({
       credentials: CREDENTIALS,
@@ -34,7 +42,7 @@ export async function convertToPdf(file: Buffer) {
       media: {
         mimeType:
           "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        body: Readable.from(file),
+        body: Readable.from(Buffer.from(await file.arrayBuffer())),
       },
     });
 
@@ -55,14 +63,16 @@ export async function convertToPdf(file: Buffer) {
       fileId: documentId,
     });
 
-    return ActionResponses.success(pdfResponse.data);
+    const bufferData = Buffer.from(pdfResponse.data as ArrayBuffer);
+
+    return ActionResponses.success(bufferData.toString("base64"));
   } catch (error) {
     console.error("Conversion error:", error);
     return ActionResponses.serverError();
   }
 }
 
-export function validateMimeType(file: File) {
+export async function validateMimeType(file: File) {
   const allowedTypes = [
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
   ];

@@ -78,7 +78,7 @@ export const UpdateServiceForm: FC<{ name: string; id: string }> = ({
           )}
         />
         <Button type="submit" disabled={loading}>
-          Simpan
+          Simpan Nama Layanan
         </Button>
       </form>
     </Form>

@@ -75,6 +75,30 @@ export const upsertService = async (
   }
 };
 
+export const deleteService = async (
+  id?: string,
+): Promise<ActionResponse<{ id: string }>> => {
+  try {
+    const session = await getServerSession();
+    if (!session?.user) {
+      return ActionResponses.unauthorized();
+    }
+
+    if (session.user.role === "CITIZEN") {
+      return ActionResponses.unauthorized();
+    }
+
+    let service = await prisma.administrativeService.delete({
+      where: { id },
+    });
+
+    return ActionResponses.success({ id: service.id });
+  } catch (error) {
+    console.error("Error in createService:", error);
+    return ActionResponses.serverError("Failed to createService");
+  }
+};
+
 export const setSkip = async (
   id: string,
   skip?: Skip,
@@ -102,102 +126,3 @@ export const setSkip = async (
     return ActionResponses.serverError("Failed to createService");
   }
 };
-
-export async function getDocumentForm(
-  id: string,
-): Promise<ActionResponse<DocumentFormInput & { content: string }>> {
-  try {
-    const validation = await validateAccess(id);
-    if (!validation.allowed) {
-      return ActionResponses.unauthorized();
-    }
-
-    const document = await prisma.document.findUnique({
-      where: { id },
-      include: {
-        user: { select: { name: true } },
-        signs: true,
-        form: {
-          include: {
-            fields: {
-              include: { options: true },
-              orderBy: { fieldNumber: "asc" },
-            },
-          },
-        },
-      },
-    });
-
-    if (!document) {
-      return ActionResponses.notFound("Document not found");
-    }
-
-    const documentForm: DocumentFormInput & { content: string } = {
-      id: document.id,
-      title: document.title,
-      content: document.content,
-      signs: document.signs.map((sign) => ({
-        positionId: sign.positionId,
-      })),
-      level: document.level,
-      form: {
-        fields:
-          document.form?.fields.map((field) => ({
-            id: field.id,
-            label: field.label,
-            required: field.required,
-            fieldTypeId: field.fieldTypeId,
-            fieldNumber: field.fieldNumber,
-            options: field.options.map((opt) => ({
-              id: opt.id,
-              value: opt.value,
-            })),
-          })) || [],
-      },
-    };
-
-    return ActionResponses.success(documentForm);
-  } catch (error) {
-    console.error("Error in getDocumentForm:", error);
-    return ActionResponses.serverError("Failed to fetch document and form");
-  }
-}
-
-export async function deleteDocument(
-  documentId: string,
-): Promise<ActionResponse<{ id: string }>> {
-  try {
-    if (!documentId) {
-      return ActionResponses.badRequest("ID is required", "id");
-    }
-
-    const session = await getServerSession();
-    if (!session?.user) {
-      return ActionResponses.unauthorized();
-    }
-
-    if (session.user.role !== "SUPERADMIN") {
-      return ActionResponses.unauthorized();
-    }
-
-    const document = await prisma.document.findUnique({
-      where: { id: documentId },
-    });
-
-    if (!document) {
-      return ActionResponses.notFound("Document not found");
-    }
-
-    await prisma.document.delete({
-      where: { id: documentId },
-    });
-
-    revalidatePath("/admin/document");
-    revalidatePath("/admin/document/[id]");
-
-    return ActionResponses.success({ id: documentId });
-  } catch (error) {
-    console.error("Error in deleteDocument:", error);
-    return ActionResponses.serverError("Failed to delete document");
-  }
-}

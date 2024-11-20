@@ -21,7 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { roleLevelMap } from "@/lib/utils";
-import { BaseFieldType, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -44,7 +44,7 @@ import {
   Pencil,
   Trash,
 } from "lucide-react";
-import { FC, useMemo, useState } from "react";
+import { FC, MouseEventHandler, useMemo, useState } from "react";
 import Link from "next/link";
 import { divisionLevelMap } from "@/lib/utils";
 
@@ -59,7 +59,8 @@ type Template = Prisma.TemplateGetPayload<{
 
 export const TemplateTable: FC<{
   templates: Template[];
-}> = ({ templates }) => {
+  buttonOnClick: MouseEventHandler<HTMLButtonElement>;
+}> = ({ templates, buttonOnClick }) => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -242,10 +243,7 @@ export const TemplateTable: FC<{
                   })}
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button
-              variant={"default"}
-              onClick={() => setCreateDialogOpen(true)}
-            >
+            <Button variant={"default"} onClick={buttonOnClick}>
               Tambah
             </Button>
           </div>
@@ -301,21 +299,6 @@ export const TemplateTable: FC<{
           </Table>
         </div>
       </div>
-
-      {/* Dialogues */}
-      {/* <ConfirmDeletionDialog
-        open={deleteDialogOpen}
-        setIsOpen={setDeleteDialogOpen}
-        description={`Anda akan menghapus Dokumen dengan judul ${selectedRow?.title}. Aksi
-            ini tidak bisa di undo. Ini akan secara permanen menghapus data ini
-            dan menghapusnya dari server kami.`}
-        serverAction={deleteDocument}
-        id={selectedRow?.id}
-      /> */}
-      {/* <CreateServiceDialog
-        open={createDialogOpen}
-        setIsOpen={setCreateDialogOpen}
-      /> */}
     </>
   );
 };

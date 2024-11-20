@@ -20,6 +20,7 @@ import {
   SquareRadical,
   Network,
   UserCheck,
+  Newspaper,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
@@ -33,6 +34,11 @@ export const AdminSidebar = () => {
         title: "Beranda",
         url: "/admin",
         icon: Home,
+      },
+      {
+        title: "Kop Surat",
+        url: "/admin/kop-surat",
+        icon: Newspaper,
       },
       {
         title: "Tipe Input",

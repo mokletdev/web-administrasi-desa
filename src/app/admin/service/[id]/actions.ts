@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import prisma from "@/lib/prisma";
 import { AdministrativeLevel } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { convertToPdf } from "@/app/actions/docx-pdf";
 
 export interface UpsertTemplateParams {
   id?: string;
@@ -90,6 +91,11 @@ export async function upsertDocumentForm(
       ? Buffer.from(await contentFile.arrayBuffer()).toString("base64")
       : undefined;
 
+    const contentPdf = contentFile
+      ? await convertToPdf(Buffer.from(await contentFile.arrayBuffer()))
+      : undefined;
+    const contentPdfBase64 = contentPdf?.data?.toString("base64");
+
     const result = await prisma.$transaction(
       async (tx) => {
         const template = input.id
@@ -98,6 +104,7 @@ export async function upsertDocumentForm(
               data: {
                 title: input.title,
                 content: contentBase64,
+                contentPdf: contentPdfBase64,
               },
             })
           : await tx.template.create({
@@ -105,6 +112,7 @@ export async function upsertDocumentForm(
                 title: input.title,
                 // If the user's creating a new docuent, then the content would always be present
                 content: contentBase64!,
+                contentPdf: contentPdfBase64,
                 level: input.level,
               },
             });

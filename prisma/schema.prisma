@@ -13,7 +13,7 @@ model AdministrativeUnit {
   administrativeLevel AdministrativeLevel
   parents             AdministrativeUnit[] @relation("ParentChild")
   children            AdministrativeUnit[] @relation("ParentChild")
-  letterhead          String?
+  letterhead          String?              @db.LongText
 
   officials Official[]
   users     User[]
@@ -57,12 +57,13 @@ model Official {
 }
 
 model Template {
-  id        String              @id @default(uuid())
-  title     String
-  content   String              @db.LongText
-  createdAt DateTime            @default(now())
-  updatedAt DateTime            @updatedAt
-  level     AdministrativeLevel
+  id         String              @id @default(uuid())
+  title      String
+  content    String              @db.LongText
+  contentPdf String?             @db.LongText
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+  level      AdministrativeLevel
 
   signs                   Sign[]
   AdministrativeService   AdministrativeService? @relation(fields: [administrativeServiceId], references: [id])

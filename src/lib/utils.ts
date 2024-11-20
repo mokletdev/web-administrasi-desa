@@ -38,6 +38,11 @@ export const divisionLevelMap = {
   SUBDISTRICT: "Kelurahan",
 };
 
+export const skipLevelMap = {
+  DISTRICT: "Kecamatan",
+  SUBDISTRICT: "Kelurahan",
+};
+
 export const roleLevelMap = {
   CITIZEN: "Penduduk",
   CITY_ADMIN: "Kota",
