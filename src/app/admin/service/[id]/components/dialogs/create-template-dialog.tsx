@@ -1,5 +1,6 @@
 "use client";
 
+import { convertToPdf } from "@/app/actions/docx-pdf";
 import { Button } from "@/components/ui/button";
 import {
   DialogFullscreen,
@@ -8,34 +9,31 @@ import {
   DialogFullscreenHeader,
   DialogFullscreenTitle,
 } from "@/components/ui/dialog-fullscreen";
-import { divisionLevelMap } from "@/lib/utils";
-import { DialogBaseProps } from "@/types/dialog";
-import { AdministrativeLevel } from "@prisma/client";
-import { Label } from "@radix-ui/react-label";
-import { FC } from "react";
-import { z } from "zod";
-import { useZodForm } from "@/hooks/use-zod-form";
 import {
   Form,
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
-  FormControl,
 } from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { roleLevelMap } from "@/lib/utils";
-import { Input, FileField } from "@/components/ui/input";
-import { useState, useEffect } from "react";
-import { convertToPdf } from "@/app/actions/docx-pdf";
-import { Document, Page } from "react-pdf";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { FileField, Input } from "@/components/ui/input";
+import { useZodForm } from "@/hooks/use-zod-form";
+import { cn, divisionLevelMap } from "@/lib/utils";
+import { DialogBaseProps } from "@/types/dialog";
+import { AdministrativeLevel, BaseFieldType, Sign } from "@prisma/client";
+import { ArrowLeft, ArrowRight, Plus } from "lucide-react";
+import { FC, useEffect, useMemo, useState } from "react";
+import { Document, Page, pdfjs } from "react-pdf";
+import { z } from "zod";
+import { Field, RenderField } from "./field";
+import { labelVariants } from "@/components/ui/label";
+
+// Initiate pdfjs worker
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url,
+).toString();
 
 const MAX_FILE_SIZE = 5_000_000;
 
@@ -69,8 +67,11 @@ const createTemplateSchema = z.object({
 });
 
 export const CreateTemplateDialog: FC<
-  DialogBaseProps & { adminLevel: AdministrativeLevel }
-> = ({ open, setIsOpen, adminLevel }) => {
+  DialogBaseProps & {
+    adminLevel: AdministrativeLevel;
+    fieldTypes: { id: number; label: string; baseType: BaseFieldType }[];
+  }
+> = ({ open, setIsOpen, adminLevel, fieldTypes }) => {
   const form = useZodForm({
     defaultValues: { title: "" },
     schema: createTemplateSchema,
@@ -80,10 +81,26 @@ export const CreateTemplateDialog: FC<
 
   const [preview, setPreview] = useState<string>();
   const [previewPageNumber, setPreviewPageNumber] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [previewPageCount, setPreviewPageCount] = useState<number>();
+  const reactPdfOptions = useMemo(
+    () => ({
+      cMapUrl: "cmaps/",
+      cMapPacked: true,
+      standardFontDataUrl: "standard_fonts/",
+    }),
+    [],
+  );
+
+  const [signs, setSigns] = useState<Sign[]>([]);
+
+  const [fields, setFields] = useState<Field[]>([]);
 
   useEffect(() => {
     const updatePreview = async () => {
       if (content && content[0] instanceof File) {
+        setLoading(true);
+
         const data = new FormData();
         data.append("content", content[0]);
 
@@ -129,6 +146,44 @@ export const CreateTemplateDialog: FC<
                 </FormItem>
               )}
             />
+            <div className="mt-4 w-full space-y-1.5">
+              <h2 className={labelVariants({ className: "text-foreground" })}>
+                Manajemen Variabel Input
+              </h2>
+              <div className="flex flex-col gap-y-2">
+                {fields
+                  .sort((a, b) => a.fieldNumber - b.fieldNumber)
+                  .map((field) => (
+                    <RenderField
+                      key={field.fieldNumber}
+                      field={field}
+                      fieldTypes={fieldTypes}
+                      fields={fields}
+                      setFields={setFields}
+                    />
+                  ))}
+              </div>
+              {fieldTypes.length > 0 && (
+                <Button
+                  className="w-full"
+                  variant={"outline"}
+                  type="button"
+                  onClick={() => {
+                    setFields((prevFields) => [
+                      ...prevFields,
+                      {
+                        fieldNumber: prevFields.length + 1,
+                        fieldTypeId: fieldTypes[0]?.id ?? 0, // Use `0` or another default ID if `fieldTypes` is empty
+                        label: "Input Baru",
+                        required: false,
+                      },
+                    ]);
+                  }}
+                >
+                  Tambah Input <Plus />
+                </Button>
+              )}
+            </div>
             <FileField
               name="content"
               label="Upload Template"
@@ -139,23 +194,73 @@ export const CreateTemplateDialog: FC<
               errorMessage={form.formState.errors.content?.message?.toString()}
             />
           </form>
-          {preview && (
-            <div className="relative mb-12 block">
-              <div className="flex items-center justify-between">
-                <Button variant={"outline"}>
-                  <ArrowLeft /> Halaman Sebelumnya
-                </Button>
-                <Button variant="outline">
-                  Halaman Selanjutnya <ArrowRight />
-                </Button>
-              </div>
-              <iframe
-                src={`data:application/pdf;base64,${preview}`}
-                scrolling="no"
-                className="h-full w-full"
-              ></iframe>
-            </div>
-          )}
+          <div
+            id="container"
+            className={cn(
+              "relative block w-full rounded-md",
+              loading || preview ? "mb-12" : "mb-0",
+            )}
+          >
+            {loading && (
+              <p className="w-full text-center">Loading preview...</p>
+            )}
+            {preview && (
+              <>
+                <div className="flex w-full items-center justify-between">
+                  <Button
+                    variant={"outline"}
+                    disabled={previewPageNumber === 1}
+                    onClick={() => {
+                      setPreviewPageNumber((prev) => prev - 1);
+                    }}
+                  >
+                    <ArrowLeft />
+                  </Button>
+                  <p>
+                    {previewPageNumber} / {previewPageCount}
+                  </p>
+                  <Button
+                    variant="outline"
+                    disabled={previewPageNumber === (previewPageCount || 1)}
+                    onClick={() => {
+                      setPreviewPageNumber((prev) =>
+                        prev < previewPageCount! ? prev + 1 : previewPageCount!,
+                      );
+                    }}
+                  >
+                    <ArrowRight />
+                  </Button>
+                </div>
+                <Document
+                  file={`data:application/pdf;base64,${preview}`}
+                  onLoadSuccess={({ numPages }) => {
+                    setPreviewPageCount(numPages);
+                  }}
+                  options={reactPdfOptions}
+                  renderMode="canvas"
+                  className="h-full w-full"
+                >
+                  <Page
+                    className={cn("mx-auto h-fit w-fit")}
+                    scale={1}
+                    key={previewPageNumber}
+                    pageNumber={previewPageNumber}
+                    renderAnnotationLayer={false}
+                    renderTextLayer={false}
+                    onLoadSuccess={() => {
+                      setLoading(false);
+                    }}
+                    canvasBackground="#000"
+                    onRenderError={() => setLoading(false)}
+                  >
+                    {signs.map((sign) => (
+                      <div key={sign.id} className="size-5 bg-black"></div>
+                    ))}
+                  </Page>
+                </Document>
+              </>
+            )}
+          </div>
         </Form>
         <Button type="submit">Tambahkan</Button>
       </DialogFullscreenContent>

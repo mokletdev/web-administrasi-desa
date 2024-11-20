@@ -1,17 +1,10 @@
 import { buttonVariants } from "@/components/ui/button";
 import prisma from "@/lib/prisma";
-import { roleLevelMap, stringifyDate } from "@/lib/utils";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { DownloadTemplateButton } from "./components/download-template-button";
-import { UpdateServiceForm } from "./components/update-service-form";
-import { TemplateTable } from "./components/template-table";
-import { AdministrativeLevel } from "@prisma/client";
-import { divisionLevelMap } from "@/lib/utils";
 import TempalateTableGroup from "./components/template-table-group";
-
-// For templates and level skipping
+import { UpdateServiceForm } from "./components/update-service-form";
 
 export default async function ServiceDetail({
   params,
@@ -20,13 +13,16 @@ export default async function ServiceDetail({
 }) {
   const { id } = await params;
 
-  const service = await prisma.administrativeService.findUnique({
-    where: { id },
-    include: {
-      templates: { include: { signs: true, fields: true } },
-      administrativeUnit: true,
-    },
-  });
+  const [service, fieldTypes] = await prisma.$transaction([
+    prisma.administrativeService.findUnique({
+      where: { id },
+      include: {
+        templates: { include: { signs: true, fields: true } },
+        administrativeUnit: true,
+      },
+    }),
+    prisma.fieldType.findMany(),
+  ]);
 
   if (!service) return notFound();
 
@@ -50,7 +46,7 @@ export default async function ServiceDetail({
           </h2>
         </div>
         <UpdateServiceForm name={service.name} id={service.id} />
-        <TempalateTableGroup service={service} />
+        <TempalateTableGroup service={service} fieldTypes={fieldTypes} />
       </div>
     </div>
   );

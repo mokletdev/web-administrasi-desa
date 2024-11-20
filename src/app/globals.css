@@ -116,3 +116,7 @@ h4 {
 p {
   @apply text-sm leading-[18px] text-muted-foreground;
 }
+
+.react-pdf__Page canvas {
+  @apply mx-auto;
+}

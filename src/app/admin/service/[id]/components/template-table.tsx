@@ -1,6 +1,5 @@
 "use client";
 
-import { ConfirmDeletionDialog } from "@/components/dialogs/delete-dialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -20,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { roleLevelMap } from "@/lib/utils";
+import { divisionLevelMap } from "@/lib/utils";
 import { Prisma } from "@prisma/client";
 import {
   ColumnDef,
@@ -44,9 +43,8 @@ import {
   Pencil,
   Trash,
 } from "lucide-react";
-import { FC, MouseEventHandler, useMemo, useState } from "react";
 import Link from "next/link";
-import { divisionLevelMap } from "@/lib/utils";
+import { FC, MouseEventHandler, useMemo, useState } from "react";
 
 type Template = Prisma.TemplateGetPayload<{
   select: {
@@ -65,11 +63,9 @@ export const TemplateTable: FC<{
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  const [selectedRow, setSelectedRow] = useState<Template | null>(null);
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   const columns: ColumnDef<Template>[] = useMemo(
     (): ColumnDef<Template>[] => [

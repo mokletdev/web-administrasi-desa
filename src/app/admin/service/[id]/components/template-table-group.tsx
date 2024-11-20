@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { divisionLevelMap, skipLevelMap } from "@/lib/utils";
-import { AdministrativeLevel, Prisma, Skip } from "@prisma/client";
+import { AdministrativeLevel, FieldType, Prisma, Skip } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { setSkip } from "../../actions";
@@ -34,8 +34,10 @@ type ServiceType = Prisma.AdministrativeServiceGetPayload<{
 
 export default function TempalateTableGroup({
   service,
+  fieldTypes,
 }: {
   service: ServiceType;
+  fieldTypes: FieldType[];
 }) {
   const { dismiss, toast } = useToast();
   const router = useRouter();
@@ -56,10 +58,10 @@ export default function TempalateTableGroup({
   const levelAndBelow = getLevelAndBelow(
     service.administrativeUnit!.administrativeLevel,
   );
-  let stateValueMap = {
+  const [skipMap, setSkipMap] = useState({
     DISTRICT: skipDistrict,
     SUBDISTRICT: skipSubDistrict,
-  };
+  });
 
   const setStateValueMap = {
     DISTRICT: setSkipDistrict,
@@ -67,10 +69,10 @@ export default function TempalateTableGroup({
   };
 
   useEffect(() => {
-    stateValueMap = {
+    setSkipMap({
       DISTRICT: skipDistrict,
       SUBDISTRICT: skipSubDistrict,
-    };
+    });
   }, [skipDistrict, skipSubDistrict]);
 
   const onSkipSubmit = async () => {
@@ -113,7 +115,7 @@ export default function TempalateTableGroup({
               <div key={i} className="flex flex-row gap-1">
                 <Checkbox
                   name={i}
-                  checked={stateValueMap[i as keyof typeof skipLevelMap]}
+                  checked={skipMap[i as keyof typeof skipLevelMap]}
                   onCheckedChange={(e) => {
                     setStateValueMap[i as keyof typeof skipLevelMap](
                       e.valueOf() as boolean,
@@ -135,7 +137,7 @@ export default function TempalateTableGroup({
         <div className="divide-y-foreground flex flex-col gap-y-6 divide-y-2">
           {levelAndBelow.map(
             (level) =>
-              (!stateValueMap[level as keyof (keyof AdministrativeLevel)] ||
+              (!skipMap[level as keyof (keyof AdministrativeLevel)] ||
                 level === service.administrativeUnit.administrativeLevel) && (
                 <div key={level} className="flex flex-col gap-y-1.5 py-4">
                   <h2 className="mb-4 font-light">
@@ -162,6 +164,7 @@ export default function TempalateTableGroup({
         open={isCreateOpen}
         setIsOpen={setCreateOpen}
         adminLevel={selectedAdminLevel!}
+        fieldTypes={fieldTypes}
       />
     </>
   );

@@ -14,11 +14,9 @@ import { AdministrativeLevel } from "@prisma/client";
 import { Label } from "@radix-ui/react-label";
 import { FC } from "react";
 
-export const CreateServiceDialog: FC<DialogBaseProps & {AdminLevel:AdministrativeLevel}> = ({
-  open,
-  setIsOpen,
-  AdminLevel
-}) => {
+export const CreateServiceDialog: FC<
+  DialogBaseProps & { level: AdministrativeLevel }
+> = ({ open, setIsOpen, level }) => {
   return (
     <DialogFullscreen open={open} onOpenChange={setIsOpen}>
       <DialogFullscreenContent className="sm:max-w-[425px]">
