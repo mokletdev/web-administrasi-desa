@@ -21,7 +21,14 @@ export default async function ServiceDetail({
     prisma.administrativeService.findUnique({
       where: { id },
       include: {
-        templates: { include: { signs: true, fields: true } },
+        templates: {
+          include: {
+            signs: {
+              include: { Official: { select: { name: true, id: true } } },
+            },
+            fields: { include: { options: true } },
+          },
+        },
         administrativeUnit: true,
       },
     }),
@@ -48,8 +55,6 @@ export default async function ServiceDetail({
       },
     }),
   ]);
-
-  console.log(officials);
 
   if (!service) return notFound();
 

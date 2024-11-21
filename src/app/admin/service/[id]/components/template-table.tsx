@@ -1,6 +1,5 @@
 "use client";
 
-import { ConfirmDeletionDialog } from "@/components/dialogs/delete-dialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -45,30 +44,42 @@ import {
   Trash,
 } from "lucide-react";
 import Link from "next/link";
-import { FC, MouseEventHandler, useMemo, useState } from "react";
-import { deleteTemplate } from "../actions";
+import {
+  Dispatch,
+  FC,
+  MouseEventHandler,
+  SetStateAction,
+  useMemo,
+  useState,
+} from "react";
 
 type Template = Prisma.TemplateGetPayload<{
-  select: {
-    id: true;
-    createdAt: true;
-    title: true;
-    level: true;
+  include: {
+    signs: {
+      include: { Official: { select: { id: true; name: true } } };
+    };
+    fields: { include: { options: true } };
   };
 }>;
 
 export const TemplateTable: FC<{
   templates: Template[];
   buttonOnClick: MouseEventHandler<HTMLButtonElement>;
-}> = ({ templates, buttonOnClick }) => {
+
+  setDeleteDialogOpen: Dispatch<SetStateAction<boolean>>;
+  setEditDialogOpen: Dispatch<SetStateAction<boolean>>;
+  setSelectedRow: Dispatch<SetStateAction<Template | undefined>>;
+}> = ({
+  templates,
+  buttonOnClick,
+  setDeleteDialogOpen,
+  setEditDialogOpen,
+  setSelectedRow,
+}) => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [selectedRow, setSelectedRow] = useState<Template>();
 
   const columns: ColumnDef<Template>[] = useMemo(
     (): ColumnDef<Template>[] => [
@@ -300,14 +311,6 @@ export const TemplateTable: FC<{
           </Table>
         </div>
       </div>
-      <ConfirmDeletionDialog
-        id={selectedRow?.id}
-        open={deleteDialogOpen}
-        setIsOpen={setDeleteDialogOpen}
-        description={`Anda akan menghapus Template dengan ID ${selectedRow?.id}. Ini akan secara permanen menghapus data ini
-            dan menghapusnya dari server kami.`}
-        serverAction={deleteTemplate}
-      />
     </>
   );
 };

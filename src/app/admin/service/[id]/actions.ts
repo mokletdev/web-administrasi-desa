@@ -30,7 +30,7 @@ export interface UpsertTemplateParams {
   }>;
 }
 
-const validateAccess = async (templateId: string) => {
+const validateAccess = async (templateId?: string) => {
   const session = await getServerSession();
   if (!session?.user) {
     return { allowed: false, error: ActionResponses.unauthorized() };
@@ -44,7 +44,7 @@ const validateAccess = async (templateId: string) => {
     const template = await prisma.template.findUnique({
       where: { id: templateId },
       include: {
-        _count: { select: { submissions: true } },
+        submissions: { select: { id: true } },
         fields: {
           include: { options: true },
           orderBy: { fieldNumber: "asc" },
@@ -76,28 +76,38 @@ export async function upsertTemplate(
     templateId: string;
   }>
 > {
-  console.log(input);
   try {
-    const validation = await validateAccess(input.id || "");
+    const validation = await validateAccess(input.id);
     if (!validation.allowed) {
       return ActionResponses.unauthorized();
     }
 
-    if (validation?.template?._count.submissions || 0 > 0) {
+    if (
+      validation?.template?.submissions.length &&
+      validation.template.submissions.length > 0
+    ) {
       return ActionResponses.badRequest(
         "Cannot edit form with existing submissions",
       );
     }
 
     const contentFile = input.content.get("content") as File | null;
+
+    if (!input.id && !contentFile) {
+      return ActionResponses.badRequest("Content must be provided!", "content");
+    }
+
     const contentBase64 = contentFile
       ? Buffer.from(await contentFile.arrayBuffer()).toString("base64")
       : undefined;
-
-    const contentPdf = contentFile
+    const contentPdf = contentBase64
       ? await convertToPdf(input.content)
       : undefined;
     const contentPdfBase64 = contentPdf?.data;
+
+    if (!input.id && !contentPdfBase64) {
+      return ActionResponses.serverError("Failed to convert docx to PDF");
+    }
 
     const result = await prisma.$transaction(
       async (tx) => {
@@ -113,10 +123,13 @@ export async function upsertTemplate(
           : await tx.template.create({
               data: {
                 title: input.title,
-                // If the user's creating a new docuent, then the content would always be present
+                // If the user's creating a new template, then the content would always be present
                 content: contentBase64!,
-                contentPdf: contentPdfBase64,
+                contentPdf: contentPdfBase64!,
                 level: input.level,
+                AdministrativeService: {
+                  connect: { id: input.administrativeServiceId },
+                },
               },
             });
 
@@ -135,31 +148,26 @@ export async function upsertTemplate(
           });
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { _count, ...form } = validation.template!;
+        if (input.fields?.length) {
+          const keepFieldIds = input.fields
+            .map((f) => f.id)
+            .filter((id) => id !== undefined);
 
-        if (form.fields?.length) {
-          if (form.fields?.length) {
-            const keepFieldIds = form.fields
-              .map((f) => f.id)
-              .filter((id) => id !== undefined);
-
-            await tx.field.deleteMany({
-              where: {
-                templateId: form.id,
-                id: { notIn: keepFieldIds },
-              },
-            });
-          }
+          await tx.field.deleteMany({
+            where: {
+              templateId: template.id,
+              id: { notIn: keepFieldIds },
+            },
+          });
 
           await Promise.all(
-            form.fields.map(async (field, index) => {
+            input.fields.map(async (field, index) => {
               const fieldData = {
                 label: field.label,
                 required: field.required,
                 fieldTypeId: field.fieldTypeId,
                 fieldNumber: index + 1,
-                templateId: form?.id || "",
+                templateId: template.id,
               };
 
               const upsertedField = field.id
@@ -194,7 +202,7 @@ export async function upsertTemplate(
       { timeout: 20000, maxWait: 20000 },
     );
 
-    revalidatePath("/admin/template/[id]");
+    revalidatePath("/admin/service/[id]", "layout");
     return ActionResponses.success(result);
   } catch (error) {
     console.error("Error in upsertDocumentForm:", error);

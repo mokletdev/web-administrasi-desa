@@ -1,5 +1,6 @@
 "use client";
 
+import { ConfirmDeletionDialog } from "@/components/dialogs/delete-dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
@@ -14,7 +15,9 @@ import {
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { setSkip } from "../../actions";
+import { deleteTemplate } from "../actions";
 import { CreateTemplateDialog } from "./dialogs";
+import { UpdateTemplateDialog } from "./dialogs/update-template-dialog";
 import { TemplateTable } from "./template-table";
 
 const getLevelAndBelow = (level: AdministrativeLevel) => {
@@ -33,7 +36,14 @@ const returnSkip = (skipDistrict: boolean, skipSubDistrict: boolean) => {
 
 type Service = Prisma.AdministrativeServiceGetPayload<{
   include: {
-    templates: { include: { signs: true; fields: true } };
+    templates: {
+      include: {
+        signs: {
+          include: { Official: { select: { id: true; name: true } } };
+        };
+        fields: { include: { options: true } };
+      };
+    };
     administrativeUnit: true;
   };
 }>;
@@ -75,6 +85,19 @@ export default function TempalateTableGroup({
     DISTRICT: setSkipDistrict,
     SUBDISTRICT: setSkipSubDistrict,
   };
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedRow, setSelectedRow] = useState<
+    Prisma.TemplateGetPayload<{
+      include: {
+        signs: {
+          include: { Official: { select: { id: true; name: true } } };
+        };
+        fields: { include: { options: true } };
+      };
+    }>
+  >();
 
   useEffect(() => {
     setSkipMap({
@@ -162,6 +185,9 @@ export default function TempalateTableGroup({
                       );
                       setCreateOpen(true);
                     }}
+                    setDeleteDialogOpen={setDeleteDialogOpen}
+                    setEditDialogOpen={setEditDialogOpen}
+                    setSelectedRow={setSelectedRow}
                   />
                 </div>
               ),
@@ -175,6 +201,45 @@ export default function TempalateTableGroup({
         fieldTypes={fieldTypes}
         officials={officials}
         serviceId={service.id}
+      />
+      {selectedRow && (
+        <UpdateTemplateDialog
+          open={editDialogOpen}
+          setIsOpen={setEditDialogOpen}
+          adminLevel={selectedAdminLevel!}
+          fieldTypes={fieldTypes}
+          officials={officials}
+          serviceId={service.id}
+          id={selectedRow.id}
+          title={selectedRow.title}
+          content={selectedRow.contentPdf}
+          fields={selectedRow.fields.map(
+            ({ id, label, fieldNumber, fieldTypeId, options }) => ({
+              label: label || undefined,
+              id,
+              fieldNumber,
+              fieldTypeId,
+              options,
+            }),
+          )}
+          signs={selectedRow.signs.map(
+            ({ coordX, coordY, Official, officialId, size }) => ({
+              officialId,
+              officialName: Official.name,
+              coordX,
+              coordY,
+              size,
+            }),
+          )}
+        />
+      )}
+      <ConfirmDeletionDialog
+        id={selectedRow?.id}
+        open={deleteDialogOpen}
+        setIsOpen={setDeleteDialogOpen}
+        description={`Anda akan menghapus Template dengan ID ${selectedRow?.id}. Ini akan secara permanen menghapus data ini
+            dan menghapusnya dari server kami.`}
+        serverAction={deleteTemplate}
       />
     </>
   );

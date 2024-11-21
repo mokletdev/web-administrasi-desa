@@ -60,47 +60,63 @@ type Sign = {
 };
 
 const MAX_FILE_SIZE = 5_000_000;
+const ALLOWED_MIME_TYPES = [
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
+];
 
-export const CreateTemplateDialog: FC<
+export const UpdateTemplateDialog: FC<
   DialogBaseProps & {
     officials: Official[];
     adminLevel: AdministrativeLevel;
     serviceId: string;
     fieldTypes: { id: number; label: string; baseType: BaseFieldType }[];
+
+    id: string;
+    title: string;
+    content: string;
+    signs: Sign[];
+    fields: Field[];
   }
-> = ({ open, setIsOpen, officials, adminLevel, fieldTypes, serviceId }) => {
+> = ({
+  open,
+  setIsOpen,
+  officials,
+  adminLevel,
+  fieldTypes,
+  serviceId,
+
+  id,
+  title: presetTitle,
+  content: contentBase64,
+  signs: presetSigns,
+  fields: presetFields,
+}) => {
   const createTemplateSchema = useMemo(
     () =>
       z.object({
         title: z.string().min(1),
         content: z
-          .instanceof(FileList, { message: "Please upload a file." })
-          .refine((files) => {
-            if (!files) return false;
-            return files.length !== 0;
-          }, "Template harus diupload!")
-          .refine((files) => {
-            if (!files) return true;
-            // Select only the first file
-            const file = files[0];
-            // If file size exceed the maximum limit, then throw error
-            return !file || file?.size <= MAX_FILE_SIZE;
-          }, `Maximum file size is 15MB`)
-          .refine((files) => {
-            if (!files) return true;
-            // Select only the first file
-            const file = files[0];
-            // If file's extension is not allowed, then throw error
-            return (
-              file?.type ===
-              "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            );
-          }),
+          .union([
+            z.instanceof(FileList), // Valid if it's a FileList
+            z.literal(undefined), // Valid if it's undefined (optional input)
+          ])
+          .refine(
+            (files) =>
+              !files || files.length === 0 || files[0]?.size <= MAX_FILE_SIZE,
+            { message: "Maximum file size is 15MB." },
+          )
+          .refine(
+            (files) =>
+              !files ||
+              files.length === 0 ||
+              ALLOWED_MIME_TYPES.includes(files[0]?.type || ""),
+            { message: "Invalid file type. Only .docx files are allowed." },
+          ),
       }),
     [],
   );
   const form = useZodForm({
-    defaultValues: { title: "" },
+    defaultValues: { title: presetTitle },
     schema: createTemplateSchema,
   });
   const { toast, dismiss } = useToast();
@@ -109,10 +125,10 @@ export const CreateTemplateDialog: FC<
 
   const content = form.watch("content");
 
-  const [preview, setPreview] = useState<string>();
+  const [preview, setPreview] = useState<string>(contentBase64);
   const [previewPageNumber, setPreviewPageNumber] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewLoading, setPreviewLoading] = useState(true);
   const [previewPageCount, setPreviewPageCount] = useState<number>();
   const reactPdfOptions = useMemo(
     () => ({
@@ -124,10 +140,10 @@ export const CreateTemplateDialog: FC<
   );
   const [variablesOpen, setVariablesOpen] = useState(false);
 
-  const [signs, setSigns] = useState<Sign[]>([]);
+  const [signs, setSigns] = useState<Sign[]>(presetSigns);
   const [officialIdToEdit, setOfficialIdToEdit] = useState<string>();
 
-  const [fields, setFields] = useState<Field[]>([]);
+  const [fields, setFields] = useState<Field[]>(presetFields);
 
   useEffect(() => {
     if (signs.length > 0 && officialIdToEdit === undefined) {
@@ -200,9 +216,12 @@ export const CreateTemplateDialog: FC<
     });
 
     const contentFormData = new FormData();
-    contentFormData.append("content", content![0]);
+    content &&
+      content.length > 0 &&
+      contentFormData.append("content", content[0]);
 
     const res = await upsertTemplate({
+      id,
       administrativeServiceId: serviceId,
       title,
       content: contentFormData,
@@ -254,6 +273,7 @@ export const CreateTemplateDialog: FC<
             <FormField
               control={form.control}
               name="title"
+              defaultValue={presetTitle}
               render={({ field }) => (
                 <FormItem className="flex flex-col space-y-1.5">
                   <FormLabel htmlFor="label">Judul Surat</FormLabel>
@@ -343,6 +363,7 @@ export const CreateTemplateDialog: FC<
                           })),
                         );
                       }}
+                      defaultValue={signs.map((sign) => sign.officialId)}
                       value={signs.map((sign) => sign.officialId)}
                       placeholder="Select official for TTE"
                       variant="inverted"
