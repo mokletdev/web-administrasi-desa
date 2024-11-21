@@ -43,9 +43,8 @@ const baseFieldTypeEnum = Object.keys(BaseFieldType);
 
 const createFieldTypeSchema = z
   .object({
-    name: z.string().min(1),
+    label: z.string().min(1),
     placeholder: z.string().optional(),
-    defaultValue: z.string().optional(),
     baseType: z.enum(baseFieldTypeEnum as [string, ...string[]]),
     targetTable: z.string().optional(),
     targetField: z.string().optional(),
@@ -72,9 +71,8 @@ export const CreateFieldTypeDialog: FC<DialogBaseProps> = ({
 }) => {
   const form = useZodForm({
     defaultValues: {
-      name: "",
+      label: "",
       baseType: "",
-      defaultValue: "",
       placeholder: "",
       targetTable: "",
       targetField: "",
@@ -96,17 +94,9 @@ export const CreateFieldTypeDialog: FC<DialogBaseProps> = ({
     });
 
     const data = new FormData();
-    const {
-      name,
-      baseType,
-      defaultValue,
-      placeholder,
-      targetTable,
-      targetField,
-    } = fields;
-    data.append("name", name);
+    const { label, baseType, placeholder, targetTable, targetField } = fields;
+    data.append("label", label);
     data.append("baseType", baseType);
-    defaultValue && !isRelation && data.append("defaultValue", defaultValue);
     placeholder && data.append("placeholder", placeholder);
     targetTable && data.append("targetTable", targetTable);
     targetField && data.append("targetField", targetField);
@@ -175,7 +165,6 @@ export const CreateFieldTypeDialog: FC<DialogBaseProps> = ({
       baseType === "radio"
     ) {
       form.setValue("placeholder", undefined);
-      form.setValue("defaultValue", undefined);
     }
   }, [baseType]);
 
@@ -193,7 +182,7 @@ export const CreateFieldTypeDialog: FC<DialogBaseProps> = ({
             <div className="grid w-full gap-4 py-4">
               <FormField
                 control={form.control}
-                name="name"
+                name="label"
                 render={({ field }) => (
                   <FormItem className="flex flex-col space-y-1.5">
                     <FormLabel htmlFor="label">Nama</FormLabel>
@@ -234,25 +223,6 @@ export const CreateFieldTypeDialog: FC<DialogBaseProps> = ({
                         <FormLabel htmlFor="placeholder">Placeholder</FormLabel>
                         <FormControl>
                           <Input {...field} placeholder="Placeholder input" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
-              {!isRelation &&
-                baseType !== "radio" &&
-                baseType !== "checkbox" && (
-                  <FormField
-                    control={form.control}
-                    name="defaultValue"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col space-y-1.5">
-                        <FormLabel htmlFor="defaultValue">
-                          Default value
-                        </FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="Default value" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

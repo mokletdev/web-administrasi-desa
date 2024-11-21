@@ -18,7 +18,10 @@ import {
   FormInput,
   Home,
   SquareRadical,
+  Network,
   UserCheck,
+  Newspaper,
+  UserRound,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
@@ -34,19 +37,19 @@ export const AdminSidebar = () => {
         icon: Home,
       },
       {
+        title: "Kop Surat",
+        url: "/admin/kop-surat",
+        icon: Newspaper,
+      },
+      {
         title: "Tipe Input",
         url: "/admin/field-type",
         icon: FormInput,
       },
       {
-        title: "Posisi Jabatan",
-        url: "/admin/position",
-        icon: SquareRadical,
-      },
-      {
-        title: "Template Surat",
-        url: "/admin/document",
-        icon: File,
+        title: "Layanan",
+        url: "/admin/service",
+        icon: Network,
       },
       {
         title: "Pejabat",
@@ -57,6 +60,11 @@ export const AdminSidebar = () => {
         title: "Ajuan Surat",
         url: "/admin/submission",
         icon: Folder,
+      },
+      {
+        title: "Profil",
+        url: "/admin/profil",
+        icon: UserRound,
       },
     ],
     [data],
@@ -77,6 +85,12 @@ export const AdminSidebar = () => {
                     !(
                       data?.user?.role === "SUPERADMIN" &&
                       item.title === "Pejabat"
+                    ),
+                )
+                .filter(
+                  (item) =>
+                    !(
+                      data?.user?.role !== "OFFICIAL" && item.title === "Profil"
                     ),
                 )
                 .map((item) => (

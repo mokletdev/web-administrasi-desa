@@ -1,38 +1,62 @@
 import { buttonVariants } from "@/components/ui/button";
+import { getServerSession } from "@/lib/next-auth";
 import prisma from "@/lib/prisma";
-import { roleLevelMap, stringifyDate } from "@/lib/utils";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { DownloadTemplateButton } from "./components/download-template-button";
+import TempalateTableGroup from "./components/template-table-group";
+import { UpdateServiceForm } from "./components/update-service-form";
 
-export default async function DocumentDetail({
+export default async function ServiceDetail({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  if (!id) return notFound();
 
-  const document = await prisma.document.findUnique({
-    where: { id },
-    include: {
-      user: { select: { name: true, email: true } },
-      form: {
-        select: {
-          fields: { include: { fieldType: true, options: true } },
-          submissions: { select: { id: true } },
+  const session = await getServerSession();
+  const { user } = session!;
+
+  const [service, fieldTypes, officials] = await prisma.$transaction([
+    prisma.administrativeService.findUnique({
+      where: { id },
+      include: {
+        templates: { include: { signs: true, fields: true } },
+        administrativeUnit: true,
+      },
+    }),
+    prisma.fieldType.findMany(),
+    prisma.official.findMany({
+      where: {
+        unit: {
+          OR: [
+            { users: { some: { id: user?.id } } },
+            {
+              parents: {
+                some: {
+                  OR: [
+                    { users: { some: { id: user?.id } } },
+                    {
+                      parents: { some: { users: { some: { id: user?.id } } } },
+                    },
+                  ],
+                },
+              },
+            },
+          ],
         },
       },
-    },
-  });
+    }),
+  ]);
 
-  if (!document) return notFound();
+  console.log(officials);
+
+  if (!service) return notFound();
 
   return (
-    <div className="flex flex-col divide-y divide-foreground">
+    <div className="flex flex-col">
       <Link
-        href={"/admin/document"}
+        href={"/admin/service"}
         className={buttonVariants({
           variant: "ghost",
           className: "mb-4 w-fit",
@@ -42,64 +66,18 @@ export default async function DocumentDetail({
         Kembali
       </Link>
       <div className="pb-8">
-        <div className="mb-8 flex flex-col justify-between gap-2 md:flex-row md:items-center">
-          <h1>Template Surat</h1>
-          <DownloadTemplateButton
-            base64={document.content}
-            filename={`${document.title}.docx`}
-          />
+        <div className="flex flex-col gap-y-1.5">
+          <h5 className="font-bold text-black">Lingkup Layanan</h5>
+          <h2 className="mb-4 font-light">
+            {service.administrativeUnit?.name}
+          </h2>
         </div>
-        <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2">
-          <div className="flex flex-col gap-y-1.5">
-            <h5 className="font-bold text-black">Judul Dokumen</h5>
-            <h2 className="mb-4 font-light">{document.title}</h2>
-          </div>
-          <div className="flex flex-col gap-y-1.5">
-            <h5 className="font-bold text-black">Tingkat Dokumen</h5>
-            <h2 className="mb-4 font-light">
-              Tingkat{" "}
-              {roleLevelMap[document.level as keyof typeof roleLevelMap]}
-            </h2>
-          </div>
-          <div className="flex flex-col gap-y-1.5">
-            <h5 className="font-bold text-black">Dibuat Pada</h5>
-            <h2 className="mb-4 font-light">
-              {stringifyDate(document.createdAt)}
-            </h2>
-          </div>
-          <div className="flex flex-col gap-y-1.5">
-            <h5 className="font-bold text-black">Dibuat Oleh</h5>
-            <div>
-              <h2 className="font-light">{document.user.name}</h2>
-              <p>({document.user.email})</p>
-            </div>
-          </div>
-          <div className="flex flex-col gap-y-1.5">
-            <h5 className="font-bold text-black">Jumlah Input</h5>
-            <h2 className="font-light">{document.form?.fields.length} Buah</h2>
-          </div>
-          <div className="flex flex-col gap-y-1.5">
-            <h5 className="font-bold text-black">Jumlah Pengiriman</h5>
-            <h2 className="font-light">
-              {document.form?.submissions.length} Buah
-            </h2>
-          </div>
-        </div>
-      </div>
-      <div className="pt-8">
-        <h1 className="mb-8">Data-data yang diperlukan</h1>
-        <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2">
-          {document.form?.fields.map((field) => (
-            <div key={field.id} className="flex flex-col gap-y-1.5">
-              <h5 className="font-bold text-black">
-                {field.fieldNumber}. {field.label}
-              </h5>
-              <h2 className="mb-4 font-light">
-                {field.fieldType.name} ({field.fieldType.baseType}){" "}
-              </h2>
-            </div>
-          ))}
-        </div>
+        <UpdateServiceForm name={service.name} id={service.id} />
+        <TempalateTableGroup
+          officials={officials}
+          service={service}
+          fieldTypes={fieldTypes}
+        />
       </div>
     </div>
   );

@@ -13,7 +13,7 @@ model AdministrativeUnit {
   administrativeLevel AdministrativeLevel
   parents             AdministrativeUnit[] @relation("ParentChild")
   children            AdministrativeUnit[] @relation("ParentChild")
-  letterhead          String?
+  letterhead          String?              @db.LongText
 
   officials Official[]
   users     User[]
@@ -31,23 +31,29 @@ model AdministrativeService {
   createdBy   User     @relation(fields: [createdById], references: [id])
 
   templates            Template[]
-  administrativeUnit   AdministrativeUnit? @relation(fields: [administrativeUnitId], references: [id])
-  administrativeUnitId String?
+  administrativeUnit   AdministrativeUnit @relation(fields: [administrativeUnitId], references: [id])
+  administrativeUnitId String
+  ServiceRequest       ServiceRequest[]
 }
 
 model ServiceRequest {
-  id     String @id @default(uuid())
+  id     String  @id @default(uuid())
   status String
+  name   String  @default("Surat")
+  done   Boolean @default(false)
+
+  admnistrativeService    AdministrativeService? @relation(fields: [administrativeServiceId], references: [id])
+  administrativeServiceId String?
+  createdAt               DateTime               @default(now())
 
   user        User         @relation(fields: [userId], references: [id])
-  submissions Submission[]
   userId      String
+  submissions Submission[]
 }
 
 model Official {
-  id         String @id @default(uuid())
-  positionId Int
-  name       String
+  id   String @id @default(uuid())
+  name String
 
   user                 User?               @relation(fields: [userId], references: [id])
   userId               String?             @unique
@@ -55,17 +61,16 @@ model Official {
   administrativeUnitId String?
   signRequests         SignRequest[]
   Sign                 Sign[]
-
-  @@index([positionId])
 }
 
 model Template {
-  id        String              @id @default(uuid())
-  title     String
-  content   String              @db.LongText
-  createdAt DateTime            @default(now())
-  updatedAt DateTime            @updatedAt
-  level     AdministrativeLevel
+  id         String              @id @default(uuid())
+  title      String
+  content    String              @db.LongText
+  contentPdf String?             @db.LongText
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+  level      AdministrativeLevel
 
   signs                   Sign[]
   AdministrativeService   AdministrativeService? @relation(fields: [administrativeServiceId], references: [id])
@@ -90,13 +95,14 @@ model Sign {
 }
 
 model SignRequest {
-  id        String @id @default(uuid())
-  signedPdf String @db.LongText
+  id        String   @id @default(uuid())
+  signedPdf String   @db.LongText
+  signedAt  DateTime
 
   submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
-  Official     Official?  @relation(fields: [officialId], references: [id])
+  official     Official   @relation(fields: [officialId], references: [id])
   submissionId String     @db.Char(36)
-  officialId   String?
+  officialId   String
 }
 
 model FieldRelation {
@@ -121,7 +127,7 @@ model FieldType {
 model Field {
   id          Int               @id @default(autoincrement()) @map("field_id")
   label       String?
-  required    Boolean?          @default(false)
+  required    Boolean?          @default(true)
   template    Template          @relation(fields: [templateId], references: [id], onDelete: Cascade)
   templateId  String
   options     FieldOption[] // For radio/checkbox options
@@ -149,12 +155,12 @@ model Submission {
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
   signedPdf   String?        @db.LongText
-  unsignedPdf String         @db.LongText
+  unsignedPdf String?        @db.LongText
 
   fields           SubmissionField[]
   approvals        Approval[]
   signRequests     SignRequest[]
-  serviceRequest   ServiceRequest?   @relation(fields: [serviceRequestId], references: [id])
+  serviceRequest   ServiceRequest?   @relation(fields: [serviceRequestId], references: [id], onDelete: Cascade)
   serviceRequestId String?
   user             User?             @relation(fields: [userId], references: [id])
   userId           String?

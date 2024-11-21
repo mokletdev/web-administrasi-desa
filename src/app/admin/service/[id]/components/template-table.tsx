@@ -20,7 +20,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Position } from "@prisma/client";
+import { divisionLevelMap } from "@/lib/utils";
+import { Prisma } from "@prisma/client";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -34,51 +35,43 @@ import {
   useReactTable,
   VisibilityState,
 } from "@tanstack/react-table";
+import { format } from "date-fns";
 import {
   ArrowUpDown,
   ChevronDown,
+  File,
   MoreHorizontal,
   Pencil,
   Trash,
 } from "lucide-react";
-import { FC, useMemo, useState } from "react";
-import { deletePosition } from "../actions";
-import { CreatePositionDialog, UpdatePositionDialog } from "./dialogs";
-import { divisionLevelMap } from "@/lib/utils";
+import Link from "next/link";
+import { FC, MouseEventHandler, useMemo, useState } from "react";
+import { deleteTemplate } from "../actions";
 
-export const PositionTable: FC<{
-  positions: Position[];
-}> = ({ positions }) => {
+type Template = Prisma.TemplateGetPayload<{
+  select: {
+    id: true;
+    createdAt: true;
+    title: true;
+    level: true;
+  };
+}>;
+
+export const TemplateTable: FC<{
+  templates: Template[];
+  buttonOnClick: MouseEventHandler<HTMLButtonElement>;
+}> = ({ templates, buttonOnClick }) => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  const [selectedRow, setSelectedRow] = useState<Position | null>(null);
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [selectedRow, setSelectedRow] = useState<Template>();
 
-  const columns: ColumnDef<Position>[] = useMemo(
-    (): ColumnDef<Position>[] => [
-      {
-        accessorKey: "id",
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="outline"
-              onClick={() =>
-                column.toggleSorting(column.getIsSorted() === "asc")
-              }
-            >
-              ID
-              <ArrowUpDown />
-            </Button>
-          );
-        },
-        cell: ({ row }) => <div>{row.getValue("id")}</div>,
-        enableSorting: true,
-      },
+  const columns: ColumnDef<Template>[] = useMemo(
+    (): ColumnDef<Template>[] => [
       {
         accessorKey: "title",
         header: ({ column }) => {
@@ -89,12 +82,13 @@ export const PositionTable: FC<{
                 column.toggleSorting(column.getIsSorted() === "asc")
               }
             >
-              Nama Posisi
+              Nama Template
               <ArrowUpDown />
             </Button>
           );
         },
         cell: ({ row }) => <div>{row.getValue("title")}</div>,
+        accessorFn: (row) => row.title,
         enableSorting: true,
       },
       {
@@ -107,11 +101,12 @@ export const PositionTable: FC<{
                 column.toggleSorting(column.getIsSorted() === "asc")
               }
             >
-              Tingkat Jabatan
+              Tingkat
               <ArrowUpDown />
             </Button>
           );
         },
+        accessorFn: (row) => row.level,
         cell: ({ row }) => (
           <div>
             {
@@ -120,6 +115,26 @@ export const PositionTable: FC<{
               ]
             }
           </div>
+        ),
+        enableSorting: true,
+      },
+      {
+        accessorKey: "createdAt",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="outline"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              Dibuat pada
+              <ArrowUpDown />
+            </Button>
+          );
+        },
+        cell: ({ row }) => (
+          <div>{format(row.getValue("createdAt"), "yyyy-MM-dd HH:mm")}</div>
         ),
         enableSorting: true,
       },
@@ -137,6 +152,12 @@ export const PositionTable: FC<{
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <Link href={`/admin/service/${row.original.id}`}>
+                  <DropdownMenuItem>
+                    <File size={16} />
+                    Detail
+                  </DropdownMenuItem>
+                </Link>
                 <DropdownMenuItem
                   onClick={() => {
                     setSelectedRow(row.original);
@@ -166,7 +187,7 @@ export const PositionTable: FC<{
   );
 
   const table = useReactTable({
-    data: positions,
+    data: templates,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -189,7 +210,7 @@ export const PositionTable: FC<{
       <div className="w-full">
         <div className="flex items-center justify-between py-4">
           <Input
-            placeholder="Filter by nama posisi..."
+            placeholder="Filter by judul..."
             value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
             onChange={(event) =>
               table.getColumn("title")?.setFilterValue(event.target.value)
@@ -223,10 +244,7 @@ export const PositionTable: FC<{
                   })}
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button
-              variant={"default"}
-              onClick={() => setCreateDialogOpen(true)}
-            >
+            <Button variant={"default"} onClick={buttonOnClick}>
               Tambah
             </Button>
           </div>
@@ -282,25 +300,13 @@ export const PositionTable: FC<{
           </Table>
         </div>
       </div>
-
-      {/* Dialogues */}
       <ConfirmDeletionDialog
+        id={selectedRow?.id}
         open={deleteDialogOpen}
         setIsOpen={setDeleteDialogOpen}
-        description={`Anda akan menghapus Posisi dengan ID ${selectedRow?.id}. Aksi
-            ini tidak bisa di undo. Ini akan secara permanen menghapus data ini
+        description={`Anda akan menghapus Template dengan ID ${selectedRow?.id}. Ini akan secara permanen menghapus data ini
             dan menghapusnya dari server kami.`}
-        serverAction={deletePosition}
-        id={selectedRow?.id}
-      />
-      <UpdatePositionDialog
-        open={editDialogOpen}
-        setIsOpen={setEditDialogOpen}
-        positionData={selectedRow}
-      />
-      <CreatePositionDialog
-        open={createDialogOpen}
-        setIsOpen={setCreateDialogOpen}
+        serverAction={deleteTemplate}
       />
     </>
   );

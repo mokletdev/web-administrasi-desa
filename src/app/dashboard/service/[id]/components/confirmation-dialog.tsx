@@ -19,11 +19,11 @@ import { submitForm } from "../../actions";
 export const ConfirmationDialog: FC<
   DialogBaseProps & {
     userId: string;
-    formId: string;
+    serviceId: string;
     answers: { name: string; value: string }[];
     setLoading: Dispatch<SetStateAction<boolean>>;
   }
-> = ({ open, setIsOpen, userId, formId, answers, setLoading }) => {
+> = ({ open, setIsOpen, userId, serviceId, answers, setLoading }) => {
   const { toast, dismiss } = useToast();
   const router = useRouter();
 
@@ -51,7 +51,7 @@ export const ConfirmationDialog: FC<
 
               const submissionResult = await submitForm({
                 userId,
-                formId,
+                serviceId,
                 answers,
               });
 

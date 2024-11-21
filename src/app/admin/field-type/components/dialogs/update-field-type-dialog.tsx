@@ -43,9 +43,8 @@ const baseFieldTypeEnum = Object.keys(BaseFieldType);
 
 const updateFieldTypeSchema = z
   .object({
-    name: z.string().min(1),
+    label: z.string().min(1),
     placeholder: z.string().optional(),
-    defaultValue: z.string().optional(),
     baseType: z.enum(baseFieldTypeEnum as [string, ...string[]]),
     targetTable: z.string().optional(),
     targetField: z.string().optional(),
@@ -76,15 +75,11 @@ export const UpdateFieldTypeDialog: FC<
   const form = useZodForm({
     values: fieldTypeData
       ? {
-          name: fieldTypeData.name,
+          label: fieldTypeData.label,
           placeholder:
             fieldTypeData.placeholder === null
               ? undefined
               : fieldTypeData.placeholder,
-          defaultValue:
-            fieldTypeData.defaultValue === null
-              ? undefined
-              : fieldTypeData.defaultValue,
           baseType: fieldTypeData.baseType,
           targetTable: fieldTypeData.relation?.targetTable,
           targetField: fieldTypeData.relation?.targetField,
@@ -106,18 +101,10 @@ export const UpdateFieldTypeDialog: FC<
 
     const data = new FormData();
     const { id } = fieldTypeData!;
-    const {
-      name,
-      baseType,
-      defaultValue,
-      placeholder,
-      targetTable,
-      targetField,
-    } = fields;
+    const { label, baseType, placeholder, targetTable, targetField } = fields;
     data.append("id", id.toString());
-    data.append("name", name);
+    data.append("label", label);
     data.append("baseType", baseType);
-    defaultValue && !isRelation && data.append("defaultValue", defaultValue);
     placeholder && data.append("placeholder", placeholder);
     targetTable && data.append("targetTable", targetTable);
     targetField && data.append("targetField", targetField);
@@ -195,7 +182,7 @@ export const UpdateFieldTypeDialog: FC<
             <div className="grid w-full gap-4 py-4">
               <FormField
                 control={form.control}
-                name="name"
+                name="label"
                 render={({ field }) => (
                   <FormItem className="flex flex-col space-y-1.5">
                     <FormLabel htmlFor="label">Nama</FormLabel>
@@ -242,42 +229,6 @@ export const UpdateFieldTypeDialog: FC<
                     )}
                   />
                 )}
-              {!isRelation &&
-                baseType !== "radio" &&
-                baseType !== "checkbox" && (
-                  <FormField
-                    control={form.control}
-                    name="defaultValue"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col space-y-1.5">
-                        <FormLabel htmlFor="defaultValue">
-                          Default value
-                        </FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="Default value" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
-              {!isRelation && (
-                <FormField
-                  control={form.control}
-                  name="defaultValue"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col space-y-1.5">
-                      <FormLabel htmlFor="defaultValue">
-                        Default value
-                      </FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Default value" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
               {isRelation && (
                 <>
                   <FormField
