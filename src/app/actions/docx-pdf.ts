@@ -82,7 +82,9 @@ export async function validateMimeType(file: File) {
   }
 }
 
-export async function convertToPdfV1(file: Blob): Promise<ActionResponse> {
+export async function convertToPdfV1(
+  file: Blob,
+): Promise<ActionResponse<string>> {
   try {
     const formData = new FormData();
     formData.append(

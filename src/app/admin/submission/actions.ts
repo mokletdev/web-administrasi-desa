@@ -3,18 +3,17 @@
 import { getServerSession } from "@/lib/next-auth";
 import prisma from "@/lib/prisma";
 import { ActionResponse, ActionResponses } from "@/types/actions";
-import { Prisma } from "@prisma/client";
+import { AdministrativeLevel, Prisma } from "@prisma/client";
+
+type Submission = Prisma.SubmissionGetPayload<{
+  include: {
+    approvals: true;
+    signRequests: true;
+  };
+}>[];
 
 export const getSubmissionsForOfficial = async (): Promise<
-  ActionResponse<
-    Prisma.SubmissionGetPayload<{
-      include: {
-        approvals: true;
-        signRequests: true;
-        form: { select: { document: { select: { title: true } } } };
-      };
-    }>[]
-  >
+  ActionResponse<Submission>
 > => {
   try {
     const session = await getServerSession();
@@ -27,13 +26,12 @@ export const getSubmissionsForOfficial = async (): Promise<
 
     const submissions = await prisma.submission.findMany({
       where: {
-        signRequests: { some: { userId: user.id } },
+        template: { signs: { some: { Official: { user: { id: user.id } } } } },
         status: "READY_FOR_SIGNATURE",
       },
       include: {
         approvals: true,
         signRequests: true,
-        form: { select: { document: { select: { title: true } } } },
       },
       orderBy: {
         createdAt: "desc",
@@ -49,11 +47,9 @@ export const getSubmissionsForOfficial = async (): Promise<
 
 export const getSubmissions = async (): Promise<
   ActionResponse<
-    Prisma.SubmissionGetPayload<{
+    Prisma.ServiceRequestGetPayload<{
       include: {
-        approvals: true;
-        signRequests: true;
-        form: { select: { document: { select: { title: true } } } };
+        submissions: true;
       };
     }>[]
   >
@@ -69,137 +65,44 @@ export const getSubmissions = async (): Promise<
 
     const userLevel = await prisma.user.findUnique({
       where: { id: user.id },
-      select: { cityId: true, subDistrictId: true, districtId: true },
+      select: { unit: true },
     });
 
-    const submissions = await prisma.submission.findMany({
+    const submissions = await prisma.serviceRequest.findMany({
       where: {
-        OR: [
-          // CITY level: requires both DISTRICT and SUBDISTRICT approval
-          {
-            AND: [
-              // Check if submission has signs required at CITY level
+        admnistrativeService: {
+          administrativeUnit: {
+            OR: [
+              { administrativeLevel: userLevel?.unit?.administrativeLevel },
               {
-                form: {
-                  document: {
-                    signs: {
-                      some: {
-                        position: {
-                          level: "CITY",
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-              // Check if all lower level admins have approved
-              {
-                signRequests: {
-                  every: {
-                    AND: [
+                parents: {
+                  some: {
+                    OR: [
                       {
-                        status: "SIGNED",
-                        user: {
-                          OR: [
-                            {
-                              role: "DISTRICT_ADMIN",
-                            },
-                            {
-                              role: "SUBDISTRICT_ADMIN",
-                            },
-                          ],
+                        administrativeLevel:
+                          userLevel?.unit?.administrativeLevel,
+                      },
+                      {
+                        parents: {
+                          some: {
+                            administrativeLevel:
+                              userLevel?.unit?.administrativeLevel,
+                          },
                         },
                       },
                     ],
                   },
                 },
               },
-              {
-                cityId: userLevel?.cityId,
-              },
             ],
           },
-
-          // DISTRICT level: requires SUBDISTRICT approval
-          {
-            AND: [
-              // Check if submission has signs required at DISTRICT level
-              {
-                form: {
-                  document: {
-                    signs: {
-                      some: {
-                        position: {
-                          level: "DISTRICT",
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-              // Check if subdistrict admin has approved
-              {
-                signRequests: {
-                  every: {
-                    status: "SIGNED",
-                    user: {
-                      role: "SUBDISTRICT_ADMIN",
-                    },
-                  },
-                },
-              },
-              {
-                districtId: userLevel?.districtId,
-              },
-            ],
-          },
-
-          // SUBDISTRICT level: no lower level approval needed
-          {
-            AND: [
-              {
-                form: {
-                  document: {
-                    signs: {
-                      some: {
-                        position: {
-                          level: "SUBDISTRICT",
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-              {
-                subDistrictId: userLevel?.subDistrictId,
-              },
-            ],
-          },
-
-          // Check user's administrative access
-          {
-            OR: [
-              {
-                user: {
-                  id: user.id,
-                  role: {
-                    in: ["CITY_ADMIN", "DISTRICT_ADMIN", "SUBDISTRICT_ADMIN"],
-                  },
-                },
-              },
-            ],
-          },
-        ],
+        },
       },
       include: {
-        approvals: true,
-        signRequests: true,
-        form: { select: { document: { select: { title: true } } } },
-      },
-      orderBy: {
-        createdAt: "desc",
+        submissions: true,
       },
     });
+
     return ActionResponses.success(submissions);
   } catch (error) {
     console.error("Error getting requests:", error);
@@ -208,8 +111,9 @@ export const getSubmissions = async (): Promise<
 };
 
 export const handleApproval = async (
-  submissionId: string,
+  serviceRequestId: string,
   status: "ACCEPT" | "REJECT",
+  registerNumber: string,
 ): Promise<ActionResponse<{ id: string }>> => {
   try {
     const session = await getServerSession();
@@ -220,52 +124,26 @@ export const handleApproval = async (
 
     const { user } = session;
 
-    let approval = await prisma.approval.findFirst({
-      where: { submissionId, approvedById: user.id },
+    const userDb = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { unit: { select: { administrativeLevel: true } } },
     });
 
-    if (!approval) {
-      approval = await prisma.approval.create({
-        data: {
-          approvedById: user.id,
-          submissionId,
-          status: status === "ACCEPT" ? "APPROVED" : "REJECTED",
-        },
-      });
-    } else {
-      await prisma.approval.update({
-        where: { id: approval.id },
-        data: { status: status === "ACCEPT" ? "APPROVED" : "REJECTED" },
-      });
-    }
-
-    const signs = await prisma.sign.findMany({
-      include: { position: { select: { level: true } } },
-      where: {
-        document: { form: { submissions: { some: { id: submissionId } } } },
+    const request = await prisma.serviceRequest.findUnique({
+      where: { id: serviceRequestId },
+      include: {
+        submissions: { where: { template: { level: userDb?.unit as any } } },
       },
     });
-    const approvals = await prisma.approval.findMany({
-      select: { approvedBy: { select: { role: true } } },
-      where: { submissionId, status: { in: ["APPROVED", "REJECTED"] } },
+
+    const submissionsId = request?.submissions.map((item) => ({ id: item.id }));
+
+    await prisma.submission.updateMany({
+      where: { OR: submissionsId },
+      data: { status: status === "ACCEPT" ? "APPROVED" : "REJECTED" },
     });
 
-    const notApproved =
-      signs.findIndex(
-        (sign) =>
-          approvals.findIndex((approve) =>
-            approve.approvedBy?.role.includes(sign.position.level),
-          ) === -1,
-      ) !== -1;
-
-    if (!notApproved) {
-      await prisma.submission.update({
-        where: { id: submissionId },
-        data: { status: "READY_FOR_SIGNATURE" },
-      });
-    }
-
-    return ActionResponses.success({ id: approval.id });
+    return ActionResponses.success({ id: serviceRequestId });
   } catch (error) {
     console.error("Error getting requests:", error);
     return ActionResponses.serverError();

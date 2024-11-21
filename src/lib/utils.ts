@@ -32,6 +32,29 @@ export const stringifyDate = (date: Date) => {
   return `${month} ${day}, ${year}`;
 };
 
+export function formatDate(date: Date): string {
+  const namaBulan = [
+    "Januari",
+    "Februari",
+    "Maret",
+    "April",
+    "Mei",
+    "Juni",
+    "Juli",
+    "Agustus",
+    "September",
+    "Oktober",
+    "November",
+    "Desember",
+  ];
+
+  const tanggal = date.getDate();
+  const bulan = namaBulan[date.getMonth()];
+  const tahun = date.getFullYear();
+
+  return `${tanggal} ${bulan} ${tahun}`;
+}
+
 export const divisionLevelMap = {
   CITY: "Kabupaten/Kota",
   DISTRICT: "Kecamatan",

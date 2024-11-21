@@ -4,7 +4,7 @@ import { ActionResponse, ActionResponses } from "@/types/actions";
 
 interface ESignParams {
   file: Buffer;
-  halaman: "PERTAMA" | "TERAKHIR";
+  halaman: string;
   imageTTD?: string;
   height: string;
   width: string;
