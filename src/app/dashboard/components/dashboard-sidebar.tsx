@@ -11,21 +11,31 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
-import { File, Home, NotepadText } from "lucide-react";
+import { File, Home, NotepadText, ChevronRight, Dot } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
+import { getUserServices } from "../actions";
+import { useEffect, useState } from "react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+} from "@/components/ui/tooltip";
+import { TooltipTrigger } from "@radix-ui/react-tooltip";
 
 const items = [
   {
     title: "Beranda",
     url: "/dashboard",
     icon: Home,
-  },
-  {
-    title: "Persuratan",
-    url: "/dashboard/document",
-    icon: File,
   },
   {
     title: "Riwayat Pengajuan",
@@ -35,6 +45,17 @@ const items = [
 ];
 
 export const DashboardSidebar = () => {
+  const [services, setServices] = useState<Array<{ id: string; name: string }>>(
+    [],
+  );
+  useEffect(() => {
+    const fetchData = async () => {
+      const fetch = await getUserServices();
+      if (fetch.success) setServices(fetch.data!);
+    };
+
+    fetchData();
+  }, []);
   return (
     <Sidebar>
       <SidebarContent>
@@ -54,6 +75,49 @@ export const DashboardSidebar = () => {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+            </SidebarMenu>
+            <SidebarMenu>
+              <Collapsible className="group/collapsible">
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton>
+                      <File />
+                      <span>Pengajuan Surat</span>
+                      <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      <SidebarMenuSubItem>
+                        <TooltipProvider>
+                          {services.length > 0 ? (
+                            services.map((item) => (
+                              <Tooltip key={item.id}>
+                                <TooltipTrigger className="w-full">
+                                  <SidebarMenuButton asChild>
+                                    <Link
+                                      href={`/dashboard/service/${item.id}`}
+                                      className="text-clip"
+                                    >
+                                      <Dot />
+                                      <span>{item.name}</span>
+                                    </Link>
+                                  </SidebarMenuButton>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <span>{item.name}</span>
+                                </TooltipContent>
+                              </Tooltip>
+                            ))
+                          ) : (
+                            <span>Tidak Ditemukan</span>
+                          )}
+                        </TooltipProvider>
+                      </SidebarMenuSubItem>
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

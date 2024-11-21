@@ -33,15 +33,22 @@ model AdministrativeService {
   templates            Template[]
   administrativeUnit   AdministrativeUnit @relation(fields: [administrativeUnitId], references: [id])
   administrativeUnitId String
+  ServiceRequest       ServiceRequest[]
 }
 
 model ServiceRequest {
-  id     String @id @default(uuid())
+  id     String  @id @default(uuid())
   status String
+  name   String  @default("Surat")
+  done   Boolean @default(false)
+
+  admnistrativeService    AdministrativeService? @relation(fields: [administrativeServiceId], references: [id])
+  administrativeServiceId String?
+  createdAt               DateTime               @default(now())
 
   user        User         @relation(fields: [userId], references: [id])
-  submissions Submission[]
   userId      String
+  submissions Submission[]
 }
 
 model Official {
@@ -148,12 +155,12 @@ model Submission {
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
   signedPdf   String?        @db.LongText
-  unsignedPdf String         @db.LongText
+  unsignedPdf String?        @db.LongText
 
   fields           SubmissionField[]
   approvals        Approval[]
   signRequests     SignRequest[]
-  serviceRequest   ServiceRequest?   @relation(fields: [serviceRequestId], references: [id])
+  serviceRequest   ServiceRequest?   @relation(fields: [serviceRequestId], references: [id], onDelete: Cascade)
   serviceRequestId String?
   user             User?             @relation(fields: [userId], references: [id])
   userId           String?

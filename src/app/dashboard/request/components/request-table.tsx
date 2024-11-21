@@ -6,6 +6,9 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -32,33 +35,49 @@ import {
   VisibilityState,
 } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { ArrowUpDown, ChevronDown, Download } from "lucide-react";
+import {
+  ArrowUpDown,
+  ChevronDown,
+  CircleSlash,
+  Download,
+  FileDown,
+  MoreHorizontal,
+} from "lucide-react";
 import { FC, useMemo, useState } from "react";
-import { deleteSubmission } from "../../document/actions";
-import { downloadFile, submissionStatusMap } from "@/lib/utils";
+import { deleteSubmission } from "../../service/actions";
+import { cn, downloadFile, submissionStatusMap } from "@/lib/utils";
 
-type Submission = Prisma.SubmissionGetPayload<{
+type ServiceRequest = Prisma.ServiceRequestGetPayload<{
   select: {
     id: true;
     status: true;
     createdAt: true;
-    form: { select: { document: { select: { title: true } } } };
+    done: true;
+    name: true;
+    submissions: {
+      select: {
+        id: true;
+        signedPdf: true;
+        status: true;
+        template: { select: { title: true } };
+      };
+    };
   };
 }>;
 
 export const RequestHistoryTable: FC<{
-  submissions: Submission[];
-}> = ({ submissions }) => {
+  serviceRequests: ServiceRequest[];
+}> = ({ serviceRequests }) => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedRow, setSelectedRow] = useState<Submission>();
+  const [selectedRow, setSelectedRow] = useState<ServiceRequest>();
 
-  const columns: ColumnDef<Submission>[] = useMemo(
-    (): ColumnDef<Submission>[] => [
+  const columns: ColumnDef<ServiceRequest>[] = useMemo(
+    (): ColumnDef<ServiceRequest>[] => [
       {
         id: "index",
 
@@ -69,12 +88,7 @@ export const RequestHistoryTable: FC<{
         enableSorting: true,
       },
       {
-        id: "title",
-        accessorFn: ({
-          form: {
-            document: { title },
-          },
-        }) => title,
+        id: "name",
         header: ({ column }) => {
           return (
             <Button
@@ -88,7 +102,7 @@ export const RequestHistoryTable: FC<{
             </Button>
           );
         },
-        cell: ({ row }) => <div>{row.original.form.document.title}</div>,
+        cell: ({ row }) => <div>{row.original.name}</div>,
         enableSorting: true,
         enableColumnFilter: true,
       },
@@ -128,50 +142,45 @@ export const RequestHistoryTable: FC<{
           );
         },
         cell: ({ row }) => (
-          <div>
-            {
-              submissionStatusMap[
-                row.getValue("status") as keyof typeof submissionStatusMap
-              ]
-            }
-          </div>
+          <div>{row.original.done ? "Selesai" : row.getValue("status")}</div>
         ),
         enableSorting: true,
       },
       {
         id: "actions",
         header: ({}) => {
-          return <Button variant="outline">Aksi</Button>;
+          return <Button variant="outline">Download</Button>;
         },
         cell: ({ row }) => {
           return (
-            <div className="flex items-center gap-2">
-              {row.original.status === "APPROVED" && (
-                <Button
-                  variant={"default"}
-                  onClick={() => {
-                    downloadFile(
-                      "/api/download-doc/" + row.original.id,
-                      `${row.original.form.document.title}`,
-                    );
-                  }}
-                >
-                  Download
-                  <Download size={16} />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                  <span className="sr-only">Open menu</span>
+                  <MoreHorizontal className="h-4 w-4" />
                 </Button>
-              )}
-              {row.original.status === "PENDING_APPROVAL" && (
-                <Button
-                  onClick={() => {
-                    setSelectedRow(row.original);
-                    setDeleteDialogOpen(true);
-                  }}
-                  variant={"destructive"}
-                >
-                  Batalkan
-                </Button>
-              )}
-            </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Download Surat</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {row.original.submissions.map((item) => {
+                  return (
+                    <DropdownMenuItem
+                      key={item.id}
+                      onClick={() => {}}
+                      disabled={item.status !== "SIGNED"}
+                    >
+                      {item.status === "SIGNED" ? (
+                        <FileDown />
+                      ) : (
+                        <CircleSlash />
+                      )}
+                      <span>{item.template.title}</span>
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
           );
         },
         enableHiding: false,
@@ -181,7 +190,7 @@ export const RequestHistoryTable: FC<{
   );
 
   const table = useReactTable({
-    data: submissions,
+    data: serviceRequests,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -205,9 +214,9 @@ export const RequestHistoryTable: FC<{
         <div className="flex items-center justify-between py-4">
           <Input
             placeholder="Filter by judul..."
-            value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
+            value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
             onChange={(event) =>
-              table.getColumn("title")?.setFilterValue(event.target.value)
+              table.getColumn("name")?.setFilterValue(event.target.value)
             }
             className="max-w-sm"
           />
