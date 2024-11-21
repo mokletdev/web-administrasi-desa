@@ -21,6 +21,7 @@ import {
   Network,
   UserCheck,
   Newspaper,
+  UserRound,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
@@ -60,6 +61,11 @@ export const AdminSidebar = () => {
         url: "/admin/submission",
         icon: Folder,
       },
+      {
+        title: "Profil",
+        url: "/admin/profil",
+        icon: UserRound,
+      },
     ],
     [data],
   );
@@ -79,6 +85,12 @@ export const AdminSidebar = () => {
                     !(
                       data?.user?.role === "SUPERADMIN" &&
                       item.title === "Pejabat"
+                    ),
+                )
+                .filter(
+                  (item) =>
+                    !(
+                      data?.user?.role !== "OFFICIAL" && item.title === "Profil"
                     ),
                 )
                 .map((item) => (
