@@ -4,14 +4,21 @@ import { RequestHistoryTable } from "./components/request-table";
 
 export default async function RequestsHistory() {
   const session = await getServerSession();
-  const submissions = await prisma.submission.findMany({
+  const serviceRequests = await prisma.serviceRequest.findMany({
     where: { userId: session?.user?.id },
     select: {
       id: true,
       status: true,
       createdAt: true,
-      form: {
-        select: { document: { select: { title: true } } },
+      done: true,
+      name: true,
+      submissions: {
+        select: {
+          id: true,
+          signedPdf: true,
+          status: true,
+          template: { select: { title: true } },
+        },
       },
     },
   });
@@ -25,7 +32,7 @@ export default async function RequestsHistory() {
           anda lakukan pada laman pengajuan surat.
         </p>
       </div>
-      <RequestHistoryTable submissions={submissions} />
+      <RequestHistoryTable serviceRequests={serviceRequests} />
     </>
   );
 }

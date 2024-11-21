@@ -81,3 +81,29 @@ export async function validateMimeType(file: File) {
     throw new Error("Invalid file type. Please upload a DOCX file.");
   }
 }
+
+export async function convertToPdfV1(file: Blob): Promise<ActionResponse> {
+  try {
+    const formData = new FormData();
+    formData.append(
+      "file",
+      new File([file], "Surat.docx", { type: file.type }),
+    );
+
+    const response = await fetch("https://pdf.benspace.xyz/", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error(`PDF conversion failed: ${response.statusText}`);
+    }
+
+    const pdfBuffer = await response.arrayBuffer();
+    const base64 = Buffer.from(pdfBuffer).toString("base64");
+    return ActionResponses.success(base64);
+  } catch (error) {
+    console.log("Error in convertToPdfV1:", error);
+    return ActionResponses.serverError();
+  }
+}
