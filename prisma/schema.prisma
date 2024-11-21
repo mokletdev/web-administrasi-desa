@@ -95,13 +95,14 @@ model Sign {
 }
 
 model SignRequest {
-  id        String @id @default(uuid())
-  signedPdf String @db.LongText
+  id        String   @id @default(uuid())
+  signedPdf String   @db.LongText
+  signedAt  DateTime
 
   submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
-  Official     Official?  @relation(fields: [officialId], references: [id])
+  official     Official   @relation(fields: [officialId], references: [id])
   submissionId String     @db.Char(36)
-  officialId   String?
+  officialId   String
 }
 
 model FieldRelation {
@@ -126,7 +127,7 @@ model FieldType {
 model Field {
   id          Int               @id @default(autoincrement()) @map("field_id")
   label       String?
-  required    Boolean?          @default(false)
+  required    Boolean?          @default(true)
   template    Template          @relation(fields: [templateId], references: [id], onDelete: Cascade)
   templateId  String
   options     FieldOption[] // For radio/checkbox options
