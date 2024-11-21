@@ -24,10 +24,10 @@ const RequiredMark: FC = () => {
 };
 
 export const DynamicForm: FC<{
-  fields: Field[];
-  formId: string;
+  fields: Array<Field & { variableName: string }>;
+  serviceId: string;
   userId: string;
-}> = ({ fields, formId, userId }) => {
+}> = ({ fields, serviceId, userId }) => {
   const {
     control,
     handleSubmit,
@@ -49,8 +49,9 @@ export const DynamicForm: FC<{
     return setConfirmationOpen(true);
   });
 
-  const renderField = (field: Field) => {
-    const { id, fieldType, label, required, options } = field;
+  const renderField = (field: Field & { variableName: string }) => {
+    const { id, fieldType, required, options, variableName } = field;
+    const label = field.label ?? field.fieldType.label;
 
     switch (fieldType.baseType) {
       case "text":
@@ -63,10 +64,10 @@ export const DynamicForm: FC<{
               {required && <RequiredMark />}
             </Label>
             <Controller
-              name={id.toString()}
+              name={variableName}
               control={control}
               rules={{
-                required,
+                required: required ?? false,
                 // validate: (value) => validateField(validations, value),
               }}
               defaultValue={""}
@@ -90,10 +91,10 @@ export const DynamicForm: FC<{
               {required && <RequiredMark />}
             </Label>
             <Controller
-              name={id.toString()}
+              name={variableName}
               control={control}
               rules={{
-                required,
+                required: required ?? false,
                 // validate: (value) => validateField(validations, value),
               }}
               defaultValue={""}
@@ -115,9 +116,9 @@ export const DynamicForm: FC<{
               {required && <RequiredMark />}
             </Label>
             <Controller
-              name={id.toString()}
+              name={variableName}
               control={control}
-              rules={{ required }}
+              rules={{ required: required ?? false }}
               render={({ field }) => (
                 <RadioGroup
                   onValueChange={field.onChange}
@@ -154,7 +155,7 @@ export const DynamicForm: FC<{
             {options?.map((option) => (
               <div key={option.id} className="my-2 flex items-center gap-x-2">
                 <Controller
-                  name={id.toString()}
+                  name={variableName}
                   control={control}
                   defaultValue={[]}
                   render={({ field }) => {
@@ -186,7 +187,6 @@ export const DynamicForm: FC<{
         );
 
       case "relation":
-        // TODO: Handle autofill and auto-complete by relation
         return (
           <InputContainer key={field.id}>
             <Label>
@@ -194,10 +194,10 @@ export const DynamicForm: FC<{
               {required && <RequiredMark />}
             </Label>
             <Controller
-              name={id.toString()}
+              name={variableName}
               control={control}
               rules={{
-                required,
+                required: required ?? false,
                 // validate: (value) => validateField(validations, value),
               }}
               defaultValue={""}
@@ -265,7 +265,7 @@ export const DynamicForm: FC<{
         open={confirmationOpen}
         setIsOpen={setConfirmationOpen}
         setLoading={setLoading}
-        formId={formId}
+        serviceId={serviceId}
         userId={userId}
         answers={answers}
       />

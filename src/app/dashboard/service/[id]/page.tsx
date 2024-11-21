@@ -5,6 +5,7 @@ import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { getServerSession } from "@/lib/next-auth";
+import { normalizeVariableName } from "@/lib/utils";
 
 export default async function RequestDocument({
   params,
@@ -14,16 +15,29 @@ export default async function RequestDocument({
   const { id } = await params;
   if (!id) return notFound();
 
-  const form = await prisma.form.findUnique({
-    where: { documentId: id },
-    select: {
-      id: true,
-      fields: { include: { options: true, fieldType: true } },
-      document: { select: { title: true } },
+  const service = await prisma.administrativeService.findUnique({
+    where: { id },
+    include: {
+      templates: {
+        include: { fields: { include: { options: true, fieldType: true } } },
+      },
     },
   });
 
-  if (!form) return notFound();
+  if (!service) return notFound();
+
+  const fields = service.templates
+    .map((item) => item.fields)
+    .flat()
+    .map((item) => ({
+      ...item,
+      variableName: normalizeVariableName(item.label ?? item.fieldType.label),
+    }));
+
+  const filteredFields = fields.filter(
+    (value, index, self) =>
+      index === self.findIndex((t) => t.variableName === value.variableName),
+  );
 
   const session = await getServerSession();
 
@@ -41,9 +55,9 @@ export default async function RequestDocument({
           Kembali
         </Link>
         <div className="flex flex-col gap-y-2">
-          <h1>Pengajuan Pembuatan {form.document.title}</h1>
+          <h1>Pengajuan Pembuatan {service.name}</h1>
           <p>
-            Untuk mengajukan pembuatan {form.document.title}, anda perlu mengisi
+            Untuk mengajukan pembuatan {service.name}, anda perlu mengisi
             kolom-kolom dibawah ini. Pastikan data yang anda isi sesuai agar
             menghindari ketidaksesuaian data yang akan ditinjau nantinya. Kolom
             yang wajib diisi ditandai dengan simbol{" "}
@@ -52,8 +66,8 @@ export default async function RequestDocument({
         </div>
       </div>
       <DynamicForm
-        fields={form.fields}
-        formId={form.id}
+        fields={filteredFields}
+        serviceId={service.id}
         userId={session?.user?.id!}
       />
     </>
