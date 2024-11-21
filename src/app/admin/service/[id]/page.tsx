@@ -1,4 +1,5 @@
 import { buttonVariants } from "@/components/ui/button";
+import { getServerSession } from "@/lib/next-auth";
 import prisma from "@/lib/prisma";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -13,7 +14,10 @@ export default async function ServiceDetail({
 }) {
   const { id } = await params;
 
-  const [service, fieldTypes] = await prisma.$transaction([
+  const session = await getServerSession();
+  const { user } = session!;
+
+  const [service, fieldTypes, officials] = await prisma.$transaction([
     prisma.administrativeService.findUnique({
       where: { id },
       include: {
@@ -22,7 +26,30 @@ export default async function ServiceDetail({
       },
     }),
     prisma.fieldType.findMany(),
+    prisma.official.findMany({
+      where: {
+        unit: {
+          OR: [
+            { users: { some: { id: user?.id } } },
+            {
+              parents: {
+                some: {
+                  OR: [
+                    { users: { some: { id: user?.id } } },
+                    {
+                      parents: { some: { users: { some: { id: user?.id } } } },
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+        },
+      },
+    }),
   ]);
+
+  console.log(officials);
 
   if (!service) return notFound();
 
@@ -46,7 +73,11 @@ export default async function ServiceDetail({
           </h2>
         </div>
         <UpdateServiceForm name={service.name} id={service.id} />
-        <TempalateTableGroup service={service} fieldTypes={fieldTypes} />
+        <TempalateTableGroup
+          officials={officials}
+          service={service}
+          fieldTypes={fieldTypes}
+        />
       </div>
     </div>
   );

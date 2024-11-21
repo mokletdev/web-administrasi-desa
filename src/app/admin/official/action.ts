@@ -50,7 +50,7 @@ export default async function upsertOfficial(
   }
 }
 
-export async function deleteOfficial(id: any) {
+export async function deleteOfficial(id: string) {
   try {
     const tryDeleteOfficial = await prisma.official.delete({
       where: {

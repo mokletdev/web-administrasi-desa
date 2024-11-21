@@ -93,9 +93,9 @@ model SignRequest {
   signedAt  DateTime
 
   submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
-  Official     Official?  @relation(fields: [officialId], references: [id])
+  official     Official   @relation(fields: [officialId], references: [id])
   submissionId String     @db.Char(36)
-  officialId   String?
+  officialId   String
 }
 
 model FieldRelation {

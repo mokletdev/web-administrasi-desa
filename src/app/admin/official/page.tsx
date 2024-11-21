@@ -1,6 +1,6 @@
 import { getServerSession } from "@/lib/next-auth";
 import prisma from "@/lib/prisma";
-import { Official, Prisma, User } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { notFound } from "next/navigation";
 import { OfficialTable } from "./components/official-table";
 

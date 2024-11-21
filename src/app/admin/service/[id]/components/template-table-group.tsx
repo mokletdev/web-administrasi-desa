@@ -4,7 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { divisionLevelMap, skipLevelMap } from "@/lib/utils";
-import { AdministrativeLevel, FieldType, Prisma, Skip } from "@prisma/client";
+import {
+  AdministrativeLevel,
+  FieldType,
+  Official,
+  Prisma,
+  Skip,
+} from "@prisma/client";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { setSkip } from "../../actions";
@@ -25,7 +31,7 @@ const returnSkip = (skipDistrict: boolean, skipSubDistrict: boolean) => {
   else return undefined;
 };
 
-type ServiceType = Prisma.AdministrativeServiceGetPayload<{
+type Service = Prisma.AdministrativeServiceGetPayload<{
   include: {
     templates: { include: { signs: true; fields: true } };
     administrativeUnit: true;
@@ -33,10 +39,12 @@ type ServiceType = Prisma.AdministrativeServiceGetPayload<{
 }>;
 
 export default function TempalateTableGroup({
+  officials,
   service,
   fieldTypes,
 }: {
-  service: ServiceType;
+  officials: Official[];
+  service: Service;
   fieldTypes: FieldType[];
 }) {
   const { dismiss, toast } = useToast();
@@ -165,6 +173,8 @@ export default function TempalateTableGroup({
         setIsOpen={setCreateOpen}
         adminLevel={selectedAdminLevel!}
         fieldTypes={fieldTypes}
+        officials={officials}
+        serviceId={service.id}
       />
     </>
   );

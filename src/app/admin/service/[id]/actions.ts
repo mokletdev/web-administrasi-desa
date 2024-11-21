@@ -1,3 +1,5 @@
+"use server";
+
 import { ActionResponse, ActionResponses } from "@/types/actions";
 import { getServerSession } from "next-auth";
 import prisma from "@/lib/prisma";
@@ -67,13 +69,14 @@ const validateAccess = async (templateId: string) => {
   return { allowed: true, user: session.user };
 };
 
-export async function upsertDocumentForm(
+export async function upsertTemplate(
   input: UpsertTemplateParams & { content: FormData }, // formData is only used to retrieve DOCX files.
 ): Promise<
   ActionResponse<{
     templateId: string;
   }>
 > {
+  console.log(input);
   try {
     const validation = await validateAccess(input.id || "");
     if (!validation.allowed) {
@@ -92,9 +95,9 @@ export async function upsertDocumentForm(
       : undefined;
 
     const contentPdf = contentFile
-      ? await convertToPdf(Buffer.from(await contentFile.arrayBuffer()))
+      ? await convertToPdf(input.content)
       : undefined;
-    const contentPdfBase64 = contentPdf?.data?.toString("base64");
+    const contentPdfBase64 = contentPdf?.data;
 
     const result = await prisma.$transaction(
       async (tx) => {
@@ -132,6 +135,7 @@ export async function upsertDocumentForm(
           });
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { _count, ...form } = validation.template!;
 
         if (form.fields?.length) {
@@ -195,5 +199,24 @@ export async function upsertDocumentForm(
   } catch (error) {
     console.error("Error in upsertDocumentForm:", error);
     return ActionResponses.serverError("Failed to save document and form");
+  }
+}
+
+export async function deleteTemplate(id: string) {
+  try {
+    const tryDeleteOfficial = await prisma.template.delete({
+      where: {
+        id,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    revalidatePath("/admin/service/[id]");
+    return ActionResponses.success({ id: tryDeleteOfficial.id });
+  } catch (e) {
+    console.error(e);
+    return ActionResponses.serverError();
   }
 }

@@ -100,7 +100,7 @@ const FileField = React.forwardRef<HTMLInputElement, FileInputProps>(
           htmlFor={name}
           className={cn(
             "relative w-full cursor-pointer rounded-lg border-2 border-dashed px-6 py-4 transition-all duration-300 hover:cursor-pointer hover:border-solid focus:outline-none",
-            errorMessage ? "border-primary-400" : "border-neutral-400",
+            errorMessage ? "border-destructive" : "border-input",
           )}
           onDrop={handleDrop}
           onDragOver={handleDragOver}

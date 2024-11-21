@@ -1,5 +1,6 @@
 "use client";
 
+import { ConfirmDeletionDialog } from "@/components/dialogs/delete-dialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -45,6 +46,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { FC, MouseEventHandler, useMemo, useState } from "react";
+import { deleteTemplate } from "../actions";
 
 type Template = Prisma.TemplateGetPayload<{
   select: {
@@ -66,6 +68,7 @@ export const TemplateTable: FC<{
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedRow, setSelectedRow] = useState<Template>();
 
   const columns: ColumnDef<Template>[] = useMemo(
     (): ColumnDef<Template>[] => [
@@ -157,6 +160,7 @@ export const TemplateTable: FC<{
                 </Link>
                 <DropdownMenuItem
                   onClick={() => {
+                    setSelectedRow(row.original);
                     setEditDialogOpen(true);
                   }}
                 >
@@ -166,6 +170,7 @@ export const TemplateTable: FC<{
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => {
+                    setSelectedRow(row.original);
                     setDeleteDialogOpen(true);
                   }}
                 >
@@ -295,6 +300,14 @@ export const TemplateTable: FC<{
           </Table>
         </div>
       </div>
+      <ConfirmDeletionDialog
+        id={selectedRow?.id}
+        open={deleteDialogOpen}
+        setIsOpen={setDeleteDialogOpen}
+        description={`Anda akan menghapus Template dengan ID ${selectedRow?.id}. Ini akan secara permanen menghapus data ini
+            dan menghapusnya dari server kami.`}
+        serverAction={deleteTemplate}
+      />
     </>
   );
 };
