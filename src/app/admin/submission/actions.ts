@@ -100,8 +100,6 @@ export const getSubmissions = async (): Promise<ActionResponse<Submission>> => {
       select: { unit: true },
     });
 
-    console.log(userLevel);
-
     const submissions = await prisma.serviceRequest.findMany({
       where: {
         levelNow: userLevel?.unit?.administrativeLevel,

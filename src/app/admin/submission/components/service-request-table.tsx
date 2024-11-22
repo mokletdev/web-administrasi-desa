@@ -203,12 +203,12 @@ export const ServiceRequestTable: FC<{
                 })}
                 <DropdownMenuSeparator />
                 <DropdownMenuLabel>Persetujuan</DropdownMenuLabel>
-                <DropdownMenuItem>
-                  <Link href={`/submission/${row.original.id}`}>
+                <Link href={`/admin/submission/${row.original.id}`}>
+                  <DropdownMenuItem>
                     <File />
                     <span>Detail</span>
-                  </Link>
-                </DropdownMenuItem>
+                  </DropdownMenuItem>
+                </Link>
                 <DropdownMenuItem
                   onClick={() => {
                     setApprovalDialogOpen(true);

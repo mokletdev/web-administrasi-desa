@@ -22,8 +22,6 @@ export default async function SubmissionPage() {
       ? await getSubmissionsForOfficial()
       : await getSubmissions();
 
-  const isOfficial = Boolean(user.official);
-
   return (
     <>
       <div className="mb-8 flex flex-col gap-2">
