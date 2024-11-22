@@ -19,8 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { submissionStatusMap } from "@/lib/utils";
-import { Prisma, User } from "@prisma/client";
+import { Prisma, UserRole } from "@prisma/client";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -37,87 +36,62 @@ import {
 import { format } from "date-fns";
 import {
   ArrowUpDown,
-  ChevronDown,
-  MoreHorizontal,
   Check,
+  ChevronDown,
+  CircleSlash,
+  FileDown,
+  MoreHorizontal,
   X,
-  Eye,
 } from "lucide-react";
 import { FC, useMemo, useState } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
-import { handleApproval, handleSign } from "../actions";
+import { ConfirmRejectionDialog } from "./dialog/confirm-rejection-dialog";
+import { ParaphraseOrRegisterNumberDialog } from "./dialog/paraphrase-or-register-number-dialog";
 
-type Submission = Prisma.SubmissionGetPayload<{
-  include: {
-    approvals: true;
-    signRequests: true;
-    form: { select: { document: { select: { title: true } } } };
+type ServiceRequest = Prisma.ServiceRequestGetPayload<{
+  select: {
+    id: true;
+    status: true;
+    createdAt: true;
+    done: true;
+    name: true;
+    submissions: {
+      select: {
+        id: true;
+        signedPdf: true;
+        status: true;
+        template: { select: { title: true } };
+      };
+    };
   };
 }>;
 
-export const SubmissionTable: FC<{
-  submissions: Submission[];
-  user: User;
-  isOfficial: boolean;
-}> = ({ submissions, user, isOfficial }) => {
-  const { dismiss, toast } = useToast();
-  const router = useRouter();
+export const ServiceRequestTable: FC<{
+  serviceRequests: ServiceRequest[];
+  user: { role: UserRole };
+}> = ({ serviceRequests, user }) => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
-  const onApprovalChange = async (
-    title: string,
-    submissionId: string,
-    status: "REJECT" | "ACCEPT",
-  ) => {
-    const loadingToast = toast({
-      title: "Mengirim...",
-      description: "Permintaan perubahan anda sedang diproses",
-    });
-    const updateOfficialAction = await handleApproval(submissionId, status);
-    if (updateOfficialAction.error) {
-      dismiss(loadingToast.id);
-      return toast({
-        title: "Gagal Mengubah!",
-        description: `Gagal mengubah data surat dengan judul ${title} (${updateOfficialAction.error.message})`,
-      });
-    }
+  const [selectedRow, setSelectedRow] = useState<ServiceRequest>();
+  // Paraphrase or register number dialog
+  const [approvalDialogOpen, setApprovalDialogOpen] = useState(false);
+  const [rejectionDialogOpen, setRejectionDialogOpen] = useState(false);
 
-    dismiss(loadingToast.id);
-    toast({
-      title: "Berhasil Mengubah!",
-      description: `Berhasil mengubah data tipe input dengan judul ${title}`,
-    });
-    return router.refresh();
-  };
-
-  const columns: ColumnDef<Submission>[] = useMemo(
-    (): ColumnDef<Submission>[] => [
+  const columns: ColumnDef<ServiceRequest>[] = useMemo(
+    (): ColumnDef<ServiceRequest>[] => [
       {
-        accessorKey: "createdAt",
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="outline"
-              onClick={() =>
-                column.toggleSorting(column.getIsSorted() === "asc")
-              }
-            >
-              Dikirim Pada
-              <ArrowUpDown />
-            </Button>
-          );
+        id: "index",
+
+        header: ({}) => {
+          return <Button variant="outline">Nomor</Button>;
         },
-        cell: ({ row }) => (
-          <div>{format(row.getValue("createdAt"), "yyyy-MM-dd HH:mm")}</div>
-        ),
+        cell: ({ row }) => <div>{row.index + 1}</div>,
         enableSorting: true,
       },
       {
-        accessorKey: "title",
+        id: "name",
         header: ({ column }) => {
           return (
             <Button
@@ -131,8 +105,28 @@ export const SubmissionTable: FC<{
             </Button>
           );
         },
-        cell: ({ row }) => <div>{row.original.form.document.title}</div>,
-        accessorFn: (row) => row.form.document.title,
+        cell: ({ row }) => <div>{row.original.name}</div>,
+        enableSorting: true,
+        enableColumnFilter: true,
+      },
+      {
+        accessorKey: "createdAt",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="outline"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              Diajukan Pada
+              <ArrowUpDown />
+            </Button>
+          );
+        },
+        cell: ({ row }) => (
+          <div>{format(row.getValue("createdAt"), "yyyy-MM-dd HH:mm")}</div>
+        ),
         enableSorting: true,
       },
       {
@@ -145,108 +139,82 @@ export const SubmissionTable: FC<{
                 column.toggleSorting(column.getIsSorted() === "asc")
               }
             >
-              Status Pengajuan
+              Status
               <ArrowUpDown />
             </Button>
           );
         },
         cell: ({ row }) => (
-          <div>
-            {
-              submissionStatusMap[
-                row.original.status as keyof typeof submissionStatusMap
-              ]
-            }
-          </div>
+          <div>{row.original.done ? "Selesai" : row.getValue("status")}</div>
         ),
         enableSorting: true,
       },
       {
         id: "actions",
-        enableHiding: false,
+        header: ({}) => {
+          return <Button variant="outline">Aksi</Button>;
+        },
         cell: ({ row }) => {
           return (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="h-8 w-8 p-0">
                   <span className="sr-only">Open menu</span>
-                  <MoreHorizontal />
+                  <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuLabel>Download Surat</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {row.original.submissions.map((item) => {
+                  return (
+                    <DropdownMenuItem
+                      key={item.id}
+                      // TODO: Implement onClick
+                      onClick={() => {}}
+                      disabled={item.status !== "SIGNED"}
+                    >
+                      {item.status === "SIGNED" ? (
+                        <FileDown />
+                      ) : (
+                        <CircleSlash />
+                      )}
+                      <span>{item.template.title}</span>
+                    </DropdownMenuItem>
+                  );
+                })}
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>Persetujuan</DropdownMenuLabel>
                 <DropdownMenuItem
                   onClick={() => {
-                    window.open("/api/download-doc/" + row.original.id);
+                    setApprovalDialogOpen(true);
+                    setSelectedRow(row.original);
                   }}
                 >
-                  <Eye size={16} />
-                  Preview
+                  <Check />
+                  <span>Approve</span>
                 </DropdownMenuItem>
-                {!isOfficial ? (
-                  <>
-                    {row.original.status === "PENDING_APPROVAL" && (
-                      <>
-                        <DropdownMenuItem
-                          onClick={async () => {
-                            await onApprovalChange(
-                              row.original.form.document.title,
-                              row.original.id,
-                              "ACCEPT",
-                            );
-                          }}
-                        >
-                          <Check size={16} />
-                          Setujui
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={async () => {
-                            await onApprovalChange(
-                              row.original.form.document.title,
-                              row.original.id,
-                              "REJECT",
-                            );
-                          }}
-                        >
-                          <X size={16} />
-                          Tolak
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <DropdownMenuItem
-                      onClick={async () => {
-                        await handleSign(row.original.id, "ACCEPT");
-                      }}
-                    >
-                      <Check size={16} />
-                      Tanda Tangani
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={async () => {
-                        await handleSign(row.original.id, "REJECT");
-                      }}
-                    >
-                      <X size={16} />
-                      Tolak
-                    </DropdownMenuItem>
-                  </>
-                )}
+                <DropdownMenuItem
+                  onClick={() => {
+                    setRejectionDialogOpen(true);
+                    setSelectedRow(row.original);
+                  }}
+                >
+                  <X />
+                  <span>Reject</span>
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           );
         },
+        enableHiding: false,
       },
     ],
     [],
   );
 
   const table = useReactTable({
-    data: submissions,
+    data: serviceRequests,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -269,10 +237,10 @@ export const SubmissionTable: FC<{
       <div className="w-full">
         <div className="flex items-center justify-between py-4">
           <Input
-            placeholder="Filter by judul surat..."
-            value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
+            placeholder="Filter by judul..."
+            value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
             onChange={(event) =>
-              table.getColumn("title")?.setFilterValue(event.target.value)
+              table.getColumn("name")?.setFilterValue(event.target.value)
             }
             className="max-w-sm"
           />
@@ -356,26 +324,21 @@ export const SubmissionTable: FC<{
           </Table>
         </div>
       </div>
-
-      {/* Dialogues */}
-      {/* <ConfirmDeletionDialog
-        open={deleteDialogOpen}
-        setIsOpen={setDeleteDialogOpen}
-        description={`Anda akan menghapus Posisi dengan ID ${selectedRow?.id}. Aksi
-            ini tidak bisa di undo. Ini akan secara permanen menghapus data ini
-            dan menghapusnya dari server kami.`}
-        serverAction={deletePosition}
-        id={selectedRow?.id}
-      />
-      <UpdatePositionDialog
-        open={editDialogOpen}
-        setIsOpen={setEditDialogOpen}
-        positionData={selectedRow}
-      />
-      <CreatePositionDialog
-        open={createDialogOpen}
-        setIsOpen={setCreateDialogOpen}
-      /> */}
+      {selectedRow && (
+        <ParaphraseOrRegisterNumberDialog
+          open={approvalDialogOpen}
+          setIsOpen={setApprovalDialogOpen}
+          id={selectedRow.id}
+          isParaphrase={user.role === "OFFICIAL"}
+        />
+      )}
+      {selectedRow && (
+        <ConfirmRejectionDialog
+          open={rejectionDialogOpen}
+          setIsOpen={setRejectionDialogOpen}
+          id={selectedRow.id}
+        />
+      )}
     </>
   );
 };

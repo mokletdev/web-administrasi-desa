@@ -20,8 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { roleLevelMap } from "@/lib/utils";
-import { BaseFieldType, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -44,10 +43,10 @@ import {
   Pencil,
   Trash,
 } from "lucide-react";
-import { FC, useMemo, useState } from "react";
 import Link from "next/link";
-import { CreateServiceDialog } from "./dialogs";
+import { FC, useMemo, useState } from "react";
 import { deleteService } from "../actions";
+import { CreateServiceDialog } from "./dialogs";
 
 type Service = Prisma.AdministrativeServiceGetPayload<{
   select: {
@@ -69,7 +68,6 @@ export const ServiceTable: FC<{
   const [selectedRow, setSelectedRow] = useState<Service | null>(null);
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   const columns: ColumnDef<Service>[] = useMemo(
@@ -151,18 +149,11 @@ export const ServiceTable: FC<{
                     Detail
                   </DropdownMenuItem>
                 </Link>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setEditDialogOpen(true);
-                  }}
-                >
-                  <Pencil size={16} />
-                  Edit
-                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => {
                     setDeleteDialogOpen(true);
+                    setSelectedRow(row.original);
                   }}
                 >
                   <Trash size={16} />

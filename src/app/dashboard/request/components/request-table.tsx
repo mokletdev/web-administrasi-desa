@@ -39,13 +39,11 @@ import {
   ArrowUpDown,
   ChevronDown,
   CircleSlash,
-  Download,
   FileDown,
   MoreHorizontal,
 } from "lucide-react";
 import { FC, useMemo, useState } from "react";
 import { deleteSubmission } from "../../service/actions";
-import { cn, downloadFile, submissionStatusMap } from "@/lib/utils";
 
 type ServiceRequest = Prisma.ServiceRequestGetPayload<{
   select: {
