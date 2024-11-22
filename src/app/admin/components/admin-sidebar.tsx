@@ -29,8 +29,8 @@ import { useMemo } from "react";
 
 export const AdminSidebar = () => {
   const { data } = useSession();
-  const items = useMemo(
-    () => [
+  const items = useMemo(() => {
+    const navItems = [
       {
         title: "Beranda",
         url: "/admin",
@@ -66,9 +66,18 @@ export const AdminSidebar = () => {
         url: "/admin/profil",
         icon: UserRound,
       },
-    ],
-    [data],
-  );
+    ];
+
+    if (data?.user?.role === "OFFICIAL") {
+      // Only include "Ajuan Surat" and "Profil" for OFFICIAL role
+      return navItems.filter(
+        (item) => item.title === "Ajuan Surat" || item.title === "Profil",
+      );
+    }
+
+    // Exclude "Profil" for non-OFFICIAL roles
+    return navItems.filter((item) => item.title !== "Profil");
+  }, [data]);
 
   return (
     <Sidebar>
