@@ -127,6 +127,8 @@ export const UpdateTemplateDialog: FC<
 
   const [preview, setPreview] = useState<string>(contentBase64);
   const [previewPageNumber, setPreviewPageNumber] = useState(1);
+  const [previewMaxWidth, setPreviewMaxWidth] = useState<number>();
+  const [previewMaxHeight, setPreviewMaxHeight] = useState<number>();
   const [loading, setLoading] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(true);
   const [previewPageCount, setPreviewPageCount] = useState<number>();
@@ -414,7 +416,11 @@ export const UpdateTemplateDialog: FC<
                       pageNumber={previewPageNumber}
                       renderAnnotationLayer={false}
                       renderTextLayer={false}
-                      onLoadSuccess={() => setPreviewLoading(false)}
+                      onLoadSuccess={({ originalWidth, originalHeight }) => {
+                        setPreviewMaxHeight(originalHeight);
+                        setPreviewMaxWidth(originalWidth);
+                        setPreviewLoading(false);
+                      }}
                       onRenderError={() => setPreviewLoading(false)}
                     >
                       {signs.map((sign) => (
@@ -482,7 +488,7 @@ export const UpdateTemplateDialog: FC<
                           (sign) => sign.officialId === officialIdToEdit,
                         )!.coordX,
                       ]}
-                      max={592}
+                      max={previewMaxWidth}
                       step={1}
                       onValueChange={(e) =>
                         handleXChange(e[0], officialIdToEdit)
@@ -498,7 +504,7 @@ export const UpdateTemplateDialog: FC<
                           (sign) => sign.officialId === officialIdToEdit,
                         )!.coordY,
                       ]}
-                      max={592}
+                      max={previewMaxHeight}
                       step={1}
                       onValueChange={(e) =>
                         handleYChange(e[0], officialIdToEdit)

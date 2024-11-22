@@ -111,6 +111,8 @@ export const CreateTemplateDialog: FC<
 
   const [preview, setPreview] = useState<string>();
   const [previewPageNumber, setPreviewPageNumber] = useState(1);
+  const [previewMaxWidth, setPreviewMaxWidth] = useState<number>();
+  const [previewMaxHeight, setPreviewMaxHeight] = useState<number>();
   const [loading, setLoading] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewPageCount, setPreviewPageCount] = useState<number>();
@@ -393,7 +395,11 @@ export const CreateTemplateDialog: FC<
                       pageNumber={previewPageNumber}
                       renderAnnotationLayer={false}
                       renderTextLayer={false}
-                      onLoadSuccess={() => setPreviewLoading(false)}
+                      onLoadSuccess={({ originalWidth, originalHeight }) => {
+                        setPreviewMaxHeight(originalHeight);
+                        setPreviewMaxWidth(originalWidth);
+                        setPreviewLoading(false);
+                      }}
                       onRenderError={() => setPreviewLoading(false)}
                     >
                       {signs.map((sign) => (
@@ -442,7 +448,7 @@ export const CreateTemplateDialog: FC<
                 </>
               )}
             </div>
-            {!!officialIdToEdit && (
+            {!!officialIdToEdit && previewMaxWidth && previewMaxHeight && (
               <div className="mb-4 flex flex-col gap-y-4">
                 <p className="mb-2 text-foreground">
                   Edit TTE{" "}
@@ -461,7 +467,7 @@ export const CreateTemplateDialog: FC<
                           (sign) => sign.officialId === officialIdToEdit,
                         )!.coordX,
                       ]}
-                      max={592}
+                      max={previewMaxWidth}
                       step={1}
                       onValueChange={(e) =>
                         handleXChange(e[0], officialIdToEdit)
@@ -477,7 +483,7 @@ export const CreateTemplateDialog: FC<
                           (sign) => sign.officialId === officialIdToEdit,
                         )!.coordY,
                       ]}
-                      max={592}
+                      max={previewMaxHeight}
                       step={1}
                       onValueChange={(e) =>
                         handleYChange(e[0], officialIdToEdit)
