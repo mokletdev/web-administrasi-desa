@@ -3,7 +3,7 @@
 import { ActionResponse, ActionResponses } from "@/types/actions";
 import prisma from "@/lib/prisma";
 import { formatDate, normalizeVariableName } from "@/lib/utils";
-import { PatchType, TextRun, patchDocument } from "docx";
+import { ImageRun, Paragraph, PatchType, TextRun, patchDocument } from "docx";
 
 export async function printDoc(
   submissionId: string,
@@ -13,7 +13,15 @@ export async function printDoc(
       where: { id: submissionId },
       include: {
         fields: { include: { field: { include: { fieldType: true } } } },
-        template: true,
+        template: {
+          include:{
+            AdministrativeService:{
+              include:{
+                administrativeUnit:true
+              }
+            }
+          }
+        },
         signRequests: {
           include: {
             official: {
@@ -30,6 +38,8 @@ export async function printDoc(
       },
     });
 
+    const letterhead = submission?.template.AdministrativeService.administrativeUnit.letterhead
+
     // signs: {
     //   include: {
     //     Official: { include: { unit: { select: { name: true } } } },
@@ -45,7 +55,39 @@ export async function printDoc(
         type: PatchType.PARAGRAPH,
         children: [new TextRun(submission.approvals[0]?.registerNumber || "-")],
       },
+      kop_surat:{
+        type: PatchType.DOCUMENT,
+        children: [
+          new Paragraph({
+            children: [
+              new ImageRun({
+                type: "jpg",
+                data: letterhead!,
+                floating: {
+                  allowOverlap: false,
+                  wrap: {
+                    type: 1,
+                  },
+                  horizontalPosition: {
+                    align: "center",
+                  },
+                  verticalPosition: {
+                    align: "inside",
+                    offset: 100,
+                  },
+                },
+                transformation: {
+                  height: 100,
+                  width: 750,
+                },
+              }),
+            ],
+          }),
+        ],
+      }
     };
+
+    
 
     for (const sign of submission.signRequests) {
       const normal = normalizeVariableName(sign.official?.name ?? "-");
