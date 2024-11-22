@@ -9,7 +9,7 @@ interface ESignParams {
   height: string;
   width: string;
   qrcode: string;
-  reason: string;
+  reason?: string;
   xAxis: string;
   yAxis: string;
   passphrase: string;

@@ -10,6 +10,7 @@ import { Prisma } from "@prisma/client";
 import { FC, ReactNode, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { ConfirmationDialog } from "./confirmation-dialog";
+import FileInput from "./Input";
 
 type Field = Prisma.FieldGetPayload<{
   include: { options: true; fieldType: true };
@@ -36,12 +37,31 @@ export const DynamicForm: FC<{
   const [loading, setLoading] = useState(false);
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [answers, setAnswers] = useState<{ name: string; value: string }[]>([]);
+  const [files, setFiles] = useState<
+    { name: string; value: File | undefined }[]
+  >(
+    fields
+      .filter((j) => j.fieldType.baseType === "file")
+      .map((field) => ({ name: field.variableName, value: undefined })),
+  );
 
   const onSubmit = handleSubmit(async (data) => {
-    const answers = Object.entries(data).map(([key, value]) => ({
+    let answers = Object.entries(data).map(([key, value]) => ({
       name: key,
       value: Array.isArray(value) ? value.join(", ") : value, // Handle checkboxes if needed
     }));
+
+    await Promise.all(
+      files.map(async (file) => {
+        let base64File = Buffer.from(
+          (await file.value?.arrayBuffer())!,
+        ).toString("base64");
+        answers.push({
+          name: file.name,
+          value: `data:${file.value?.type};base64,${base64File}`,
+        });
+      }),
+    );
 
     setAnswers(answers);
 
@@ -209,6 +229,21 @@ export const DynamicForm: FC<{
               </span>
             )}
           </InputContainer>
+        );
+
+      case "file":
+        return (
+          <FileInput
+            key={field.id}
+            fieldName={field.label ?? ""}
+            required={field.required ?? false}
+            accept={["image/png", "image/jpeg"]}
+            centerText="Upload file"
+            id={field.id.toString()}
+            name={field.variableName}
+            files={files}
+            setFiles={setFiles}
+          />
         );
 
       default:
