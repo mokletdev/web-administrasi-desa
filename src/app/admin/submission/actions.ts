@@ -28,6 +28,11 @@ export const getSubmissionsForOfficial = async (): Promise<
 
     const { user } = session;
 
+    const userLevel = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { unit: { select: { administrativeLevel: true } } },
+    });
+
     const submissions = await prisma.serviceRequest.findMany({
       where: {
         submissions: {
@@ -38,6 +43,7 @@ export const getSubmissionsForOfficial = async (): Promise<
           },
         },
         status: "READY_FOR_SIGNATURE",
+        levelNow: userLevel?.unit?.administrativeLevel,
       },
       include: {
         submissions: {
