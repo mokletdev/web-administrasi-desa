@@ -39,10 +39,11 @@ model AdministrativeService {
 }
 
 model ServiceRequest {
-  id     String  @id @default(uuid())
-  status String
-  name   String  @default("Surat")
-  done   Boolean @default(false)
+  id       String              @id @default(uuid())
+  status   String
+  name     String              @default("Surat")
+  done     Boolean             @default(false)
+  levelNow AdministrativeLevel @default(SUBDISTRICT)
 
   admnistrativeService    AdministrativeService? @relation(fields: [administrativeServiceId], references: [id])
   administrativeServiceId String?

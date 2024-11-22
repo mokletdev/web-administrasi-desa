@@ -16,7 +16,7 @@ export async function printDoc(
         template: true,
         signRequests: {
           include: {
-            Official: {
+            official: {
               select: {
                 name: true,
                 user: {
@@ -41,10 +41,6 @@ export async function printDoc(
     const bufferDocx = Buffer.from(submission.template.content, "base64");
 
     let patches: any = {
-      tgl_surat: {
-        type: PatchType.PARAGRAPH,
-        children: [new TextRun(formatDate(new Date()))],
-      },
       no_surat: {
         type: PatchType.PARAGRAPH,
         children: [new TextRun(submission.approvals[0]?.registerNumber || "-")],
@@ -52,20 +48,21 @@ export async function printDoc(
     };
 
     for (const sign of submission.signRequests) {
-      const normal = normalizeVariableName(sign.Official?.name ?? "-");
+      const normal = normalizeVariableName(sign.official?.name ?? "-");
 
       patches[`tte_${normal}`] = {
         type: PatchType.PARAGRAPH,
-        children: [new TextRun(sign.Official?.user?.name ?? "-")],
+        children: [new TextRun(sign.official?.user?.name ?? "-")],
       };
 
-      // patches[`tte_${normal}_tgl`] = {
-      //   type: PatchType.PARAGRAPH,
-      //   children: [new TextRun(formatDate(sign.signedAt))],
-      // };
+      patches[`tte_${normal}_tgl`] = {
+        type: PatchType.PARAGRAPH,
+        children: [new TextRun(formatDate(sign.signedAt))],
+      };
+
       patches[`tte_${normal}_location`] = {
         type: PatchType.PARAGRAPH,
-        children: [new TextRun(sign.Official?.user?.name ?? "Belum TTE")],
+        children: [new TextRun(sign.official?.user?.name ?? "Belum TTE")],
       };
     }
 
@@ -88,7 +85,7 @@ export async function printDoc(
 
     return ActionResponses.success(doc);
   } catch (error) {
-    console.log("Error in printDoc:", printDoc);
+    console.log("Error in printDoc:", error);
     return ActionResponses.serverError();
   }
 }
