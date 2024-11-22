@@ -3,8 +3,7 @@
 import { getServerSession } from "@/lib/next-auth";
 import prisma from "@/lib/prisma";
 import { ActionResponse, ActionResponses } from "@/types/actions";
-import { Prisma, Skip, UserRole } from "@prisma/client";
-import { revalidatePath } from "next/cache";
+import { Skip, UserRole } from "@prisma/client";
 
 export interface DocumentFormInput {
   id?: string;

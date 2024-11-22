@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Prisma, UserRole } from "@prisma/client";
+import { Official, Prisma, UserRole } from "@prisma/client";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -39,6 +39,7 @@ import {
   Check,
   ChevronDown,
   CircleSlash,
+  File,
   FileDown,
   MoreHorizontal,
   X,
@@ -46,6 +47,7 @@ import {
 import { FC, useMemo, useState } from "react";
 import { ConfirmRejectionDialog } from "./dialog/confirm-rejection-dialog";
 import { ParaphraseOrRegisterNumberDialog } from "./dialog/paraphrase-or-register-number-dialog";
+import Link from "next/link";
 
 type ServiceRequest = Prisma.ServiceRequestGetPayload<{
   select: {
@@ -54,6 +56,7 @@ type ServiceRequest = Prisma.ServiceRequestGetPayload<{
     createdAt: true;
     done: true;
     name: true;
+    user: { select: { name: true } };
     submissions: {
       select: {
         id: true;
@@ -67,7 +70,7 @@ type ServiceRequest = Prisma.ServiceRequestGetPayload<{
 
 export const ServiceRequestTable: FC<{
   serviceRequests: ServiceRequest[];
-  user: { role: UserRole };
+  user: { role: UserRole; official: Official | null };
 }> = ({ serviceRequests, user }) => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -106,6 +109,25 @@ export const ServiceRequestTable: FC<{
           );
         },
         cell: ({ row }) => <div>{row.original.name}</div>,
+        enableSorting: true,
+        enableColumnFilter: true,
+      },
+      {
+        id: "requestedBy",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="outline"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              Pengaju
+              <ArrowUpDown />
+            </Button>
+          );
+        },
+        cell: ({ row }) => <div>{row.original.user.name}</div>,
         enableSorting: true,
         enableColumnFilter: true,
       },
@@ -170,21 +192,23 @@ export const ServiceRequestTable: FC<{
                   return (
                     <DropdownMenuItem
                       key={item.id}
-                      // TODO: Implement onClick
-                      onClick={() => {}}
-                      disabled={item.status !== "SIGNED"}
+                      onClick={() => {
+                        window.open("/api/download/" + item.id);
+                      }}
                     >
-                      {item.status === "SIGNED" ? (
-                        <FileDown />
-                      ) : (
-                        <CircleSlash />
-                      )}
+                      <FileDown />
                       <span>{item.template.title}</span>
                     </DropdownMenuItem>
                   );
                 })}
                 <DropdownMenuSeparator />
                 <DropdownMenuLabel>Persetujuan</DropdownMenuLabel>
+                <DropdownMenuItem>
+                  <Link href={`/submission/${row.original.id}`}>
+                    <File />
+                    <span>Detail</span>
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
                     setApprovalDialogOpen(true);
@@ -329,7 +353,7 @@ export const ServiceRequestTable: FC<{
           open={approvalDialogOpen}
           setIsOpen={setApprovalDialogOpen}
           id={selectedRow.id}
-          isParaphrase={user.role === "OFFICIAL"}
+          officialId={user.official !== null ? user.official.id : undefined}
         />
       )}
       {selectedRow && (

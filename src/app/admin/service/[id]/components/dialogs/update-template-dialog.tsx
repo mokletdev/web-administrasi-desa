@@ -57,6 +57,7 @@ type Sign = {
   coordX: number;
   coordY: number;
   size: number;
+  page: number;
 };
 
 const MAX_FILE_SIZE = 5_000_000;
@@ -362,6 +363,7 @@ export const UpdateTemplateDialog: FC<
                             coordX: 0,
                             coordY: 0,
                             size: 42,
+                            page: 1,
                           })),
                         );
                       }}
@@ -423,47 +425,50 @@ export const UpdateTemplateDialog: FC<
                       }}
                       onRenderError={() => setPreviewLoading(false)}
                     >
-                      {signs.map((sign) => (
-                        <TooltipProvider key={sign.officialId}>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <button
-                                className={cn(
-                                  "absolute flex size-5 items-center justify-center rounded-sm border border-input p-2",
-                                  officialIdToEdit === sign.officialId
-                                    ? "bg-foreground"
-                                    : "bg-input",
-                                )}
-                                onClick={() =>
-                                  setOfficialIdToEdit(sign.officialId)
-                                }
-                                style={{
-                                  left: `${sign.coordX}px`,
-                                  bottom: `${sign.coordY}px`,
-                                  width: `${sign.size}px`,
-                                  height: `${sign.size}px`,
-                                }}
-                              >
-                                <p
+                      {signs
+                        .filter((sign) => sign.page === previewPageNumber)
+                        .map((sign) => (
+                          <TooltipProvider key={sign.officialId}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  type="button"
                                   className={cn(
-                                    "line-clamp-1 text-xs",
+                                    "absolute flex size-5 items-center justify-center rounded-sm border border-input p-2",
                                     officialIdToEdit === sign.officialId
-                                      ? "text-background"
-                                      : "text-foreground",
+                                      ? "bg-foreground"
+                                      : "bg-input",
                                   )}
+                                  onClick={() =>
+                                    setOfficialIdToEdit(sign.officialId)
+                                  }
+                                  style={{
+                                    left: `${sign.coordX}px`,
+                                    bottom: `${sign.coordY}px`,
+                                    width: `${sign.size}px`,
+                                    height: `${sign.size}px`,
+                                  }}
                                 >
+                                  <p
+                                    className={cn(
+                                      "line-clamp-1 text-xs",
+                                      officialIdToEdit === sign.officialId
+                                        ? "text-background"
+                                        : "text-foreground",
+                                    )}
+                                  >
+                                    {sign.officialName}
+                                  </p>
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="text-background">
                                   {sign.officialName}
                                 </p>
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p className="text-background">
-                                {sign.officialName}
-                              </p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      ))}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        ))}
                     </Page>
                   </Document>
                 </>
@@ -479,6 +484,31 @@ export const UpdateTemplateDialog: FC<
                   }
                 </p>
                 <div className="flex flex-col gap-y-2">
+                  <div>
+                    <Label htmlFor="page">Halaman</Label>
+                    <Input
+                      name="page"
+                      type="number"
+                      max={previewPageCount}
+                      min={1}
+                      onChange={(e) => {
+                        setSigns((prev) => {
+                          return prev.map((sign) => {
+                            if (sign.officialId === officialIdToEdit) {
+                              return { ...sign, page: Number(e.target.value) };
+                            }
+
+                            return sign;
+                          });
+                        });
+                      }}
+                      value={
+                        signs.find(
+                          (sign) => sign.officialId === officialIdToEdit,
+                        )!.page
+                      }
+                    />
+                  </div>
                   <div>
                     <Label>Posisi X</Label>
                     <Slider

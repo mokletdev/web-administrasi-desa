@@ -223,12 +223,13 @@ export default function TempalateTableGroup({
             }),
           )}
           signs={selectedRow.signs.map(
-            ({ coordX, coordY, Official, officialId, size }) => ({
+            ({ coordX, coordY, Official, officialId, size, page }) => ({
               officialId,
               officialName: Official.name,
               coordX,
               coordY,
               size,
+              page,
             }),
           )}
         />

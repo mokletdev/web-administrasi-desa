@@ -23,27 +23,27 @@ import {
   Form,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { handleApproval } from "../../actions";
+import { handleApproval, handleSign } from "../../actions";
 
 export const ParaphraseOrRegisterNumberDialog: FC<
-  DialogBaseProps & { id: string; isParaphrase: boolean }
-> = ({ open, setIsOpen, id, isParaphrase }) => {
+  DialogBaseProps & { id: string; officialId?: string }
+> = ({ open, setIsOpen, officialId, id }) => {
   const createServiceSchema = useMemo(
     () =>
       z.object({
-        parahpraseOrRegisterNumber: z.string().min(1),
+        paraphraseOrRegisterNumber: z.string().min(1),
       }),
     [],
   );
   const form = useZodForm({
-    values: { parahpraseOrRegisterNumber: "" },
+    values: { paraphraseOrRegisterNumber: "" },
     schema: createServiceSchema,
   });
   const [loading, setLoading] = useState(false);
   const { toast, dismiss } = useToast();
   const router = useRouter();
 
-  const onSubmit = form.handleSubmit(async ({ parahpraseOrRegisterNumber }) => {
+  const onSubmit = form.handleSubmit(async ({ paraphraseOrRegisterNumber }) => {
     setLoading(true);
 
     const loadingToast = toast({
@@ -51,12 +51,26 @@ export const ParaphraseOrRegisterNumberDialog: FC<
       description: "Permintaan penambahan anda sedang diproses",
     });
 
-    if (!isParaphrase) {
-      // Handle non-official approval
+    if (officialId) {
+      // Handle official approval
+      const res = await handleSign(
+        id,
+        "ACCEPT",
+        officialId,
+        paraphraseOrRegisterNumber,
+      );
+
+      if (res.error) {
+        dismiss(loadingToast.id);
+        return toast({
+          title: "Gagal Menambahkan!",
+          description: `Gagal menambah layanan (${res.error.message})`,
+        });
+      }
     }
 
     // If isParaphrase is true, then we'll use another function
-    const res = await handleApproval(id, "ACCEPT", parahpraseOrRegisterNumber);
+    const res = await handleApproval(id, "ACCEPT", paraphraseOrRegisterNumber);
 
     if (res.error) {
       dismiss(loadingToast.id);
@@ -80,7 +94,9 @@ export const ParaphraseOrRegisterNumberDialog: FC<
     <Dialog open={open} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Setujui Permintaan</DialogTitle>
+          <DialogTitle>
+            {officialId ? "Tanda Tangani Permintaan" : "Setujui Permintaan"}
+          </DialogTitle>
           <DialogDescription>
             Setujui permintaan disini. Tekan tombol simpan jika telah selesai.
           </DialogDescription>
@@ -89,17 +105,17 @@ export const ParaphraseOrRegisterNumberDialog: FC<
           <form onSubmit={onSubmit}>
             <FormField
               control={form.control}
-              name="parahpraseOrRegisterNumber"
+              name="paraphraseOrRegisterNumber"
               render={({ field }) => (
                 <FormItem className="flex flex-col space-y-1.5">
-                  <FormLabel htmlFor="parahpraseOrRegisterNumber">
-                    {isParaphrase ? "Parafrase" : "Nomor Registrasi"}
+                  <FormLabel htmlFor="paraphraseOrRegisterNumber">
+                    {officialId ? "Parafrase" : "Nomor Registrasi"}
                   </FormLabel>
                   <FormControl>
                     <Input
                       {...field}
                       placeholder={
-                        isParaphrase ? "Parafrase anda" : "Nomor registrasi"
+                        officialId ? "Parafrase anda" : "Nomor registrasi"
                       }
                     />
                   </FormControl>

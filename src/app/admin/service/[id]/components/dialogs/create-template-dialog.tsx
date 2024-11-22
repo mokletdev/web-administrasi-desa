@@ -57,6 +57,7 @@ type Sign = {
   coordX: number;
   coordY: number;
   size: number;
+  page: number;
 };
 
 const MAX_FILE_SIZE = 5_000_000;
@@ -342,6 +343,7 @@ export const CreateTemplateDialog: FC<
                             coordX: 0,
                             coordY: 0,
                             size: 42,
+                            page: 1,
                           })),
                         );
                       }}
@@ -407,6 +409,7 @@ export const CreateTemplateDialog: FC<
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <button
+                                type="button"
                                 className={cn(
                                   "absolute flex size-5 items-center justify-center rounded-sm border border-input p-2",
                                   officialIdToEdit === sign.officialId
@@ -458,6 +461,30 @@ export const CreateTemplateDialog: FC<
                   }
                 </p>
                 <div className="flex flex-col gap-y-2">
+                  <div>
+                    <Label>Halaman</Label>
+                    <Input
+                      type="number"
+                      max={previewPageCount}
+                      min={1}
+                      onChange={(e) => {
+                        setSigns((prev) => {
+                          return prev.map((sign) => {
+                            if (sign.officialId === officialIdToEdit) {
+                              return { ...sign, page: Number(e.target.value) };
+                            }
+
+                            return sign;
+                          });
+                        });
+                      }}
+                      value={
+                        signs.find(
+                          (sign) => sign.officialId === officialIdToEdit,
+                        )!.page
+                      }
+                    />
+                  </div>
                   <div>
                     <Label>Posisi X</Label>
                     <Slider

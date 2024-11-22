@@ -2,22 +2,25 @@ import { getServerSession } from "@/lib/next-auth";
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { ServiceRequestTable } from "./components/service-request-table";
+import { getSubmissions, getSubmissionsForOfficial } from "./actions";
 
 export default async function SubmissionPage() {
   const session = await getServerSession();
   const { user: sessionUser } = session!;
 
-  const [user, serviceRequests] = await prisma.$transaction([
+  const [user] = await prisma.$transaction([
     prisma.user.findUnique({
       where: { id: sessionUser?.id },
       include: { official: true },
     }),
-    prisma.serviceRequest.findMany({
-      include: { submissions: { include: { template: true } } },
-    }),
   ]);
 
   if (!user) return notFound();
+
+  const serviceRequests =
+    user.role === "OFFICIAL"
+      ? await getSubmissionsForOfficial()
+      : await getSubmissions();
 
   const isOfficial = Boolean(user.official);
 
@@ -31,7 +34,10 @@ export default async function SubmissionPage() {
           earum ipsum tempore!
         </p>
       </div>
-      <ServiceRequestTable serviceRequests={serviceRequests} user={user} />
+      <ServiceRequestTable
+        serviceRequests={serviceRequests.data!}
+        user={user}
+      />
     </>
   );
 }

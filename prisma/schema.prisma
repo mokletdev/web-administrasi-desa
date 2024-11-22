@@ -87,6 +87,7 @@ model Sign {
   coordX Float
   coordY Float
   size   Float
+  page   Int    @default(1)
 
   Official   Official @relation(fields: [officialId], references: [id])
   officialId String
@@ -100,7 +101,7 @@ model Sign {
 model SignRequest {
   id        String   @id @default(uuid())
   signedPdf String   @db.LongText
-  signedAt  DateTime
+  signedAt  DateTime @default(now())
 
   submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
   official     Official   @relation(fields: [officialId], references: [id])
@@ -188,7 +189,7 @@ model SubmissionField {
 model Approval {
   id             String         @id @default(uuid())
   status         ApprovalStatus @default(PENDING)
-  approvedAt     DateTime?
+  approvedAt     DateTime       @default(now())
   registerNumber String?
 
   approvedBy   User?       @relation(fields: [approvedById], references: [id])

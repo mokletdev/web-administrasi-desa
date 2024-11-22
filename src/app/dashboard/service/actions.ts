@@ -97,11 +97,11 @@ export async function submitForm({
       service.skipStep === "SUBDISTRICT"
         ? "KECAMATAN"
         : service.skipStep === "SUBDISTRICT_DISTRICT"
-        ? "Dinas"
-        : "Kelurahan"
+          ? "Dinas"
+          : "Kelurahan"
     }`;
     const serviceRequest = await prisma.serviceRequest.create({
-      data: { userId, status },
+      data: { userId, status, administrativeServiceId: serviceId },
     });
     for (const form of service.templates) {
       // Validate required fields and option values
