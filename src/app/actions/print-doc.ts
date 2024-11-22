@@ -47,6 +47,7 @@ export async function printDoc(
     // },
 
     if (!submission) return ActionResponses.notFound("submission not found");
+    if(!submission.template.AdministrativeService.administrativeUnit.letterhead) return ActionResponses.badRequest("Letterhead unit belum diset!");
 
     const bufferDocx = Buffer.from(submission.template.content, "base64");
 
