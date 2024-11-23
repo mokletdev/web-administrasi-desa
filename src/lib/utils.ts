@@ -43,21 +43,21 @@ export function formatDate(date: Date): string {
 export const divisionLevelMap = {
   CITY: "Kabupaten/Kota",
   DISTRICT: "Kecamatan",
-  SUBDISTRICT: "Kelurahan",
+  SUBDISTRICT: "Pemerintahan Desa",
 };
 
 export const divisionLevelIndex = ["SUBDISTRICT", "DISTRICT", "CITY"] as const;
 
 export const skipLevelMap = {
   DISTRICT: "Kecamatan",
-  SUBDISTRICT: "Kelurahan",
+  SUBDISTRICT: "Pemerintahan Desa",
 };
 
 export const roleLevelMap = {
   CITIZEN: "Penduduk",
   CITY_ADMIN: "Kota",
   DISTRICT_ADMIN: "Kecamatan",
-  SUBDISTRICT_ADMIN: "Kelurahan",
+  SUBDISTRICT_ADMIN: "Pemerintahan Desa",
 };
 
 export const submissionStatusMap = {
