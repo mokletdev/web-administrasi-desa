@@ -90,7 +90,9 @@ export const UserTable: FC<{
         header: ({}) => {
           return <Button variant="outline">Nomor</Button>;
         },
-        cell: ({ row }) => <div>{row.index + 1}</div>,
+        cell: ({ row }) => (
+          <div>{meta.perPage * (meta.currentPage - 1) + row.index + 1}</div>
+        ),
         enableSorting: true,
       },
       {
@@ -220,7 +222,7 @@ export const UserTable: FC<{
         enableHiding: false,
       },
     ],
-    [],
+    [meta],
   );
 
   const table = useReactTable({
@@ -352,8 +354,10 @@ export const UserTable: FC<{
             <Button
               variant="outline"
               size="sm"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
+              onClick={() =>
+                router.push(`/admin/user?page=${meta.currentPage - 1}`)
+              }
+              disabled={meta.currentPage === 1}
             >
               Previous
             </Button>
