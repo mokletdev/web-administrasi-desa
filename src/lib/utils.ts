@@ -55,7 +55,7 @@ export const skipLevelMap = {
 
 export const roleLevelMap = {
   CITIZEN: "Penduduk",
-  CITY_ADMIN: "Kota",
+  CITY_ADMIN: "Kabupaten",
   DISTRICT_ADMIN: "Kecamatan",
   SUBDISTRICT_ADMIN: "Pemerintahan Desa",
 };

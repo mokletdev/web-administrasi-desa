@@ -13,14 +13,13 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import {
-  File,
+  CircleUser,
   Folder,
   FormInput,
   Home,
-  SquareRadical,
   Network,
-  UserCheck,
   Newspaper,
+  UserCheck,
   UserRound,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
@@ -62,9 +61,14 @@ export const AdminSidebar = () => {
         icon: Folder,
       },
       {
+        title: "Pengguna",
+        url: "/admin/user",
+        icon: UserRound,
+      },
+      {
         title: "Profil",
         url: "/admin/profil",
-        icon: UserRound,
+        icon: CircleUser,
       },
     ];
 
@@ -75,7 +79,17 @@ export const AdminSidebar = () => {
       );
     }
 
-    // Exclude "Profil" for non-OFFICIAL roles
+    // Exclude "Profil" and "Pengguna" for non-OFFICIAL roles
+    if (
+      data?.user?.role !== "SUBDISTRICT_ADMIN" &&
+      data?.user?.role !== "SUPERADMIN"
+    ) {
+      return navItems.filter(
+        (item) => item.title !== "Profil" && item.title !== "Pengguna",
+      );
+    }
+
+    // Excclude "Profil" for SUPERADMIN and SUBDISTRICT_ADMIN
     return navItems.filter((item) => item.title !== "Profil");
   }, [data]);
 
