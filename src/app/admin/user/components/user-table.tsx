@@ -19,8 +19,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { divisionLevelMap } from "@/lib/utils";
-import { Prisma } from "@prisma/client";
+import { PaginationMetadata } from "@/lib/paginator";
+import { AdministrativeLevel, Prisma, UserRole } from "@prisma/client";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -34,76 +34,67 @@ import {
   useReactTable,
   VisibilityState,
 } from "@tanstack/react-table";
-import { format } from "date-fns";
 import {
+  ArrowLeft,
+  ArrowRight,
   ArrowUpDown,
   ChevronDown,
-  File,
   MoreHorizontal,
   Pencil,
-  Trash,
 } from "lucide-react";
-import Link from "next/link";
-import {
-  Dispatch,
-  FC,
-  MouseEventHandler,
-  SetStateAction,
-  useMemo,
-  useState,
-} from "react";
+import { useRouter } from "next-nprogress-bar";
+import { FC, useMemo, useState } from "react";
+import { CreateUserDialog } from "./dialogs/create-user-dialog";
+import { UpdateUserDialog } from "./dialogs/update-user-dialog";
 
-type Template = Prisma.TemplateGetPayload<{
-  include: {
-    signs: {
-      include: { Official: { select: { id: true; name: true } } };
-    };
-    fields: { include: { options: true } };
+type User = Prisma.UserGetPayload<{
+  select: {
+    id: true;
+    name: true;
+    NIK: true;
+    email: true;
+    username: true;
+    role: true;
+    unit: { select: { id: true; name: true; administrativeLevel: true } };
   };
 }>;
 
-export const TemplateTable: FC<{
-  templates: Template[];
-  buttonOnClick: MouseEventHandler<HTMLButtonElement>;
-
-  setDeleteDialogOpen: Dispatch<SetStateAction<boolean>>;
-  setEditDialogOpen: Dispatch<SetStateAction<boolean>>;
-  setSelectedRow: Dispatch<SetStateAction<Template | undefined>>;
-}> = ({
-  templates,
-  buttonOnClick,
-  setDeleteDialogOpen,
-  setEditDialogOpen,
-  setSelectedRow,
-}) => {
+export const UserTable: FC<{
+  users: User[];
+  user: {
+    role: UserRole;
+    unit?: {
+      id: string;
+      administrativeLevel: AdministrativeLevel;
+      name: string;
+    };
+  };
+  meta: PaginationMetadata;
+}> = ({ users, user, meta }) => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
-  const columns: ColumnDef<Template>[] = useMemo(
-    (): ColumnDef<Template>[] => [
+  const [selectedRow, setSelectedRow] = useState<User>();
+
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+
+  const router = useRouter();
+
+  const columns: ColumnDef<User>[] = useMemo(
+    (): ColumnDef<User>[] => [
       {
-        accessorKey: "title",
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="outline"
-              onClick={() =>
-                column.toggleSorting(column.getIsSorted() === "asc")
-              }
-            >
-              Nama Template
-              <ArrowUpDown />
-            </Button>
-          );
+        id: "index",
+        header: ({}) => {
+          return <Button variant="outline">Nomor</Button>;
         },
-        cell: ({ row }) => <div>{row.getValue("title")}</div>,
-        accessorFn: (row) => row.title,
+        cell: ({ row }) => <div>{row.index + 1}</div>,
         enableSorting: true,
       },
       {
-        accessorKey: "level",
+        accessorKey: "name",
         header: ({ column }) => {
           return (
             <Button
@@ -112,25 +103,17 @@ export const TemplateTable: FC<{
                 column.toggleSorting(column.getIsSorted() === "asc")
               }
             >
-              Tingkat
+              Nama
               <ArrowUpDown />
             </Button>
           );
         },
-        accessorFn: (row) => row.level,
-        cell: ({ row }) => (
-          <div>
-            {
-              divisionLevelMap[
-                row.getValue("level") as keyof typeof divisionLevelMap
-              ]
-            }
-          </div>
-        ),
+        cell: ({ row }) => <div>{row.getValue("name")}</div>,
         enableSorting: true,
+        enableColumnFilter: true,
       },
       {
-        accessorKey: "createdAt",
+        accessorKey: "NIK",
         header: ({ column }) => {
           return (
             <Button
@@ -139,66 +122,109 @@ export const TemplateTable: FC<{
                 column.toggleSorting(column.getIsSorted() === "asc")
               }
             >
-              Dibuat pada
+              NIK
               <ArrowUpDown />
             </Button>
           );
         },
-        cell: ({ row }) => (
-          <div>{format(row.getValue("createdAt"), "yyyy-MM-dd HH:mm")}</div>
-        ),
+        cell: ({ row }) => <div>{row.getValue("NIK")}</div>,
+        enableSorting: true,
+        enableColumnFilter: true,
+      },
+      {
+        accessorKey: "email",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="outline"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              Email
+              <ArrowUpDown />
+            </Button>
+          );
+        },
+        cell: ({ row }) => <div>{row.getValue("email")}</div>,
+        enableSorting: true,
+        enableColumnFilter: true,
+      },
+      {
+        accessorKey: "username",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="outline"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              Username
+              <ArrowUpDown />
+            </Button>
+          );
+        },
+        cell: ({ row }) => <div>{row.getValue("username")}</div>,
+        enableSorting: true,
+        enableColumnFilter: true,
+      },
+      {
+        accessorKey: "role",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="outline"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              Peran
+              <ArrowUpDown />
+            </Button>
+          );
+        },
+        cell: ({ row }) => <div>{row.getValue("role")}</div>,
         enableSorting: true,
       },
       {
         id: "actions",
-        enableHiding: false,
+        header: ({}) => {
+          return <Button variant="outline">Aksi</Button>;
+        },
         cell: ({ row }) => {
           return (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="h-8 w-8 p-0">
                   <span className="sr-only">Open menu</span>
-                  <MoreHorizontal />
+                  <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <Link href={`/admin/service/${row.original.id}`}>
-                  <DropdownMenuItem>
-                    <File size={16} />
-                    Detail
-                  </DropdownMenuItem>
-                </Link>
+                <DropdownMenuLabel>Aksi</DropdownMenuLabel>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => {
                     setSelectedRow(row.original);
                     setEditDialogOpen(true);
                   }}
                 >
-                  <Pencil size={16} />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => {
-                    setSelectedRow(row.original);
-                    setDeleteDialogOpen(true);
-                  }}
-                >
-                  <Trash size={16} />
-                  Hapus
+                  <Pencil />
+                  <span>Edit</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           );
         },
+        enableHiding: false,
       },
     ],
     [],
   );
 
   const table = useReactTable({
-    data: templates,
+    data: users,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -222,9 +248,9 @@ export const TemplateTable: FC<{
         <div className="flex items-center justify-between py-4">
           <Input
             placeholder="Filter by judul..."
-            value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
+            value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
             onChange={(event) =>
-              table.getColumn("title")?.setFilterValue(event.target.value)
+              table.getColumn("name")?.setFilterValue(event.target.value)
             }
             className="max-w-sm"
           />
@@ -255,7 +281,10 @@ export const TemplateTable: FC<{
                   })}
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button variant={"default"} onClick={buttonOnClick}>
+            <Button
+              variant={"default"}
+              onClick={() => setCreateDialogOpen(true)}
+            >
               Tambah
             </Button>
           </div>
@@ -315,26 +344,68 @@ export const TemplateTable: FC<{
             <Button
               variant="outline"
               size="sm"
+              onClick={() => router.push("/admin/user?page=1")}
+            >
+              <ArrowLeft />
+              <ArrowLeft />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
             >
               Previous
             </Button>
             <span className="text-xs">
-              Page {table.getState().pagination.pageIndex + 1} of{" "}
-              {table.getPageCount()}
+              Page {meta.currentPage} of {meta.lastPage}
             </span>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
+              onClick={() =>
+                router.push(`/admin/user?page=${meta.currentPage + 1}`)
+              }
+              disabled={meta.currentPage === meta.lastPage}
             >
               Next
+            </Button>{" "}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push(`/admin/user?page=${meta.lastPage}`)}
+            >
+              <ArrowRight />
+              <ArrowRight />
             </Button>
           </div>
         </div>
       </div>
+      <CreateUserDialog
+        open={createDialogOpen}
+        setIsOpen={setCreateDialogOpen}
+        user={user}
+      />
+      {selectedRow && (
+        <UpdateUserDialog
+          open={editDialogOpen}
+          setIsOpen={setEditDialogOpen}
+          data={{
+            ...selectedRow,
+            NIK: selectedRow.NIK!,
+            administrativeUnitId: selectedRow.unit
+              ? {
+                  label:
+                    selectedRow.unit.administrativeLevel +
+                    " " +
+                    selectedRow.unit.name,
+                  value: selectedRow.unit.id,
+                }
+              : undefined,
+          }}
+          user={user}
+        />
+      )}
     </>
   );
 };
