@@ -25,8 +25,9 @@ export const Combobox: React.FC<{
   options: Option[];
   placeholder: string;
   value?: string;
+  disabled?: boolean;
   onChange: (value: string) => void;
-}> = ({ options, placeholder, value, onChange }) => {
+}> = ({ options, placeholder, value, onChange, disabled }) => {
   const [open, setOpen] = useState(false);
 
   return (
@@ -36,6 +37,7 @@ export const Combobox: React.FC<{
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          disabled={disabled}
           className="w-full justify-between"
         >
           {value

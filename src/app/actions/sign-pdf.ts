@@ -32,7 +32,11 @@ const signPdf = async (submissionId: string, paraphrase: string) => {
           include: {
             signs: {
               include: {
-                Official: true,
+                Official: {
+                  include:{
+                    user:true
+                  }
+                },
               },
             },
           },
@@ -50,14 +54,22 @@ const signPdf = async (submissionId: string, paraphrase: string) => {
     const unsignedPdfBuffer = Buffer.from(unsignedPdf.data!, "base64");
     const signedPdf = await eSign({
       file: unsignedPdfBuffer,
-      halaman: "1",
+      page: "1",
       height: sign?.size.toString()!,
       passphrase: paraphrase,
-      qrcode: process.env.URL + "/api/download/" + submissionId,
+      linkQR: process.env.URL + "/api/download/" + submissionId,
       width: sign?.size.toString()!,
       xAxis: sign?.coordX.toString()!,
       yAxis: sign?.coordY.toString()!,
+      tampilan:"visible",
+      nik: submission?.template.signs[0].Official.user?.NIK!,
+      image: false
     });
+
+    if(signedPdf.error){
+      return ActionResponses.serverError("PDF signing failed");
+    }
+
     return ActionResponses.success(signedPdf.data);
   } catch (e) {
     console.error(e);

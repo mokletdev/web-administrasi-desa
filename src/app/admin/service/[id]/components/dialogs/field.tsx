@@ -33,14 +33,14 @@ export type Field = z.infer<typeof upsertFieldSchema> & { id?: number };
 
 export const RenderField: FC<{
   field: Field;
-  fieldTypes: { id: number; label: string; baseType: BaseFieldType }[];
+  fieldTypes?: { id: number; label: string; baseType: BaseFieldType }[];
   fields: Field[];
   setFields: Dispatch<SetStateAction<Field[]>>;
 }> = ({ field, fieldTypes, fields, setFields }) => {
   const form = useZodForm({ values: { ...field }, schema: upsertFieldSchema });
 
   const fieldTypeId = form.watch("fieldTypeId");
-  const baseType = fieldTypes.find(
+  const baseType = fieldTypes?.find(
     (fieldType) => fieldType.id === fieldTypeId,
   )?.baseType;
 
@@ -76,7 +76,7 @@ export const RenderField: FC<{
             className: "font-bold text-foreground",
           })}
         >
-          Input No. {field.fieldNumber}
+          {fieldTypes ? "Input" : "Persyaratan"} No. {field.fieldNumber}
         </p>
         <div className="flex items-center gap-2">
           <Button
@@ -123,42 +123,45 @@ export const RenderField: FC<{
           >
             <ArrowDown />
           </Button>
-          <Button
-            variant={"destructive"}
-            size={"icon"}
-            type="button"
-            onClick={() => {
-              // Delete current field
-              setFields((prevFields) =>
-                prevFields
-                  .filter((f) => f.fieldNumber !== field.fieldNumber)
-                  .map((f) => {
-                    if (f.fieldNumber > field.fieldNumber) {
-                      return { ...f, fieldNumber: f.fieldNumber - 1 };
-                    }
+          {field.label !== "NIK" && (
+            <Button
+              variant={"destructive"}
+              size={"icon"}
+              type="button"
+              onClick={() => {
+                // Delete current field
+                setFields((prevFields) =>
+                  prevFields
+                    .filter((f) => f.fieldNumber !== field.fieldNumber)
+                    .map((f) => {
+                      if (f.fieldNumber > field.fieldNumber) {
+                        return { ...f, fieldNumber: f.fieldNumber - 1 };
+                      }
 
-                    return f;
-                  }),
-              );
-            }}
-          >
-            <Trash />
-          </Button>
+                      return f;
+                    }),
+                );
+              }}
+            >
+              <Trash />
+            </Button>
+          )}
         </div>
       </div>
       <FormField
         control={form.control}
         name="label"
-        render={({ field }) => (
+        render={({ field: localField }) => (
           <FormItem className="flex flex-col space-y-1.5">
             <FormLabel htmlFor="label">Label</FormLabel>
             <FormControl>
               <Input
-                {...field}
+                {...localField}
                 onChange={(e) => {
                   handleChange("label", e.target.value);
-                  field.onChange(e);
+                  localField.onChange(e);
                 }}
+                disabled={field.label === "NIK"}
                 placeholder="Label kolom"
               />
             </FormControl>
@@ -166,28 +169,31 @@ export const RenderField: FC<{
           </FormItem>
         )}
       />
-      <FormField
-        control={form.control}
-        name="fieldTypeId"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Tipe Input</FormLabel>
-            <Combobox
-              options={fieldTypes.map((fieldType) => ({
-                label: fieldType.label,
-                value: fieldType.id.toString(),
-              }))}
-              placeholder="Pilih tipe input"
-              value={field.value.toString()}
-              onChange={(e) => {
-                handleChange("fieldTypeId", Number(e));
-                field.onChange(e);
-              }}
-            />
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      {fieldTypes && fieldTypes?.length > 0 && (
+        <FormField
+          control={form.control}
+          name="fieldTypeId"
+          render={({ field: localField }) => (
+            <FormItem>
+              <FormLabel>Tipe Input</FormLabel>
+              <Combobox
+                disabled={field.label === "NIK"}
+                options={fieldTypes.map((fieldType) => ({
+                  label: fieldType.label,
+                  value: fieldType.id.toString(),
+                }))}
+                placeholder="Pilih tipe input"
+                value={localField.value.toString()}
+                onChange={(e) => {
+                  handleChange("fieldTypeId", Number(e));
+                  localField.onChange(e);
+                }}
+              />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
       {baseType && (baseType === "checkbox" || baseType === "radio") && (
         <>
           <FormItem className="w-full space-y-1.5">
@@ -242,7 +248,8 @@ export const RenderField: FC<{
                       // Delete the current option by value, because there's no way that more than one unique value are in one options
                       setFields((prevFields) =>
                         prevFields.map((f) =>
-                          f.fieldNumber === field.fieldNumber
+                          f.fieldNumber === field.fieldNumber &&
+                          f.fieldTypeId === field.fieldTypeId
                             ? {
                                 ...f,
                                 options: f.options?.filter(

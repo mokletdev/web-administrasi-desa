@@ -4,15 +4,18 @@ import { ActionResponse, ActionResponses } from "@/types/actions";
 
 interface ESignParams {
   file: Buffer;
-  halaman: string;
+  page: string;
   imageTTD?: string;
   height: string;
   width: string;
-  qrcode: string;
+  linkQR: string;
   reason?: string;
   xAxis: string;
   yAxis: string;
   passphrase: string;
+  tampilan: "visible" | "invisible";
+  nik:string
+  image: boolean
 }
 
 export async function eSign(
@@ -32,13 +35,18 @@ export async function eSign(
     ).toString("base64");
 
     const { file, ...queryParams } = params;
-    const query = new URLSearchParams(queryParams).toString();
-
+    
     const formData = new FormData();
+    for (let key in params){
+      if(params[key as keyof ESignParams]){
+
+        formData.append(key, params[key as keyof ESignParams] as string)
+      }
+    }
     formData.append("file", new Blob([file]), "document.pdf");
 
     const response = await fetch(
-      `${process.env.TTE_URL}api/sign/pdf?${query}`,
+      `${process.env.TTE_URL}api/sign/pdf`,
       {
         method: "POST",
         headers: { Authorization: `Basic ${auth}` },
