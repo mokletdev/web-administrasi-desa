@@ -3,9 +3,16 @@ import { getServerSession } from "@/lib/next-auth";
 import { ActionResponse, ActionResponses } from "@/types/actions";
 import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
+import { AdministrativeLevel } from "@prisma/client";
 
 export async function getUserServices(): Promise<
-  ActionResponse<Array<{ name: string; id: string }>>
+  ActionResponse<
+    Array<{
+      name: string;
+      id: string;
+      administrativeUnit: { administrativeLevel: AdministrativeLevel };
+    }>
+  >
 > {
   try {
     const session = await getServerSession();
@@ -17,7 +24,11 @@ export async function getUserServices(): Promise<
     } = session;
 
     const services = await prisma.administrativeService.findMany({
-      select: { name: true, id: true },
+      select: {
+        name: true,
+        id: true,
+        administrativeUnit: { select: { administrativeLevel: true } },
+      },
       where: {
         administrativeUnit: {
           OR: [

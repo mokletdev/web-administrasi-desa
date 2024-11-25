@@ -579,9 +579,6 @@ export const UpdateTemplateDialog: FC<
                 </div>
                 <CollapsibleContent className="w-full space-y-2">
                   <div className="rounded-md border px-4 py-2 font-mono text-sm shadow-sm">
-                    {`{{tgl_surat}}`}
-                  </div>
-                  <div className="rounded-md border px-4 py-2 font-mono text-sm shadow-sm">
                     {`{{no_surat}}`}
                   </div>
                   {signs.map((sign) => (
@@ -596,13 +593,17 @@ export const UpdateTemplateDialog: FC<
                         key={sign.officialId + "_tgl"}
                         className="rounded-md border px-4 py-2 font-mono text-sm shadow-sm"
                       >
-                        {`{{tte_${normalizeVariableName(sign.officialName)}_tgl}}`}
+                        {`{{tte_${normalizeVariableName(
+                          sign.officialName,
+                        )}_tgl}}`}
                       </div>
                       <div
                         key={sign.officialId + "_location"}
                         className="rounded-md border px-4 py-2 font-mono text-sm shadow-sm"
                       >
-                        {`{{tte_${normalizeVariableName(sign.officialName)}_location}}`}
+                        {`{{tte_${normalizeVariableName(
+                          sign.officialName,
+                        )}_location}}`}
                       </div>
                     </Fragment>
                   ))}

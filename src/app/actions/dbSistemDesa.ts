@@ -65,7 +65,12 @@ export async function getPendudukByNIK(searchNIK: string) {
       take: 10,
     });
 
-    return ActionResponses.success(penduduk);
+    const pendudukMap = penduduk.map((item) => ({
+      label: `${item.nama} - (${item.nik})`,
+      value: item.nik,
+    }));
+
+    return ActionResponses.success(pendudukMap);
   } catch (error) {
     console.log("Error in getPenduduk: ", error);
     return ActionResponses.serverError();

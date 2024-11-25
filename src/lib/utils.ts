@@ -47,6 +47,12 @@ export const divisionLevelMap = {
   SUBDISTRICT: "Pemerintahan Desa",
 };
 
+export const levelMap = {
+  CITY: "",
+  DISTRICT: "Kecamatan",
+  SUBDISTRICT: "Desa",
+};
+
 export const divisionLevelIndex = ["SUBDISTRICT", "DISTRICT", "CITY"] as const;
 
 export const skipLevelMap = {

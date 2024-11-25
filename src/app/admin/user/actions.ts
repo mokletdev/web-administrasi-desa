@@ -3,6 +3,7 @@
 import { generateHash } from "@/lib/bcryptjs";
 import { getServerSession } from "@/lib/next-auth";
 import prisma from "@/lib/prisma";
+import { divisionLevelMap, levelMap } from "@/lib/utils";
 import { ActionResponse, ActionResponses } from "@/types/actions";
 import { User, UserRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
@@ -90,7 +91,7 @@ export async function searchUnit(terms: string) {
   });
 
   return units.map((unit) => ({
-    label: unit.administrativeLevel + " " + unit.name,
+    label: levelMap[unit.administrativeLevel] + " " + unit.name,
     value: unit.id,
   }));
 }

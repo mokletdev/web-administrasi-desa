@@ -35,6 +35,10 @@ import { FC, useMemo, useState } from "react";
 import AsyncSelect from "react-select/async";
 import { z } from "zod";
 import { searchUnit, upsertUser } from "../../actions";
+import {
+  defaultClassNames as reactSelectClassNames,
+  defaultStyles as reactSelectStyles,
+} from "@/components/ui/react-select";
 
 export const UpdateUserDialog: FC<
   DialogBaseProps & {
@@ -280,6 +284,9 @@ export const UpdateUserDialog: FC<
                         <AsyncSelect
                           {...field}
                           cacheOptions
+                          unstyled
+                          classNames={reactSelectClassNames}
+                          styles={reactSelectStyles}
                           loadOptions={debounce((query, callback) => {
                             searchUnit(query).then((res) => callback(res));
                           }, 1000)}

@@ -1,6 +1,12 @@
 "use client";
 
+import { getUserServices } from "@/app/dashboard/actions";
 import { Button } from "@/components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   Sidebar,
   SidebarContent,
@@ -11,9 +17,14 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
+import { AdministrativeLevel } from "@prisma/client";
 import {
+  ChevronRight,
   CircleUser,
+  Dot,
   Folder,
   FormInput,
   Home,
@@ -24,7 +35,14 @@ import {
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
-import { useMemo } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
+import { File } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export const AdminSidebar = () => {
   const { data } = useSession();
@@ -93,6 +111,22 @@ export const AdminSidebar = () => {
     return navItems.filter((item) => item.title !== "Profil");
   }, [data]);
 
+  const [services, setServices] = useState<
+    Array<{
+      id: string;
+      name: string;
+      administrativeUnit: { administrativeLevel: AdministrativeLevel };
+    }>
+  >([]);
+  useEffect(() => {
+    const fetchData = async () => {
+      const fetch = await getUserServices();
+      if (fetch.success) setServices(fetch.data!);
+    };
+
+    fetchData();
+  }, []);
+
   return (
     <Sidebar>
       <SidebarContent>
@@ -127,6 +161,157 @@ export const AdminSidebar = () => {
                   </SidebarMenuItem>
                 ))}
             </SidebarMenu>
+            {data?.user?.role === "SUBDISTRICT_ADMIN" && (
+              <Fragment>
+                <SidebarMenu>
+                  <Collapsible className="group/collapsible">
+                    <SidebarMenuItem>
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuButton>
+                          <File />
+                          <span>Layanan Desa</span>
+                          <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                        </SidebarMenuButton>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <SidebarMenuSub>
+                          <SidebarMenuSubItem>
+                            <TooltipProvider>
+                              {services.length > 0 ? (
+                                services
+                                  .filter(
+                                    (service) =>
+                                      service.administrativeUnit
+                                        .administrativeLevel === "SUBDISTRICT",
+                                  )
+                                  .map((item) => (
+                                    <Tooltip key={item.id}>
+                                      <TooltipTrigger className="w-full">
+                                        <SidebarMenuButton asChild>
+                                          <Link
+                                            href={`/admin/fill-service/${item.id}`}
+                                            className="text-clip"
+                                          >
+                                            <Dot />
+                                            <span>{item.name}</span>
+                                          </Link>
+                                        </SidebarMenuButton>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <span>{item.name}</span>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  ))
+                              ) : (
+                                <span>Tidak Ditemukan</span>
+                              )}
+                            </TooltipProvider>
+                          </SidebarMenuSubItem>
+                        </SidebarMenuSub>
+                      </CollapsibleContent>
+                    </SidebarMenuItem>
+                  </Collapsible>
+                </SidebarMenu>
+                <SidebarMenu>
+                  <Collapsible className="group/collapsible">
+                    <SidebarMenuItem>
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuButton>
+                          <File />
+                          <span>Layanan Kecamatan</span>
+                          <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                        </SidebarMenuButton>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <SidebarMenuSub>
+                          <SidebarMenuSubItem>
+                            <TooltipProvider>
+                              {services.length > 0 ? (
+                                services
+                                  .filter(
+                                    (service) =>
+                                      service.administrativeUnit
+                                        .administrativeLevel === "DISTRICT",
+                                  )
+                                  .map((item) => (
+                                    <Tooltip key={item.id}>
+                                      <TooltipTrigger className="w-full">
+                                        <SidebarMenuButton asChild>
+                                          <Link
+                                            href={`/admin/fill-service/${item.id}`}
+                                            className="text-clip"
+                                          >
+                                            <Dot />
+                                            <span>{item.name}</span>
+                                          </Link>
+                                        </SidebarMenuButton>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <span>{item.name}</span>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  ))
+                              ) : (
+                                <span>Tidak Ditemukan</span>
+                              )}
+                            </TooltipProvider>
+                          </SidebarMenuSubItem>
+                        </SidebarMenuSub>
+                      </CollapsibleContent>
+                    </SidebarMenuItem>
+                  </Collapsible>
+                </SidebarMenu>
+                <SidebarMenu>
+                  <Collapsible className="group/collapsible">
+                    <SidebarMenuItem>
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuButton>
+                          <File />
+                          <span>Layanan Kabupaten</span>
+                          <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                        </SidebarMenuButton>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <SidebarMenuSub>
+                          <SidebarMenuSubItem>
+                            <TooltipProvider>
+                              {services.length > 0 ? (
+                                services
+                                  .filter(
+                                    (service) =>
+                                      service.administrativeUnit
+                                        .administrativeLevel === "CITY",
+                                  )
+                                  .map((item) => (
+                                    <Tooltip key={item.id}>
+                                      <TooltipTrigger className="w-full">
+                                        <SidebarMenuButton asChild>
+                                          <Link
+                                            href={`/admin/fill-service/${item.id}`}
+                                            className="text-clip"
+                                          >
+                                            <Dot />
+                                            <span>{item.name}</span>
+                                          </Link>
+                                        </SidebarMenuButton>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <span>{item.name}</span>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  ))
+                              ) : (
+                                <span>Tidak Ditemukan</span>
+                              )}
+                            </TooltipProvider>
+                          </SidebarMenuSubItem>
+                        </SidebarMenuSub>
+                      </CollapsibleContent>
+                    </SidebarMenuItem>
+                  </Collapsible>
+                </SidebarMenu>
+              </Fragment>
+            )}
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>

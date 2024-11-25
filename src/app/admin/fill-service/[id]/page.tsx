@@ -45,7 +45,7 @@ export default async function RequestDocument({
     <>
       <div className="mb-12 flex flex-col">
         <Link
-          href={"/dashboard"}
+          href={"/admin"}
           className={buttonVariants({
             variant: "ghost",
             className: "mb-4 w-fit",

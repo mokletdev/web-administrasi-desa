@@ -44,6 +44,7 @@ import { Document, Page, pdfjs } from "react-pdf";
 import { z } from "zod";
 import { upsertTemplate } from "../../actions";
 import { Field, RenderField } from "./field";
+import { PENDUDUK_PROPS } from "@/lib/penduduk";
 
 // Initiate pdfjs worker
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -636,9 +637,6 @@ export const CreateTemplateDialog: FC<
                 </div>
                 <CollapsibleContent className="w-full space-y-2">
                   <div className="rounded-md border px-4 py-2 font-mono text-sm shadow-sm">
-                    {`{{tgl_surat}}`}
-                  </div>
-                  <div className="rounded-md border px-4 py-2 font-mono text-sm shadow-sm">
                     {`{{no_surat}}`}
                   </div>
                   {signs.map((sign) => (
@@ -653,13 +651,9 @@ export const CreateTemplateDialog: FC<
                         key={sign.officialId + "_tgl"}
                         className="rounded-md border px-4 py-2 font-mono text-sm shadow-sm"
                       >
-                        {`{{tte_${normalizeVariableName(sign.officialName)}_tgl}}`}
-                      </div>
-                      <div
-                        key={sign.officialId + "_location"}
-                        className="rounded-md border px-4 py-2 font-mono text-sm shadow-sm"
-                      >
-                        {`{{tte_${normalizeVariableName(sign.officialName)}_location}}`}
+                        {`{{tte_${normalizeVariableName(
+                          sign.officialName,
+                        )}_tgl}}`}
                       </div>
                     </Fragment>
                   ))}
@@ -669,6 +663,31 @@ export const CreateTemplateDialog: FC<
                       className="rounded-md border px-4 py-2 font-mono text-sm shadow-sm"
                     >
                       {`{{${normalizeVariableName(field.label || "")}}}`}
+                    </div>
+                  ))}
+                </CollapsibleContent>
+              </Collapsible>
+            </div>
+            <div className="mb-1 flex w-full items-center">
+              <Collapsible className="w-full space-y-2">
+                <div className="flex items-center justify-between space-x-4 px-4">
+                  <p className="text-xs font-semibold">
+                    Variabel data Penduduk
+                  </p>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm">
+                      <ChevronsUpDown className="h-4 w-4" />
+                      <span className="sr-only">Toggle</span>
+                    </Button>
+                  </CollapsibleTrigger>
+                </div>
+                <CollapsibleContent className="w-full space-y-2">
+                  {PENDUDUK_PROPS.map((field) => (
+                    <div
+                      key={field}
+                      className="rounded-md border px-4 py-2 font-mono text-sm shadow-sm"
+                    >
+                      {`{{${field}}}`}
                     </div>
                   ))}
                 </CollapsibleContent>
