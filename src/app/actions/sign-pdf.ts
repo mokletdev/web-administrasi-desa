@@ -28,14 +28,19 @@ const signPdf = async (submissionId: string, paraphrase: string) => {
         id: submissionId,
       },
       include: {
+        signRequests: {
+          where: { signedPdf: { not: "-" } },
+          orderBy: { signedAt: "desc" },
+          take: 1,
+        },
         template: {
           include: {
             signs: {
               include: {
                 Official: {
-                  include:{
-                    user:true
-                  }
+                  include: {
+                    user: true,
+                  },
                 },
               },
             },
@@ -46,27 +51,32 @@ const signPdf = async (submissionId: string, paraphrase: string) => {
     const sign = submission?.template.signs.filter(
       (item) => item.Official?.userId === session?.user?.id,
     )?.[0];
-    const unsignedDoc = await printDoc(submissionId);
-    const unsignedDocBlob = new Blob([unsignedDoc.data!]);
-    const unsignedPdf = await convertToPdfV1(
-      unsignedDocBlob as globalThis.Blob,
-    );
-    const unsignedPdfBuffer = Buffer.from(unsignedPdf.data!, "base64");
+    let unsignedPdf;
+    if (submission?.signRequests[0]) {
+      unsignedPdf = submission?.signRequests[0].signedPdf;
+    } else {
+      const unsignedDoc = await printDoc(submissionId);
+      const unsignedDocBlob = new Blob([unsignedDoc.data!]);
+      unsignedPdf = (await convertToPdfV1(unsignedDocBlob as globalThis.Blob))
+        .data;
+    }
+
+    const unsignedPdfBuffer = Buffer.from(unsignedPdf!, "base64");
     const signedPdf = await eSign({
       file: unsignedPdfBuffer,
-      page: "1",
+      page: sign?.page.toString()!,
       height: sign?.size.toString()!,
       passphrase: paraphrase,
       linkQR: process.env.URL + "/api/download/" + submissionId,
       width: sign?.size.toString()!,
       xAxis: sign?.coordX.toString()!,
       yAxis: sign?.coordY.toString()!,
-      tampilan:"visible",
-      nik: submission?.template.signs[0].Official.user?.NIK!,
-      image: false
+      tampilan: "visible",
+      nik: sign?.Official.user?.NIK!,
+      image: false,
     });
 
-    if(signedPdf.error){
+    if (signedPdf.error) {
       return ActionResponses.serverError("PDF signing failed");
     }
 
