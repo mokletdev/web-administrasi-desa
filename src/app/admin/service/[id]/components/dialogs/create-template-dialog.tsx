@@ -44,6 +44,9 @@ import { Document, Page, pdfjs } from "react-pdf";
 import { z } from "zod";
 import { upsertTemplate } from "../../actions";
 import { Field, RenderField } from "./field";
+import { Checkbox } from "@/components/ui/checkbox";
+import { CheckedState } from "@radix-ui/react-checkbox";
+import ImageForm from "./imageForm";
 
 // Initiate pdfjs worker
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -58,6 +61,8 @@ type Sign = {
   coordY: number;
   size: number;
   page: number;
+  image?: File | null;
+  isManual?: boolean;
 };
 
 const MAX_FILE_SIZE = 5_000_000;
@@ -201,6 +206,30 @@ export const CreateTemplateDialog: FC<
     });
   };
 
+  const handleManualChange = (e: boolean, officialId: string) => {
+    setSigns((prev) => {
+      return prev.map((sign) => {
+        if (sign.officialId === officialId) {
+          return { ...sign, isManual: e };
+        }
+
+        return sign;
+      });
+    });
+  };
+
+  const handleImageChange = (e: File, officialId: string) => {
+    setSigns((prev) => {
+      return prev.map((sign) => {
+        if (sign.officialId === officialId) {
+          return { ...sign, image: e };
+        }
+
+        return sign;
+      });
+    });
+  };
+
   const onSubmit = form.handleSubmit(async ({ title, content }) => {
     setLoading(true);
 
@@ -218,12 +247,18 @@ export const CreateTemplateDialog: FC<
       content: contentFormData,
       fields,
       level: adminLevel,
-      signs: signs.map(({ coordX, coordY, officialId, size }) => ({
-        coordX,
-        coordY,
-        officialId,
-        size,
-      })),
+      signs: signs.map(({ coordX, coordY, officialId, size, image }) => {
+        const imageFormData = new FormData();
+        image && imageFormData.append("image", image);
+
+        return {
+          coordX,
+          coordY,
+          officialId,
+          size,
+          image: imageFormData,
+        };
+      }),
     });
 
     if (res.error) {
@@ -276,11 +311,10 @@ export const CreateTemplateDialog: FC<
             />
             <div className="mt-4 w-full space-y-1.5">
               <h2 className={labelVariants({ className: "text-foreground" })}>
-                Manajemen Input Form
+                Manajemen Variabel Input
               </h2>
               <div className="flex flex-col gap-y-2">
                 {fields
-                  .sort((a, b) => a.fieldNumber - b.fieldNumber)
                   .filter(
                     (i) =>
                       i.fieldTypeId !==
@@ -288,13 +322,12 @@ export const CreateTemplateDialog: FC<
                         fieldTypes.findIndex((j) => j.baseType === "file")
                       ].id,
                   )
+                  .sort((a, b) => a.fieldNumber - b.fieldNumber)
                   .map((field) => (
                     <RenderField
-                      key={field.fieldTypeId + field.fieldNumber}
+                      key={field.fieldNumber}
                       field={field}
-                      fieldTypes={fieldTypes.filter(
-                        (i) => i.baseType !== "file",
-                      )}
+                      fieldTypes={fieldTypes}
                       fields={fields}
                       setFields={setFields}
                     />
@@ -309,16 +342,7 @@ export const CreateTemplateDialog: FC<
                     setFields((prevFields) => [
                       ...prevFields,
                       {
-                        fieldNumber:
-                          prevFields.filter(
-                            (i) =>
-                              i.fieldTypeId !==
-                              fieldTypes[
-                                fieldTypes.findIndex(
-                                  (j) => j.baseType === "file",
-                                )
-                              ].id,
-                          ).length + 1,
+                        fieldNumber: prevFields.length + 1,
                         fieldTypeId: fieldTypes[0]?.id ?? 0, // Use `0` or another default ID if `fieldTypes` is empty
                         label: "Input Baru",
                         required: false,
@@ -332,11 +356,10 @@ export const CreateTemplateDialog: FC<
             </div>
             <div className="mt-4 w-full space-y-1.5">
               <h2 className={labelVariants({ className: "text-foreground" })}>
-                Manajemen Persyaratan Form
+                Manajemen Persyaratan
               </h2>
               <div className="flex flex-col gap-y-2">
                 {fields
-                  .sort((a, b) => a.fieldNumber - b.fieldNumber)
                   .filter(
                     (i) =>
                       i.fieldTypeId ===
@@ -344,9 +367,10 @@ export const CreateTemplateDialog: FC<
                         fieldTypes.findIndex((j) => j.baseType === "file")
                       ].id,
                   )
+                  .sort((a, b) => a.fieldNumber - b.fieldNumber)
                   .map((field) => (
                     <RenderField
-                      key={field.fieldTypeId + field.fieldNumber}
+                      key={field.fieldNumber}
                       field={field}
                       fields={fields}
                       setFields={setFields}
@@ -362,19 +386,10 @@ export const CreateTemplateDialog: FC<
                     setFields((prevFields) => [
                       ...prevFields,
                       {
-                        fieldNumber:
-                          prevFields.filter(
-                            (i) =>
-                              i.fieldTypeId ===
-                              fieldTypes[
-                                fieldTypes.findIndex(
-                                  (j) => j.baseType === "file",
-                                )
-                              ].id,
-                          ).length + 1,
+                        fieldNumber: prevFields.length + 1,
                         fieldTypeId:
                           fieldTypes[
-                            fieldTypes.findIndex((i) => i.baseType === "file")
+                            fieldTypes.findIndex((j) => j.baseType === "file")
                           ]?.id ?? 0, // Use `0` or another default ID if `fieldTypes` is empty
                         label: "Persyaratan Baru",
                         required: false,
@@ -613,6 +628,34 @@ export const CreateTemplateDialog: FC<
                         handleSizeChange(e[0], officialIdToEdit)
                       }
                     />
+                  </div>
+                  <div>
+                    <div className="mb-4 inline-flex items-center gap-2">
+                      <Label>Image TTE</Label>
+                      <Checkbox
+                        checked={
+                          signs.find(
+                            (sign) => sign.officialId === officialIdToEdit,
+                          )!.isManual ?? false
+                        }
+                        onCheckedChange={(s: CheckedState) =>
+                          handleManualChange(s as boolean, officialIdToEdit)
+                        }
+                      />
+                    </div>
+                    {signs.find((sign) => sign.officialId === officialIdToEdit)!
+                      .isManual && (
+                      <ImageForm
+                        ttdFile={
+                          signs.find(
+                            (sign) => sign.officialId === officialIdToEdit,
+                          )?.image
+                        }
+                        onChange={(e: File) => {
+                          handleImageChange(e, officialIdToEdit);
+                        }}
+                      />
+                    )}
                   </div>
                 </div>
               </div>

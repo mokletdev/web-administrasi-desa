@@ -238,7 +238,7 @@ export async function downloadFile(
  *         mapImagePositionToDocx({
  *           left: 50,
  *           bottom: 100,
- *           imagePath: "./image1.png",
+ *           imageBase64: "...",
  *           width: 150,
  *           height: 100,
  *           pageHeight: 1122,
@@ -246,7 +246,7 @@ export async function downloadFile(
  *         mapImagePositionToDocx({
  *           left: 300,
  *           bottom: 200,
- *           imagePath: "./image2.png",
+ *           imageBase64: "...",
  *           width: 200,
  *           height: 150,
  *           pageHeight: 1122,

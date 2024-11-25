@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ActionResponse } from "@/types/actions";
 import { DialogBaseProps } from "@/types/dialog";
 import { FC } from "react";
+import { useRouter } from "next/navigation";
 
 export const ConfirmDeletionDialog: FC<
   DialogBaseProps & {
@@ -27,6 +28,7 @@ export const ConfirmDeletionDialog: FC<
   }
 > = ({ open, setIsOpen, id, description, serverAction }) => {
   const { toast, dismiss } = useToast();
+  const router = useRouter();
 
   return (
     <AlertDialog open={open} onOpenChange={setIsOpen}>
@@ -61,6 +63,7 @@ export const ConfirmDeletionDialog: FC<
                 description: `Berhasil menghapus data dengan ID ${id}`,
               });
               setIsOpen(false);
+              return router.refresh();
             }}
           >
             Konfirmasi

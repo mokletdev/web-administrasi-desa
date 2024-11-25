@@ -285,7 +285,20 @@ export const DynamicForm: FC<{
   return (
     <>
       <form onSubmit={onSubmit} className="w-full space-y-6">
-        {fields.map((field) => renderField(field))}
+        <div className="mb-4">
+          <h3 className="mb-4">Input</h3>
+          {fields
+            .filter((i) => i.fieldType.baseType !== "file")
+            .map((field) => renderField(field))}
+        </div>
+        {fields.filter((i) => i.fieldType.baseType === "file").length > 0 && (
+          <div>
+            <h3 className="mb-4">Persyaratan</h3>
+            {fields
+              .filter((i) => i.fieldType.baseType === "file")
+              .map((field) => renderField(field))}
+          </div>
+        )}
         <Button
           type="submit"
           variant={"default"}
