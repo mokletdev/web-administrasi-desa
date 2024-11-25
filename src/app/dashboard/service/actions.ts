@@ -98,7 +98,7 @@ export async function submitForm({
         ? "KECAMATAN"
         : service.skipStep === "SUBDISTRICT_DISTRICT"
           ? "Dinas"
-          : "Kelurahan"
+          : "Pemerintahan Desa"
     }`;
     const serviceRequest = await prisma.serviceRequest.create({
       data: { userId, status, administrativeServiceId: serviceId },

@@ -5,9 +5,10 @@ import { useToast } from "@/hooks/use-toast";
 import { AdministrativeUnit } from "@prisma/client";
 import { Upload } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import { DragEvent, useEffect, useState } from "react";
 import upsertLetterHead from "../action";
+import Link from "next/link";
 
 const ImageForm = ({
   administrativeUnit,
@@ -144,6 +145,16 @@ const ImageForm = ({
           Simpan
         </Button>
       </form>
+      {administrativeUnit.letterhead && (
+        <Link
+          href={administrativeUnit.letterhead}
+          className="mt-2 inline-flex h-9 w-full items-center justify-center gap-2 whitespace-nowrap rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+          target="_blank"
+          download={`kop-surat-${administrativeUnit.name.toLowerCase().split(" ").join("-")}`}
+        >
+          Download template!
+        </Link>
+      )}
     </>
   );
 };

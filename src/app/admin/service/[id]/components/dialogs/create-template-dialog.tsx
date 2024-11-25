@@ -130,7 +130,14 @@ export const CreateTemplateDialog: FC<
   const [signs, setSigns] = useState<Sign[]>([]);
   const [officialIdToEdit, setOfficialIdToEdit] = useState<string>();
 
-  const [fields, setFields] = useState<Field[]>([]);
+  const [fields, setFields] = useState<Field[]>([
+    {
+      fieldNumber: 1,
+      fieldTypeId:
+        fieldTypes[fieldTypes.findIndex((i) => i.baseType === "text")].id,
+      label: "NIK",
+    },
+  ]);
 
   useEffect(() => {
     if (signs.length > 0 && officialIdToEdit === undefined) {
@@ -269,16 +276,25 @@ export const CreateTemplateDialog: FC<
             />
             <div className="mt-4 w-full space-y-1.5">
               <h2 className={labelVariants({ className: "text-foreground" })}>
-                Manajemen Variabel Input
+                Manajemen Input Form
               </h2>
               <div className="flex flex-col gap-y-2">
                 {fields
                   .sort((a, b) => a.fieldNumber - b.fieldNumber)
+                  .filter(
+                    (i) =>
+                      i.fieldTypeId !==
+                      fieldTypes[
+                        fieldTypes.findIndex((j) => j.baseType === "file")
+                      ].id,
+                  )
                   .map((field) => (
                     <RenderField
-                      key={field.fieldNumber}
+                      key={field.fieldTypeId + field.fieldNumber}
                       field={field}
-                      fieldTypes={fieldTypes}
+                      fieldTypes={fieldTypes.filter(
+                        (i) => i.baseType !== "file",
+                      )}
                       fields={fields}
                       setFields={setFields}
                     />
@@ -293,7 +309,16 @@ export const CreateTemplateDialog: FC<
                     setFields((prevFields) => [
                       ...prevFields,
                       {
-                        fieldNumber: prevFields.length + 1,
+                        fieldNumber:
+                          prevFields.filter(
+                            (i) =>
+                              i.fieldTypeId !==
+                              fieldTypes[
+                                fieldTypes.findIndex(
+                                  (j) => j.baseType === "file",
+                                )
+                              ].id,
+                          ).length + 1,
                         fieldTypeId: fieldTypes[0]?.id ?? 0, // Use `0` or another default ID if `fieldTypes` is empty
                         label: "Input Baru",
                         required: false,
@@ -302,6 +327,62 @@ export const CreateTemplateDialog: FC<
                   }}
                 >
                   Tambah Input <Plus />
+                </Button>
+              )}
+            </div>
+            <div className="mt-4 w-full space-y-1.5">
+              <h2 className={labelVariants({ className: "text-foreground" })}>
+                Manajemen Persyaratan Form
+              </h2>
+              <div className="flex flex-col gap-y-2">
+                {fields
+                  .sort((a, b) => a.fieldNumber - b.fieldNumber)
+                  .filter(
+                    (i) =>
+                      i.fieldTypeId ===
+                      fieldTypes[
+                        fieldTypes.findIndex((j) => j.baseType === "file")
+                      ].id,
+                  )
+                  .map((field) => (
+                    <RenderField
+                      key={field.fieldTypeId + field.fieldNumber}
+                      field={field}
+                      fields={fields}
+                      setFields={setFields}
+                    />
+                  ))}
+              </div>
+              {fieldTypes.length > 0 && (
+                <Button
+                  className="w-full"
+                  variant={"outline"}
+                  type="button"
+                  onClick={() => {
+                    setFields((prevFields) => [
+                      ...prevFields,
+                      {
+                        fieldNumber:
+                          prevFields.filter(
+                            (i) =>
+                              i.fieldTypeId ===
+                              fieldTypes[
+                                fieldTypes.findIndex(
+                                  (j) => j.baseType === "file",
+                                )
+                              ].id,
+                          ).length + 1,
+                        fieldTypeId:
+                          fieldTypes[
+                            fieldTypes.findIndex((i) => i.baseType === "file")
+                          ]?.id ?? 0, // Use `0` or another default ID if `fieldTypes` is empty
+                        label: "Persyaratan Baru",
+                        required: false,
+                      },
+                    ]);
+                  }}
+                >
+                  Tambah Persyaratan <Plus />
                 </Button>
               )}
             </div>
