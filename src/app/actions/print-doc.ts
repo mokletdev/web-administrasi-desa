@@ -4,6 +4,7 @@ import { ActionResponse, ActionResponses } from "@/types/actions";
 import prisma from "@/lib/prisma";
 import { formatDate, normalizeVariableName } from "@/lib/utils";
 import { ImageRun, Paragraph, PatchType, TextRun, patchDocument } from "docx";
+import { getPenduduk } from "./dbSistemDesa";
 
 export async function printDoc(
   submissionId: string,
@@ -14,13 +15,13 @@ export async function printDoc(
       include: {
         fields: { include: { field: { include: { fieldType: true } } } },
         template: {
-          include:{
-            AdministrativeService:{
-              include:{
-                administrativeUnit:true
-              }
-            }
-          }
+          include: {
+            AdministrativeService: {
+              include: {
+                administrativeUnit: true,
+              },
+            },
+          },
         },
         signRequests: {
           include: {
@@ -38,7 +39,8 @@ export async function printDoc(
       },
     });
 
-    const letterhead = submission?.template.AdministrativeService.administrativeUnit.letterhead
+    const letterhead =
+      submission?.template.AdministrativeService.administrativeUnit.letterhead;
 
     // signs: {
     //   include: {
@@ -47,7 +49,10 @@ export async function printDoc(
     // },
 
     if (!submission) return ActionResponses.notFound("submission not found");
-    if(!submission.template.AdministrativeService.administrativeUnit.letterhead) return ActionResponses.badRequest("Letterhead unit belum diset!");
+    if (
+      !submission.template.AdministrativeService.administrativeUnit.letterhead
+    )
+      return ActionResponses.badRequest("Letterhead unit belum diset!");
 
     const bufferDocx = Buffer.from(submission.template.content, "base64");
 
@@ -56,7 +61,7 @@ export async function printDoc(
         type: PatchType.PARAGRAPH,
         children: [new TextRun(submission.approvals[0]?.registerNumber || "-")],
       },
-      kop_surat:{
+      kop_surat: {
         type: PatchType.DOCUMENT,
         children: [
           new Paragraph({
@@ -85,10 +90,8 @@ export async function printDoc(
             ],
           }),
         ],
-      }
+      },
     };
-
-    
 
     for (const sign of submission.signRequests) {
       const normal = normalizeVariableName(sign.official?.name ?? "-");
@@ -106,6 +109,29 @@ export async function printDoc(
       patches[`tte_${normal}_location`] = {
         type: PatchType.PARAGRAPH,
         children: [new TextRun(sign.official?.user?.name ?? "Belum TTE")],
+      };
+    }
+
+    const nik = submission.fields.find((field) => field.field.label === "NIK");
+    const penduduk = nik?.value ? await getPenduduk(nik?.value) : undefined;
+
+    if (penduduk?.data) {
+      for (const data in penduduk.data) {
+        patches[data] = {
+          type: PatchType.PARAGRAPH,
+          children: [new TextRun(penduduk.data[data])],
+        };
+      }
+    }
+
+    for (const field of submission.fields) {
+      const normal = normalizeVariableName(
+        field.field.label || field.field.fieldType.label,
+      );
+
+      patches[normal] = {
+        type: PatchType.PARAGRAPH,
+        children: [new TextRun(field.value)],
       };
     }
 
