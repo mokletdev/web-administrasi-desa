@@ -1,6 +1,6 @@
 "use server";
 
-import { convertToPdf, convertToPdfV1 } from "@/app/actions/docx-pdf";
+import { convertToPdfV1 } from "@/app/actions/docx-pdf";
 import { printDoc } from "@/app/actions/print-doc";
 import signPdf from "@/app/actions/sign-pdf";
 import { getServerSession } from "@/lib/next-auth";
@@ -8,6 +8,7 @@ import prisma from "@/lib/prisma";
 import { divisionLevelIndex } from "@/lib/utils";
 import { ActionResponse, ActionResponses } from "@/types/actions";
 import { AdministrativeLevel, ApprovalStatus, Prisma } from "@prisma/client";
+import { revalidatePath } from "next/cache";
 import { notFound } from "next/navigation";
 
 type Submission = Prisma.ServiceRequestGetPayload<{
@@ -20,8 +21,27 @@ type Submission = Prisma.ServiceRequestGetPayload<{
     user: { select: { name: true } };
     submissions: {
       select: {
+        approvals: true;
         id: true;
-        signedPdf: true;
+        status: true;
+        template: { select: { title: true } };
+      };
+    };
+  };
+}>[];
+
+type SubmissionOfficial = Prisma.ServiceRequestGetPayload<{
+  select: {
+    id: true;
+    status: true;
+    createdAt: true;
+    done: true;
+    name: true;
+    user: { select: { name: true } };
+    submissions: {
+      select: {
+        signRequests: true;
+        id: true;
         status: true;
         template: { select: { title: true } };
       };
@@ -30,7 +50,7 @@ type Submission = Prisma.ServiceRequestGetPayload<{
 }>[];
 
 export const getSubmissionsForOfficial = async (): Promise<
-  ActionResponse<Submission>
+  ActionResponse<SubmissionOfficial>
 > => {
   try {
     const session = await getServerSession();
@@ -79,8 +99,8 @@ export const getSubmissionsForOfficial = async (): Promise<
         user: { select: { name: true } },
         submissions: {
           select: {
+            signRequests: { where: { official: { userId: user.id } } },
             id: true,
-            signedPdf: true,
             status: true,
             template: { select: { title: true } },
           },
@@ -163,8 +183,16 @@ export const getSubmissions = async (): Promise<ActionResponse<Submission>> => {
         user: { select: { name: true } },
         submissions: {
           select: {
+            approvals: {
+              where: {
+                approvedBy: {
+                  unit: {
+                    administrativeLevel: userLevel?.unit?.administrativeLevel,
+                  },
+                },
+              },
+            },
             id: true,
-            signedPdf: true,
             status: true,
             template: { select: { title: true } },
           },
@@ -207,7 +235,9 @@ export const handleApproval = async (
       admnistrativeService: { include: { administrativeUnit: true } },
       submissions: {
         where: { template: { level: userDb.unit.administrativeLevel } },
-        include: { template: { include: { signs: true } } },
+        include: {
+          template: { include: { signs: { where: { image: null } } } },
+        },
       },
     },
   });
@@ -278,6 +308,8 @@ export const handleApproval = async (
     },
   });
 
+  revalidatePath("/", "layout");
+
   return ActionResponses.success({ id: serviceRequestId });
   // } catch (error) {
   //   console.error("Error getting requests:", error);
@@ -315,7 +347,11 @@ export const handleSign = async (
       submissions: {
         include: {
           signRequests: { include: { official: true } },
-          template: { include: { signs: { include: { Official: true } } } },
+          template: {
+            include: {
+              signs: { where: { image: null }, include: { Official: true } },
+            },
+          },
         },
         where: { template: { level: userDb.unit.administrativeLevel } },
       },
@@ -405,6 +441,7 @@ export const handleSign = async (
     },
   });
 
+  revalidatePath("/", "layout");
   return ActionResponses.success({ id: serviceRequestId });
   // } catch (error) {
   //   console.error("Error getting requests:", error);
@@ -529,6 +566,7 @@ export const getSubmissionDetails = async (
 
     if (!submission) return ActionResponses.notFound("Submission not found");
 
+    revalidatePath("/", "layout");
     return ActionResponses.success(submission);
   } catch (error) {
     console.error("Error getting requests:", error);

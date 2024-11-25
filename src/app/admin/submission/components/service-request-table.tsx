@@ -44,7 +44,7 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { FC, useMemo, useState } from "react";
+import { FC, Fragment, useMemo, useState } from "react";
 import { ConfirmRejectionDialog } from "./dialog/confirm-rejection-dialog";
 import { ParaphraseOrRegisterNumberDialog } from "./dialog/paraphrase-or-register-number-dialog";
 
@@ -208,24 +208,32 @@ export const ServiceRequestTable: FC<{
                     <span>Detail</span>
                   </DropdownMenuItem>
                 </Link>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setApprovalDialogOpen(true);
-                    setSelectedRow(row.original);
-                  }}
-                >
-                  <Check />
-                  <span>Approve</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setRejectionDialogOpen(true);
-                    setSelectedRow(row.original);
-                  }}
-                >
-                  <X />
-                  <span>Reject</span>
-                </DropdownMenuItem>
+                {row.original.submissions.some(
+                  (item: any) =>
+                    item?.approvals?.length > 1 ||
+                    item?.signRequests?.length > 1,
+                ) ? null : (
+                  <Fragment>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setApprovalDialogOpen(true);
+                        setSelectedRow(row.original);
+                      }}
+                    >
+                      <Check />
+                      <span>Approve</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setRejectionDialogOpen(true);
+                        setSelectedRow(row.original);
+                      }}
+                    >
+                      <X />
+                      <span>Reject</span>
+                    </DropdownMenuItem>
+                  </Fragment>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           );
