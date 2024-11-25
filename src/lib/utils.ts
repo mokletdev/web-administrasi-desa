@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { ImageRun } from "docx";
 import { extension } from "mime-types";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -203,4 +204,96 @@ export async function downloadFile(
   URL.revokeObjectURL(link.href);
 
   return;
+}
+
+/**
+ * Maps CSS-like positioning properties for an image to a `docx` floating image configuration.
+ *
+ * @param {Object} params - The configuration object for the image.
+ * @param {number} params.left - The horizontal position in pixels, measured from the left of the page.
+ * @param {number} params.bottom - The vertical position in pixels, measured from the bottom of the page.
+ * @param {string} params.imagePath - The file path to the image.
+ * @param {number} params.width - The width of the image in pixels.
+ * @param {number} params.height - The height of the image in pixels.
+ * @param {number} params.pageHeight - The height of the page in pixels, used to calculate the vertical position from the top.
+ *
+ * @returns {ImageRun} A `docx` `ImageRun` instance with the configured floating image properties.
+ *
+ * @throws {Error} Throws an error if the image file cannot be read.
+ *
+ * @example
+ * const imageRun = mapImagePositionToDocx({
+ *   left: 150,
+ *   bottom: 300,
+ *   imagePath: "./example-image.png",
+ *   width: 200,
+ *   height: 100,
+ *   pageHeight: 1122, // Approximate height of an A4 page in pixels
+ * });
+ *
+ * @example
+ * // Adding multiple images to a docx document
+ * const doc = new Document({
+ *   sections: [
+ *     {
+ *       children: [
+ *         mapImagePositionToDocx({
+ *           left: 50,
+ *           bottom: 100,
+ *           imagePath: "./image1.png",
+ *           width: 150,
+ *           height: 100,
+ *           pageHeight: 1122,
+ *         }),
+ *         mapImagePositionToDocx({
+ *           left: 300,
+ *           bottom: 200,
+ *           imagePath: "./image2.png",
+ *           width: 200,
+ *           height: 150,
+ *           pageHeight: 1122,
+ *         }),
+ *       ],
+ *     },
+ *   ],
+ * });
+ */
+export function mapImagePositionToDocx({
+  left,
+  bottom,
+  imageBase64,
+  width,
+  height,
+}: {
+  left: number;
+  bottom: number;
+  imageBase64: string;
+  width: number;
+  height: number;
+}): ImageRun {
+  const A4_HEIGHT_PX = 1122;
+  const EMU_PER_PIXEL = 9525;
+
+  const horizontalOffset = left * EMU_PER_PIXEL;
+  const verticalOffsetFromTop =
+    (A4_HEIGHT_PX - bottom - height) * EMU_PER_PIXEL; // Adjusted vertical position
+
+  return new ImageRun({
+    type: "png",
+    data: Buffer.from(imageBase64, "base64"),
+    transformation: {
+      width,
+      height,
+    },
+    floating: {
+      horizontalPosition: {
+        relative: "page",
+        offset: horizontalOffset,
+      },
+      verticalPosition: {
+        relative: "page",
+        offset: verticalOffsetFromTop,
+      },
+    },
+  });
 }

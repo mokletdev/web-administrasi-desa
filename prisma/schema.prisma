@@ -83,11 +83,12 @@ model Template {
 }
 
 model Sign {
-  id     String @id @default(uuid())
-  coordX Float
-  coordY Float
+  id     String  @id @default(uuid())
+  coordX Float // X Coordinate in pixels (measured from the left property of CSS)
+  coordY Float // Y Coordinate in pixels (measured from the bottom property of CSS)
   size   Float
-  page   Int    @default(1)
+  page   Int     @default(1)
+  image  String? // If it has 'image' property, then it is not a TTE
 
   Official   Official @relation(fields: [officialId], references: [id])
   officialId String
