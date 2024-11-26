@@ -82,14 +82,14 @@ export async function upsertTemplate(
       return ActionResponses.unauthorized();
     }
 
-    if (
-      validation?.template?.submissions.length &&
-      validation.template.submissions.length > 0
-    ) {
-      return ActionResponses.badRequest(
-        "Cannot edit form with existing submissions",
-      );
-    }
+    // if (
+    //   validation?.template?.submissions.length &&
+    //   validation.template.submissions.length > 0
+    // ) {
+    //   return ActionResponses.badRequest(
+    //     "Cannot edit form with existing submissions",
+    //   );
+    // }
 
     const contentFile = input.content.get("content") as File | null;
 
