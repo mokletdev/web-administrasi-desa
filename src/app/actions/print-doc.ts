@@ -153,7 +153,9 @@ export async function printDoc(
   }
   // console.log(patches);
 
-  for (const field of submission.fields) {
+  for (const field of submission.fields.filter(
+    (item) => item.field.fieldType.baseType !== "file",
+  )) {
     const normal = normalizeVariableName(
       field.field.label || field.field.fieldType.label,
     );
