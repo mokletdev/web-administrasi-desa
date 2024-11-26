@@ -294,6 +294,13 @@ export const UpdateTemplateDialog: FC<
               </h2>
               <div className="flex flex-col gap-y-2">
                 {fields
+                  .filter(
+                    (i) =>
+                      i.fieldTypeId !==
+                      fieldTypes[
+                        fieldTypes.findIndex((j) => j.baseType === "file")
+                      ].id,
+                  )
                   .sort((a, b) => a.fieldNumber - b.fieldNumber)
                   .map((field) => (
                     <RenderField
@@ -323,6 +330,53 @@ export const UpdateTemplateDialog: FC<
                   }}
                 >
                   Tambah Input <Plus />
+                </Button>
+              )}
+            </div>
+            <div className="mt-4 w-full space-y-1.5">
+              <h2 className={labelVariants({ className: "text-foreground" })}>
+                Manajemen Persyaratan
+              </h2>
+              <div className="flex flex-col gap-y-2">
+                {fields
+                  .filter(
+                    (i) =>
+                      i.fieldTypeId ===
+                      fieldTypes[
+                        fieldTypes.findIndex((j) => j.baseType === "file")
+                      ].id,
+                  )
+                  .sort((a, b) => a.fieldNumber - b.fieldNumber)
+                  .map((field) => (
+                    <RenderField
+                      key={field.fieldNumber}
+                      field={field}
+                      fields={fields}
+                      setFields={setFields}
+                    />
+                  ))}
+              </div>
+              {fieldTypes.length > 0 && (
+                <Button
+                  className="w-full"
+                  variant={"outline"}
+                  type="button"
+                  onClick={() => {
+                    setFields((prevFields) => [
+                      ...prevFields,
+                      {
+                        fieldNumber: prevFields.length + 1,
+                        fieldTypeId:
+                          fieldTypes[
+                            fieldTypes.findIndex((j) => j.baseType === "file")
+                          ]?.id ?? 0, // Use `0` or another default ID if `fieldTypes` is empty
+                        label: "Persyaratan Baru",
+                        required: false,
+                      },
+                    ]);
+                  }}
+                >
+                  Tambah Persyaratan <Plus />
                 </Button>
               )}
             </div>

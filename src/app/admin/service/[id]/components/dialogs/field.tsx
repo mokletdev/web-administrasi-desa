@@ -76,7 +76,7 @@ export const RenderField: FC<{
             className: "font-bold text-foreground",
           })}
         >
-          {fieldTypes ? "Input" : "Persyaratan"} No. {field.fieldNumber}
+          {fieldTypes ? "Input" : "Persyaratan"} {field.label}
         </p>
         <div className="flex items-center gap-2">
           <Button

@@ -34,9 +34,14 @@ export async function eSign(
       `${process.env.TTE_USERNAME}:${process.env.TTE_PASSWORD}`,
     ).toString("base64");
 
-    const { file, ...queryParams } = params;
+    const { file, imageTTD, ...queryParams } = params;
 
-    console.log("TTE: 1");
+    const imageFile = new File(
+      [await (await fetch(imageTTD!)).blob()],
+      `${queryParams.nik}`,
+      { type: "image/png" },
+    );
+
     const formData = new FormData();
     for (let key in queryParams) {
       if (params[key as keyof ESignParams]) {
@@ -48,7 +53,10 @@ export async function eSign(
       new Blob([file], { type: "application/pdf" }),
       "document.pdf",
     );
-    console.log("TTE: 2");
+    if (!params.image) {
+      formData.append("imageTTD", imageFile!);
+    }
+    formData.append("file", new Blob([file]), "document.pdf");
 
     const response = await fetch(`${process.env.TTE_URL}api/sign/pdf`, {
       method: "POST",
