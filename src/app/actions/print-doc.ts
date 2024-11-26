@@ -114,15 +114,19 @@ export async function printDoc(
 
     const nik = submission.fields.find((field) => field.field.label === "NIK");
     const penduduk = nik?.value ? await getPenduduk(nik?.value) : undefined;
-
-    if (penduduk?.data) {
+    console.log(penduduk);
+    if (penduduk?.success) {
       for (const data in penduduk.data) {
+        const value = penduduk.data[data] ?? "-";
+
+        const formatedValue = value instanceof Date ? formatDate(value) : value;
         patches[data] = {
           type: PatchType.PARAGRAPH,
-          children: [new TextRun(penduduk.data[data])],
+          children: [new TextRun(formatedValue)],
         };
       }
     }
+    // console.log(patches);
 
     for (const field of submission.fields) {
       const normal = normalizeVariableName(
@@ -131,7 +135,7 @@ export async function printDoc(
 
       patches[normal] = {
         type: PatchType.PARAGRAPH,
-        children: [new TextRun(field.value)],
+        children: [new TextRun(field.value ?? "-")],
       };
     }
 

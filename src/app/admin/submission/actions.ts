@@ -5,7 +5,7 @@ import { printDoc } from "@/app/actions/print-doc";
 import signPdf from "@/app/actions/sign-pdf";
 import { getServerSession } from "@/lib/next-auth";
 import prisma from "@/lib/prisma";
-import { divisionLevelIndex } from "@/lib/utils";
+import { divisionLevelIndex, levelMap } from "@/lib/utils";
 import { ActionResponse, ActionResponses } from "@/types/actions";
 import { AdministrativeLevel, ApprovalStatus, Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
@@ -288,11 +288,15 @@ export const handleApproval = async (
     request?.admnistrativeService?.skipStep!,
   );
 
-  let newStatus = `Menunggu Tanda Tangan di ${request?.levelNow}`;
+  let newStatus = `Menunggu Tanda Tangan di ${
+    request?.levelNow ? levelMap[request?.levelNow] : ""
+  }`;
   let level = request?.levelNow;
 
   if (status === "REJECT") {
-    newStatus = `Ditolak TTE di ${request?.levelNow} (${reason})`;
+    newStatus = `Ditolak TTE di ${
+      request?.levelNow ? levelMap[request?.levelNow] : ""
+    } (${reason})`;
   } else if (noTTE && next.nextLevel === null) newStatus = "Selesai";
   else if (noTTE && next.nextLevel) {
     level = next.nextLevel as AdministrativeLevel;
@@ -423,11 +427,15 @@ export const handleSign = async (
     request?.admnistrativeService?.skipStep!,
   );
 
-  let newStatus = `Menunggu Tanda Tangan di ${request?.levelNow}`;
+  let newStatus = `Menunggu Tanda Tangan di ${
+    request?.levelNow ? levelMap[request?.levelNow] : ""
+  }`;
   let level = request?.levelNow;
 
   if (status === "REJECT") {
-    newStatus = `Ditolak TTE di ${request?.levelNow} (${reason})`;
+    newStatus = `Ditolak TTE di ${
+      request?.levelNow ? levelMap[request?.levelNow] : ""
+    } (${reason})`;
   } else if (doneAllTTE && next.nextLevel === null) newStatus = "Selesai";
   else if (doneAllTTE && next.nextLevel) {
     level = next.nextLevel as AdministrativeLevel;

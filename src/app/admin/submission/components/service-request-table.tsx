@@ -210,8 +210,8 @@ export const ServiceRequestTable: FC<{
                 </Link>
                 {row.original.submissions.some(
                   (item: any) =>
-                    item?.approvals?.length > 1 ||
-                    item?.signRequests?.length > 1,
+                    item?.approvals?.length > 0 ||
+                    item?.signRequests?.length > 0,
                 ) ? null : (
                   <Fragment>
                     <DropdownMenuItem

@@ -10,38 +10,33 @@ export async function getPenduduk(nik: string) {
       return ActionResponses.notFound("Penduduk tidak ditemukan");
     }
 
-    const [jk, kel, pend, agama, status, pekerjaan, gol_dar] =
-      await Promise.all([
-        penduduk.jk
-          ? sistemdesa.jk.findFirst({ where: { kode: penduduk.jk } })
-          : null,
-        penduduk.kel
-          ? sistemdesa.kel.findFirst({ where: { id: penduduk.kel } })
-          : null,
-        penduduk.pend
-          ? sistemdesa.pendidikan.findFirst({ where: { id: penduduk.pend } })
-          : null,
-        penduduk.agama
-          ? sistemdesa.agama.findFirst({ where: { id: penduduk.agama } })
-          : null,
-        penduduk.status
-          ? sistemdesa.status.findFirst({ where: { id: penduduk.status } })
-          : null,
-        penduduk.pekerjaan
-          ? sistemdesa.pekerjaan.findFirst({
-              where: { id: penduduk.pekerjaan },
-            })
-          : null,
-        penduduk.gol_dar
-          ? sistemdesa.gol_dar.findFirst({
-              where: { id: parseInt(penduduk.gol_dar) },
-            })
-          : null,
-      ]);
+    const [kel, pend, agama, status, pekerjaan, gol_dar] = await Promise.all([
+      penduduk.kel
+        ? sistemdesa.kel.findFirst({ where: { id: penduduk.kel } })
+        : null,
+      penduduk.pend
+        ? sistemdesa.pendidikan.findFirst({ where: { id: penduduk.pend } })
+        : null,
+      penduduk.agama
+        ? sistemdesa.agama.findFirst({ where: { id: penduduk.agama } })
+        : null,
+      penduduk.status
+        ? sistemdesa.status.findFirst({ where: { id: penduduk.status } })
+        : null,
+      penduduk.pekerjaan
+        ? sistemdesa.pekerjaan.findFirst({
+            where: { id: penduduk.pekerjaan },
+          })
+        : null,
+      penduduk.gol_dar
+        ? sistemdesa.gol_dar.findFirst({
+            where: { id: parseInt(penduduk.gol_dar) },
+          })
+        : null,
+    ]);
 
     const pendudukWithRelation = {
       ...penduduk,
-      jk: jk?.jk,
       kel: kel?.kel,
       pend: pend?.pend,
       agama: agama?.agama,
