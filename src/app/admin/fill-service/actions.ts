@@ -97,11 +97,16 @@ export async function submitForm({
       service.skipStep === "SUBDISTRICT"
         ? "KECAMATAN"
         : service.skipStep === "SUBDISTRICT_DISTRICT"
-          ? "Dinas"
-          : "Pemerintahan Desa"
+        ? "Dinas"
+        : "Pemerintahan Desa"
     }`;
     const serviceRequest = await prisma.serviceRequest.create({
-      data: { userId, status, administrativeServiceId: serviceId },
+      data: {
+        userId,
+        status,
+        administrativeServiceId: serviceId,
+        name: service.name,
+      },
     });
     for (const form of service.templates) {
       // Validate required fields and option values
