@@ -4,8 +4,14 @@ import { RequestHistoryTable } from "./components/request-table";
 
 export default async function RequestsHistory() {
   const session = await getServerSession();
+  const userNIK = await prisma.user.findUnique({
+    where: { id: session?.user?.id },
+  });
+
   const serviceRequests = await prisma.serviceRequest.findMany({
-    where: { userId: session?.user?.id },
+    where: {
+      OR: [{ userId: session?.user?.id }, { user: { NIK: userNIK?.NIK } }],
+    },
     select: {
       id: true,
       status: true,
