@@ -62,22 +62,28 @@ export const ParaphraseOrRegisterNumberDialog: FC<
 
       if (res.error) {
         dismiss(loadingToast.id);
+        setLoading(false);
         return toast({
           title: "Gagal Menambahkan!",
           description: `Gagal menambah layanan (${res.error.message})`,
         });
       }
-    }
+    } else {
+      // If isParaphrase is true, then we'll use another function
+      const res = await handleApproval(
+        id,
+        "ACCEPT",
+        paraphraseOrRegisterNumber,
+      );
 
-    // If isParaphrase is true, then we'll use another function
-    const res = await handleApproval(id, "ACCEPT", paraphraseOrRegisterNumber);
-
-    if (res.error) {
-      dismiss(loadingToast.id);
-      return toast({
-        title: "Gagal Menambahkan!",
-        description: `Gagal menambah layanan (${res.error.message})`,
-      });
+      if (res.error) {
+        dismiss(loadingToast.id);
+        setLoading(false);
+        return toast({
+          title: "Gagal Menambahkan!",
+          description: `Gagal menambah layanan (${res.error.message})`,
+        });
+      }
     }
 
     dismiss(loadingToast.id);

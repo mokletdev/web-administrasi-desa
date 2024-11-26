@@ -383,6 +383,7 @@ export const handleSign = async (
       const signLength = submission.template.signs.length;
       const signedLength = submission.signRequests.length;
       const remainingSignatures = signLength - signedLength;
+      console.log("REMAINS:", remainingSignatures);
 
       const availableForTTE =
         submission.template.signs.some(
@@ -427,20 +428,30 @@ export const handleSign = async (
     request?.admnistrativeService?.skipStep!,
   );
 
-  let newStatus = `Menunggu Tanda Tangan di ${
-    request?.levelNow ? levelMap[request?.levelNow] : ""
-  }`;
+  let newStatus =
+    doneAllTTE && next.nextLevel == null
+      ? "Selesai"
+      : `Menunggu Tanda Tangan di ${
+          request?.levelNow ? levelMap[request?.levelNow] : ""
+        }`;
   let level = request?.levelNow;
+
+  console.log("DONEALL:", doneAllTTE);
+  console.log("level:", next);
+  console.log("condition:", doneAllTTE && next.nextLevel === null);
+
+  if (doneAllTTE && next.nextLevel) {
+    level = next.nextLevel as AdministrativeLevel;
+    newStatus = `Menunggu Operator ${next.nextLevel}`;
+  }
 
   if (status === "REJECT") {
     newStatus = `Ditolak TTE di ${
       request?.levelNow ? levelMap[request?.levelNow] : ""
     } (${reason})`;
-  } else if (doneAllTTE && next.nextLevel === null) newStatus = "Selesai";
-  else if (doneAllTTE && next.nextLevel) {
-    level = next.nextLevel as AdministrativeLevel;
-    newStatus = `Menunggu Operator ${next.nextLevel}`;
   }
+
+  console.log(newStatus);
 
   await prisma.serviceRequest.update({
     where: { id: serviceRequestId },

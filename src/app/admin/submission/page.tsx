@@ -22,8 +22,6 @@ export default async function SubmissionPage() {
       ? await getSubmissionsForOfficial()
       : await getSubmissions();
 
-  console.log(serviceRequests?.data?.[0].submissions);
-
   return (
     <>
       <div className="mb-8 flex flex-col gap-2">
