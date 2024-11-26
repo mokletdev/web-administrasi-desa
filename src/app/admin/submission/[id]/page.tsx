@@ -1,5 +1,6 @@
 import { buttonVariants } from "@/components/ui/button";
 import prisma from "@/lib/prisma";
+import { normalizeVariableName } from "@/lib/utils";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -21,7 +22,11 @@ export default async function SubmissionDetail({
         select: {
           fields: {
             include: {
-              field: { include: { fieldType: { select: { baseType: true } } } },
+              field: {
+                include: {
+                  fieldType: { select: { label: true, baseType: true } },
+                },
+              },
             },
           },
         },
@@ -36,11 +41,23 @@ export default async function SubmissionDetail({
   const submissionFields =
     serviceRequest.submissions.flatMap((submission) =>
       submission.fields.map((submissionField) => ({
-        label: submissionField.field.label || "No Label",
+        label:
+          submissionField.field.label || submissionField.field.fieldType.label,
         answer: submissionField.value || "No Answer",
         type: submissionField.field.fieldType.baseType,
+        variableName: normalizeVariableName(
+          normalizeVariableName(
+            submissionField.field.label ||
+              submissionField.field.fieldType.label,
+          ),
+        ),
       })),
     ) || [];
+
+  const filteredFields = submissionFields.filter(
+    (value, index, self) =>
+      index === self.findIndex((t) => t.variableName === value.variableName),
+  );
 
   return (
     <div className="flex flex-col">
@@ -64,7 +81,7 @@ export default async function SubmissionDetail({
           ipsum iure!
         </p>
       </div>
-      <FieldsDisplay fields={submissionFields} />
+      <FieldsDisplay fields={filteredFields} />
     </div>
   );
 }
