@@ -80,7 +80,7 @@ export const DynamicForm: FC<{
     const { id, fieldType, required, options, variableName } = field;
     const label = field.label ?? field.fieldType.label;
 
-    if (fieldType.baseType === "relation" && field.label === "NIK")
+    if (field.label === "NIK")
       return (
         <InputContainer key={field.id}>
           <Label>
