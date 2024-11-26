@@ -392,12 +392,13 @@ export const handleSign = async (
         ? remainingSignatures <= 1
         : remainingSignatures === 0;
 
-      if (done) doneAllTTE = false;
-
+      if (!done) doneAllTTE = false;
       if (!availableForTTE) continue;
 
+      let pdfFinal;
       if (status !== "REJECT") {
         const doc = await signPdf(submission.id, paraphrase);
+        if (done) pdfFinal = doc.data?.toString("base64");
         await prisma.signRequest.updateMany({
           where: {
             officialId,
@@ -409,6 +410,7 @@ export const handleSign = async (
       await prisma.submission.update({
         where: { id: submission.id },
         data: {
+          signedPdf: pdfFinal,
           status: status === "ACCEPT" ? "SIGNED" : "REJECTED",
         },
       });
