@@ -14,8 +14,8 @@ interface ESignParams {
   yAxis: string;
   passphrase: string;
   tampilan: "visible" | "invisible";
-  nik:string
-  image: boolean
+  nik: string;
+  image: boolean;
 }
 
 export async function eSign(
@@ -34,25 +34,35 @@ export async function eSign(
       `${process.env.TTE_USERNAME}:${process.env.TTE_PASSWORD}`,
     ).toString("base64");
 
-    const { file, ...queryParams } = params;
-    
-    const formData = new FormData();
-    for (let key in params){
-      if(params[key as keyof ESignParams]){
+    const { file, imageTTD, ...queryParams } = params;
 
-        formData.append(key, params[key as keyof ESignParams] as string)
+    const imageFile = new File(
+      [await (await fetch(imageTTD!)).blob()],
+      `${queryParams.nik}`,
+      { type: "image/png" },
+    );
+
+    const formData = new FormData();
+    for (let key in queryParams) {
+      if (params[key as keyof ESignParams]) {
+        formData.append(key, params[key as keyof ESignParams] as string);
       }
+    }
+    formData.append(
+      "file",
+      new Blob([file], { type: "application/pdf" }),
+      "document.pdf",
+    );
+    if (!params.image) {
+      formData.append("imageTTD", imageFile!);
     }
     formData.append("file", new Blob([file]), "document.pdf");
 
-    const response = await fetch(
-      `${process.env.TTE_URL}api/sign/pdf`,
-      {
-        method: "POST",
-        headers: { Authorization: `Basic ${auth}` },
-        body: formData,
-      },
-    );
+    const response = await fetch(`${process.env.TTE_URL}api/sign/pdf`, {
+      method: "POST",
+      headers: { Authorization: `Basic ${auth}` },
+      body: formData,
+    });
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);

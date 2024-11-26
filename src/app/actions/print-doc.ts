@@ -2,7 +2,11 @@
 
 import { ActionResponse, ActionResponses } from "@/types/actions";
 import prisma from "@/lib/prisma";
-import { formatDate, normalizeVariableName } from "@/lib/utils";
+import {
+  formatDate,
+  mapImagePositionToDocx,
+  normalizeVariableName,
+} from "@/lib/utils";
 import { ImageRun, Paragraph, PatchType, TextRun, patchDocument } from "docx";
 import { getPenduduk } from "./dbSistemDesa";
 
@@ -11,10 +15,18 @@ export async function printDoc(
 ): Promise<ActionResponse<Buffer>> {
   try {
     const submission = await prisma.submission.findUnique({
-      where: { id: submissionId },
+      where: {
+        id: submissionId,
+        template: {
+          signs: { some: { image: { not: null } } },
+        },
+      },
       include: {
         fields: { include: { field: { include: { fieldType: true } } } },
         template: {
+          select: {
+            signs: true,
+          },
           include: {
             AdministrativeService: {
               include: {
@@ -91,6 +103,18 @@ export async function printDoc(
           }),
         ],
       },
+      manual_sign: {
+        type: PatchType.DOCUMENT,
+        children: submission.template.signs.map((manualSign) =>
+          mapImagePositionToDocx({
+            bottom: manualSign.coordY,
+            left: manualSign.coordX,
+            width: manualSign.size,
+            height: manualSign.size,
+            imageBase64: manualSign.image!,
+          }),
+        ),
+      },
     };
 
     for (const sign of submission.signRequests) {
@@ -102,6 +126,11 @@ export async function printDoc(
       };
 
       patches[`tte_${normal}_tgl`] = {
+        type: PatchType.PARAGRAPH,
+        children: [new TextRun(formatDate(sign.signedAt))],
+      };
+
+      patches[`tgl_surat`] = {
         type: PatchType.PARAGRAPH,
         children: [new TextRun(formatDate(sign.signedAt))],
       };

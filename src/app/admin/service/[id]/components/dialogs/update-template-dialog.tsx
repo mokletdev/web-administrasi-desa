@@ -44,6 +44,7 @@ import { Document, Page, pdfjs } from "react-pdf";
 import { z } from "zod";
 import { upsertTemplate } from "../../actions";
 import { Field, RenderField } from "./field";
+import { PENDUDUK_PROPS } from "@/lib/penduduk";
 
 // Initiate pdfjs worker
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -293,6 +294,13 @@ export const UpdateTemplateDialog: FC<
               </h2>
               <div className="flex flex-col gap-y-2">
                 {fields
+                  .filter(
+                    (i) =>
+                      i.fieldTypeId !==
+                      fieldTypes[
+                        fieldTypes.findIndex((j) => j.baseType === "file")
+                      ].id,
+                  )
                   .sort((a, b) => a.fieldNumber - b.fieldNumber)
                   .map((field) => (
                     <RenderField
@@ -322,6 +330,53 @@ export const UpdateTemplateDialog: FC<
                   }}
                 >
                   Tambah Input <Plus />
+                </Button>
+              )}
+            </div>
+            <div className="mt-4 w-full space-y-1.5">
+              <h2 className={labelVariants({ className: "text-foreground" })}>
+                Manajemen Persyaratan
+              </h2>
+              <div className="flex flex-col gap-y-2">
+                {fields
+                  .filter(
+                    (i) =>
+                      i.fieldTypeId ===
+                      fieldTypes[
+                        fieldTypes.findIndex((j) => j.baseType === "file")
+                      ].id,
+                  )
+                  .sort((a, b) => a.fieldNumber - b.fieldNumber)
+                  .map((field) => (
+                    <RenderField
+                      key={field.fieldNumber}
+                      field={field}
+                      fields={fields}
+                      setFields={setFields}
+                    />
+                  ))}
+              </div>
+              {fieldTypes.length > 0 && (
+                <Button
+                  className="w-full"
+                  variant={"outline"}
+                  type="button"
+                  onClick={() => {
+                    setFields((prevFields) => [
+                      ...prevFields,
+                      {
+                        fieldNumber: prevFields.length + 1,
+                        fieldTypeId:
+                          fieldTypes[
+                            fieldTypes.findIndex((j) => j.baseType === "file")
+                          ]?.id ?? 0, // Use `0` or another default ID if `fieldTypes` is empty
+                        label: "Persyaratan Baru",
+                        required: false,
+                      },
+                    ]);
+                  }}
+                >
+                  Tambah Persyaratan <Plus />
                 </Button>
               )}
             </div>
@@ -601,9 +656,9 @@ export const UpdateTemplateDialog: FC<
                         key={sign.officialId + "_location"}
                         className="rounded-md border px-4 py-2 font-mono text-sm shadow-sm"
                       >
-                        {`{{tte_${normalizeVariableName(
+                        {/* {`{{tte_${normalizeVariableName(
                           sign.officialName,
-                        )}_location}}`}
+                        )}_location}}`} */}
                       </div>
                     </Fragment>
                   ))}
@@ -613,6 +668,31 @@ export const UpdateTemplateDialog: FC<
                       className="rounded-md border px-4 py-2 font-mono text-sm shadow-sm"
                     >
                       {`{{${normalizeVariableName(field.label || "")}}}`}
+                    </div>
+                  ))}
+                </CollapsibleContent>
+              </Collapsible>
+            </div>
+            <div className="mb-1 flex w-full items-center">
+              <Collapsible className="w-full space-y-2">
+                <div className="flex items-center justify-between space-x-4 px-4">
+                  <p className="text-xs font-semibold">
+                    Variabel data Penduduk
+                  </p>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm">
+                      <ChevronsUpDown className="h-4 w-4" />
+                      <span className="sr-only">Toggle</span>
+                    </Button>
+                  </CollapsibleTrigger>
+                </div>
+                <CollapsibleContent className="w-full space-y-2">
+                  {PENDUDUK_PROPS.map((field) => (
+                    <div
+                      key={field}
+                      className="rounded-md border px-4 py-2 font-mono text-sm shadow-sm"
+                    >
+                      {`{{${field}}}`}
                     </div>
                   ))}
                 </CollapsibleContent>

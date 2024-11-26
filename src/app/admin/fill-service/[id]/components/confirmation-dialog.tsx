@@ -70,7 +70,7 @@ export const ConfirmationDialog: FC<
                 description: `Berhasil mengirim data formulir pengajuan surat. Anda akan diarahkan ke halaman riwayat pengajuan anda.`,
               });
               setLoading(false);
-              return router.push("/dashboard/request");
+              return router.push("/admin/submission");
             }}
           >
             Konfirmasi
