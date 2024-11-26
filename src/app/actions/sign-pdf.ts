@@ -62,6 +62,7 @@ const signPdf = async (submissionId: string, paraphrase: string) => {
     }
 
     const unsignedPdfBuffer = Buffer.from(unsignedPdf!, "base64");
+    console.log("TTE Proccess");
     const signedPdf = await eSign({
       file: unsignedPdfBuffer,
       page: sign?.page.toString()!,

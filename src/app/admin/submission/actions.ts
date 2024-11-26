@@ -404,7 +404,7 @@ export const handleSign = async (
       if (status !== "REJECT") {
         const doc = await signPdf(submission.id, paraphrase);
         if (done) pdfFinal = doc.data?.toString("base64");
-        await prisma.signRequest.updateMany({
+        const update = await prisma.signRequest.updateMany({
           where: {
             officialId,
             submissionId: submission.id,
