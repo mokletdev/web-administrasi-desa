@@ -32,14 +32,21 @@ export const GET = async (
 
       const printBlob = new Blob([print.data]);
       const printPdf = await convertToPdfV1(printBlob);
+      console.log(printPdf);
 
       doc = await b64toBlob(printPdf.data!, "application/pdf");
     } else {
-      const newestDoc = await prisma.signRequest.findFirst({
+      let newestDoc: any = await prisma.signRequest.findFirst({
         where: { submissionId: id },
         select: { signedPdf: true },
         orderBy: { signedAt: "desc" },
       });
+
+      if (!newestDoc?.signedPdf)
+        newestDoc = await prisma.submission.findUnique({
+          where: { id },
+          select: { signedPdf: true },
+        });
 
       doc = await b64toBlob(newestDoc?.signedPdf!, "application/pdf");
     }
