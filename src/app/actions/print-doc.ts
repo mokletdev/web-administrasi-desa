@@ -106,6 +106,11 @@ export async function printDoc(
         children: [new TextRun(formatDate(sign.signedAt))],
       };
 
+      patches[`tgl_surat`] = {
+        type: PatchType.PARAGRAPH,
+        children: [new TextRun(formatDate(sign.signedAt))],
+      };
+
       patches[`tte_${normal}_location`] = {
         type: PatchType.PARAGRAPH,
         children: [new TextRun(sign.official?.user?.name ?? "Belum TTE")],
