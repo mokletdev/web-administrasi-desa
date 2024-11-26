@@ -55,7 +55,11 @@ export const DynamicForm: FC<{
   const onSubmit = handleSubmit(async (data) => {
     let answers = Object.entries(data).map(([key, value]) => ({
       name: key,
-      value: Array.isArray(value) ? value.join(", ") : value, // Handle checkboxes if needed
+      value: Array.isArray(value)
+        ? value.join(", ")
+        : typeof value === "object"
+        ? value.value
+        : value, // Handle checkboxes and react-select if needed
     }));
 
     await Promise.all(
@@ -94,7 +98,7 @@ export const DynamicForm: FC<{
               required: true,
             }}
             defaultValue={""}
-            render={({ field }) => (
+            render={({ field: { onChange, ...field } }) => (
               <AsyncSelect
                 {...field}
                 cacheOptions
@@ -102,6 +106,7 @@ export const DynamicForm: FC<{
                 isSearchable
                 styles={reactSelectStyles}
                 classNames={reactSelectClassNames}
+                onChange={(e) => onChange(e.value)}
                 loadOptions={debounce((query, callback) => {
                   getPendudukByNIK(query).then((res) => callback(res.data));
                 }, 1000)}
