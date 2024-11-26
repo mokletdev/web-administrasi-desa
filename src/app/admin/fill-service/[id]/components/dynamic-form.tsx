@@ -98,7 +98,7 @@ export const DynamicForm: FC<{
               required: true,
             }}
             defaultValue={""}
-            render={({ field: { onChange, ...field } }) => (
+            render={({ field }) => (
               <AsyncSelect
                 {...field}
                 cacheOptions
@@ -106,7 +106,6 @@ export const DynamicForm: FC<{
                 isSearchable
                 styles={reactSelectStyles}
                 classNames={reactSelectClassNames}
-                onChange={(e) => onChange(e.value)}
                 loadOptions={debounce((query, callback) => {
                   getPendudukByNIK(query).then((res) => callback(res.data));
                 }, 1000)}
