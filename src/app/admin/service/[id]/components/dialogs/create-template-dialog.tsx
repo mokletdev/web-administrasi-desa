@@ -533,91 +533,97 @@ export const CreateTemplateDialog: FC<
                 </>
               )}
             </div>
-            {!!officialIdToEdit && previewMaxWidth && previewMaxHeight && (
-              <div className="mb-4 flex flex-col gap-y-4">
-                <p className="mb-2 text-foreground">
-                  Edit TTE{" "}
-                  {
-                    signs.find((sign) => sign.officialId === officialIdToEdit)
-                      ?.officialName
-                  }
-                </p>
-                <div className="flex flex-col gap-y-2">
-                  <div>
-                    <Label>Halaman</Label>
-                    <Input
-                      type="number"
-                      max={previewPageCount}
-                      min={1}
-                      onChange={(e) => {
-                        setSigns((prev) => {
-                          return prev.map((sign) => {
-                            if (sign.officialId === officialIdToEdit) {
-                              return { ...sign, page: Number(e.target.value) };
-                            }
+            {signs.length > 0 &&
+              !!officialIdToEdit &&
+              previewMaxWidth &&
+              previewMaxHeight && (
+                <div className="mb-4 flex flex-col gap-y-4">
+                  <p className="mb-2 text-foreground">
+                    Edit TTE{" "}
+                    {
+                      signs.find((sign) => sign.officialId === officialIdToEdit)
+                        ?.officialName
+                    }
+                  </p>
+                  <div className="flex flex-col gap-y-2">
+                    <div>
+                      <Label>Halaman</Label>
+                      <Input
+                        type="number"
+                        max={previewPageCount}
+                        min={1}
+                        onChange={(e) => {
+                          setSigns((prev) => {
+                            return prev.map((sign) => {
+                              if (sign.officialId === officialIdToEdit) {
+                                return {
+                                  ...sign,
+                                  page: Number(e.target.value),
+                                };
+                              }
 
-                            return sign;
+                              return sign;
+                            });
                           });
-                        });
-                      }}
-                      value={
-                        signs.find(
-                          (sign) => sign.officialId === officialIdToEdit,
-                        )!.page
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label>Posisi X</Label>
-                    <Slider
-                      defaultValue={[0]}
-                      value={[
-                        signs.find(
-                          (sign) => sign.officialId === officialIdToEdit,
-                        )!.coordX,
-                      ]}
-                      max={previewMaxWidth}
-                      step={1}
-                      onValueChange={(e) =>
-                        handleXChange(e[0], officialIdToEdit)
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label>Posisi Y</Label>
-                    <Slider
-                      defaultValue={[0]}
-                      value={[
-                        signs.find(
-                          (sign) => sign.officialId === officialIdToEdit,
-                        )!.coordY,
-                      ]}
-                      max={previewMaxHeight}
-                      step={1}
-                      onValueChange={(e) =>
-                        handleYChange(e[0], officialIdToEdit)
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label>Skala</Label>
-                    <Slider
-                      defaultValue={[0]}
-                      value={[
-                        signs.find(
-                          (sign) => sign.officialId === officialIdToEdit,
-                        )!.size,
-                      ]}
-                      max={300}
-                      step={1}
-                      onValueChange={(e) =>
-                        handleSizeChange(e[0], officialIdToEdit)
-                      }
-                    />
+                        }}
+                        value={
+                          signs.find(
+                            (sign) => sign.officialId === officialIdToEdit,
+                          )!.page
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label>Posisi X</Label>
+                      <Slider
+                        defaultValue={[0]}
+                        value={[
+                          signs.find(
+                            (sign) => sign.officialId === officialIdToEdit,
+                          )!.coordX,
+                        ]}
+                        max={previewMaxWidth}
+                        step={1}
+                        onValueChange={(e) =>
+                          handleXChange(e[0], officialIdToEdit)
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label>Posisi Y</Label>
+                      <Slider
+                        defaultValue={[0]}
+                        value={[
+                          signs.find(
+                            (sign) => sign.officialId === officialIdToEdit,
+                          )!.coordY,
+                        ]}
+                        max={previewMaxHeight}
+                        step={1}
+                        onValueChange={(e) =>
+                          handleYChange(e[0], officialIdToEdit)
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label>Skala</Label>
+                      <Slider
+                        defaultValue={[0]}
+                        value={[
+                          signs.find(
+                            (sign) => sign.officialId === officialIdToEdit,
+                          )!.size,
+                        ]}
+                        max={300}
+                        step={1}
+                        onValueChange={(e) =>
+                          handleSizeChange(e[0], officialIdToEdit)
+                        }
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
             <div className="mb-1 flex w-full items-center">
               <Collapsible
                 open={variablesOpen}
