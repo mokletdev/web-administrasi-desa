@@ -160,7 +160,9 @@ export const RequestHistoryTable: FC<{
                   return (
                     <DropdownMenuItem
                       key={item.id}
-                      onClick={() => {}}
+                      onClick={() => {
+                        window.open("/api/download/" + item.id);
+                      }}
                       disabled={item.status !== "SIGNED"}
                     >
                       {item.status === "SIGNED" ? (
