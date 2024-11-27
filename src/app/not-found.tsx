@@ -11,6 +11,7 @@ export default function NotFound() {
       <div className="flex flex-col items-center gap-2">
         <h1 className="display">404</h1>
         <p>Halaman yang anda cari tidak ditemukan!</p>
+        <p className="text-xs">&copy; MokletDev Team</p>
       </div>
     </main>
   );
