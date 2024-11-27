@@ -114,7 +114,10 @@ export const authOptions: AuthOptions = {
 
         token.id = findUser?.id;
         token.role = findUser?.role;
+        token.name = findUser?.name;
+        token.email = findUser?.email;
       }
+
       return token;
     },
     async session({ session, token }) {

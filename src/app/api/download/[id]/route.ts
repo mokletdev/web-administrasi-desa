@@ -1,10 +1,7 @@
 import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
-import { patchDocument, PatchType, TextRun } from "docx";
-import { normalizeVariableName } from "@/lib/utils";
 import { printDoc } from "@/app/actions/print-doc";
-import { convertToPdf, convertToPdfV1 } from "@/app/actions/docx-pdf";
-import { notFound } from "next/navigation";
+import { convertToPdfV1 } from "@/app/actions/docx-pdf";
 
 export const GET = async (
   req: NextRequest,
