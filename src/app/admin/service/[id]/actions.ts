@@ -167,7 +167,7 @@ export async function upsertTemplate(
       if (input.fields?.length) {
         const keepFieldIds = input.fields
           .map((f) => f.id)
-          .filter((id) => id !== undefined);
+          .filter((id) => id !== undefined) as number[];
 
         await tx.field.deleteMany({
           where: {

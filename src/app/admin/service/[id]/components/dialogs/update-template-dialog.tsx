@@ -152,6 +152,8 @@ export const UpdateTemplateDialog: FC<
   useEffect(() => {
     if (signs.length > 0 && officialIdToEdit === undefined) {
       setOfficialIdToEdit(signs[0].officialId);
+    } else if (signs.length === 0 && officialIdToEdit !== undefined) {
+      setOfficialIdToEdit(undefined);
     }
   }, [officialIdToEdit, signs]);
 
@@ -389,232 +391,237 @@ export const UpdateTemplateDialog: FC<
               }
               errorMessage={form.formState.errors.content?.message?.toString()}
             />
-            <div
-              id="container"
-              className={cn(
-                "relative block w-full rounded-md",
-                loading || preview ? "mb-12" : "mb-0",
-              )}
-            >
-              {previewLoading && (
-                <p className="w-full text-center">Loading preview...</p>
-              )}
-              {preview && (
-                <>
-                  <div className="flex flex-col gap-y-1.5">
-                    <Label>Pilih Pejabat untuk TTE</Label>
-                    <MultiSelect
-                      options={officials.map((official) => ({
-                        label: official.name,
-                        value: official.id,
-                      }))}
-                      onValueChange={(values) => {
-                        setSigns(
-                          values.map((value) => ({
-                            officialId: value,
-                            officialName: officials.find(
-                              (official) => official.id === value,
-                            )!.name,
-                            coordX: 0,
-                            coordY: 0,
-                            size: 42,
-                            page: 1,
-                          })),
-                        );
+            <div className="flex gap-4">
+              <div
+                id="container"
+                className={cn(
+                  "relative block w-full rounded-md",
+                  loading || preview ? "mb-12" : "mb-0",
+                )}
+              >
+                {previewLoading && (
+                  <p className="w-full text-center">Loading preview...</p>
+                )}
+                {preview && (
+                  <>
+                    <div className="flex flex-col gap-y-1.5">
+                      <Label>Pilih Pejabat untuk TTE</Label>
+                      <MultiSelect
+                        options={officials.map((official) => ({
+                          label: official.name,
+                          value: official.id,
+                        }))}
+                        onValueChange={(values) => {
+                          setSigns(
+                            values.map((value) => ({
+                              officialId: value,
+                              officialName: officials.find(
+                                (official) => official.id === value,
+                              )!.name,
+                              coordX: 280,
+                              coordY: 360,
+                              size: 42,
+                              page: 1,
+                            })),
+                          );
+                        }}
+                        defaultValue={signs.map((sign) => sign.officialId)}
+                        value={signs.map((sign) => sign.officialId)}
+                        placeholder="Select official for TTE"
+                        variant="inverted"
+                        animation={2}
+                        maxCount={3}
+                      />
+                    </div>
+                    <div className="flex w-full items-center justify-between">
+                      <Button
+                        variant={"outline"}
+                        disabled={previewPageNumber === 1}
+                        onClick={() => {
+                          setPreviewPageNumber((prev) => prev - 1);
+                        }}
+                      >
+                        <ArrowLeft />
+                      </Button>
+                      <p>
+                        {previewPageNumber} / {previewPageCount}
+                      </p>
+                      <Button
+                        variant="outline"
+                        disabled={previewPageNumber === (previewPageCount || 1)}
+                        onClick={() => {
+                          setPreviewPageNumber((prev) =>
+                            prev < previewPageCount!
+                              ? prev + 1
+                              : previewPageCount!,
+                          );
+                        }}
+                      >
+                        <ArrowRight />
+                      </Button>
+                    </div>
+                    <Document
+                      file={`data:application/pdf;base64,${preview}`}
+                      onLoadSuccess={({ numPages }) => {
+                        setPreviewPageCount(numPages);
                       }}
-                      defaultValue={signs.map((sign) => sign.officialId)}
-                      value={signs.map((sign) => sign.officialId)}
-                      placeholder="Select official for TTE"
-                      variant="inverted"
-                      animation={2}
-                      maxCount={3}
-                    />
-                  </div>
-                  <div className="flex w-full items-center justify-between">
-                    <Button
-                      variant={"outline"}
-                      disabled={previewPageNumber === 1}
-                      onClick={() => {
-                        setPreviewPageNumber((prev) => prev - 1);
-                      }}
+                      options={reactPdfOptions}
+                      renderMode="canvas"
+                      className="h-full w-full"
                     >
-                      <ArrowLeft />
-                    </Button>
-                    <p>
-                      {previewPageNumber} / {previewPageCount}
-                    </p>
-                    <Button
-                      variant="outline"
-                      disabled={previewPageNumber === (previewPageCount || 1)}
-                      onClick={() => {
-                        setPreviewPageNumber((prev) =>
-                          prev < previewPageCount!
-                            ? prev + 1
-                            : previewPageCount!,
-                        );
-                      }}
-                    >
-                      <ArrowRight />
-                    </Button>
-                  </div>
-                  <Document
-                    file={`data:application/pdf;base64,${preview}`}
-                    onLoadSuccess={({ numPages }) => {
-                      setPreviewPageCount(numPages);
-                    }}
-                    options={reactPdfOptions}
-                    renderMode="canvas"
-                    className="h-full w-full"
-                  >
-                    <Page
-                      className={cn("mx-auto h-fit w-fit")}
-                      scale={1}
-                      key={previewPageNumber}
-                      pageNumber={previewPageNumber}
-                      renderAnnotationLayer={false}
-                      renderTextLayer={false}
-                      onLoadSuccess={({ originalWidth, originalHeight }) => {
-                        setPreviewMaxHeight(originalHeight);
-                        setPreviewMaxWidth(originalWidth);
-                        setPreviewLoading(false);
-                      }}
-                      onRenderError={() => setPreviewLoading(false)}
-                    >
-                      {signs
-                        .filter((sign) => sign.page === previewPageNumber)
-                        .map((sign) => (
-                          <TooltipProvider key={sign.officialId}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button
-                                  type="button"
-                                  className={cn(
-                                    "absolute flex size-5 items-center justify-center rounded-sm border border-input p-2",
-                                    officialIdToEdit === sign.officialId
-                                      ? "bg-foreground"
-                                      : "bg-input",
-                                  )}
-                                  onClick={() =>
-                                    setOfficialIdToEdit(sign.officialId)
-                                  }
-                                  style={{
-                                    left: `${sign.coordX}px`,
-                                    bottom: `${sign.coordY}px`,
-                                    width: `${sign.size}px`,
-                                    height: `${sign.size}px`,
-                                  }}
-                                >
-                                  <p
+                      <Page
+                        className={cn("mx-auto h-fit w-fit")}
+                        scale={1}
+                        key={previewPageNumber}
+                        pageNumber={previewPageNumber}
+                        renderAnnotationLayer={false}
+                        renderTextLayer={false}
+                        onLoadSuccess={({ originalWidth, originalHeight }) => {
+                          setPreviewMaxHeight(originalHeight);
+                          setPreviewMaxWidth(originalWidth);
+                          setPreviewLoading(false);
+                        }}
+                        onRenderError={() => setPreviewLoading(false)}
+                      >
+                        {signs
+                          .filter((sign) => sign.page === previewPageNumber)
+                          .map((sign) => (
+                            <TooltipProvider key={sign.officialId}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    type="button"
                                     className={cn(
-                                      "line-clamp-1 text-xs",
+                                      "absolute flex size-5 items-center justify-center rounded-sm border border-input p-2",
                                       officialIdToEdit === sign.officialId
-                                        ? "text-background"
-                                        : "text-foreground",
+                                        ? "bg-foreground"
+                                        : "bg-input",
                                     )}
+                                    onClick={() =>
+                                      setOfficialIdToEdit(sign.officialId)
+                                    }
+                                    style={{
+                                      left: `${sign.coordX}px`,
+                                      bottom: `${sign.coordY}px`,
+                                      width: `${sign.size}px`,
+                                      height: `${sign.size}px`,
+                                    }}
                                   >
-                                    {sign.officialName}
+                                    <p
+                                      className={cn(
+                                        "line-clamp-1 text-xs",
+                                        officialIdToEdit === sign.officialId
+                                          ? "text-background"
+                                          : "text-foreground",
+                                      )}
+                                    >
+                                      {sign.officialName}
+                                    </p>
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p className="text-background">
+                                    TTD {sign.officialName}
                                   </p>
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p className="text-background">
-                                  {sign.officialName}
-                                </p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        ))}
-                    </Page>
-                  </Document>
-                </>
-              )}
-            </div>
-            {!!officialIdToEdit && (
-              <div className="mb-4 flex flex-col gap-y-4">
-                <p className="mb-2 text-foreground">
-                  Edit TTE{" "}
-                  {
-                    signs.find((sign) => sign.officialId === officialIdToEdit)
-                      ?.officialName
-                  }
-                </p>
-                <div className="flex flex-col gap-y-2">
-                  <div>
-                    <Label htmlFor="page">Halaman</Label>
-                    <Input
-                      name="page"
-                      type="number"
-                      max={previewPageCount}
-                      min={1}
-                      onChange={(e) => {
-                        setSigns((prev) => {
-                          return prev.map((sign) => {
-                            if (sign.officialId === officialIdToEdit) {
-                              return { ...sign, page: Number(e.target.value) };
-                            }
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          ))}
+                      </Page>
+                    </Document>
+                  </>
+                )}
+              </div>
+              {officialIdToEdit !== undefined && (
+                <div className="mb-4 flex flex-col gap-y-4 basis-[30%]">
+                  <p className="mb-2 text-foreground">
+                    Edit TTE{" "}
+                    {
+                      signs.find((sign) => sign.officialId === officialIdToEdit)
+                        ?.officialName
+                    }
+                  </p>
+                  <div className="flex flex-col gap-y-2">
+                    <div>
+                      <Label htmlFor="page">Halaman</Label>
+                      <Input
+                        name="page"
+                        type="number"
+                        max={previewPageCount}
+                        min={1}
+                        onChange={(e) => {
+                          setSigns((prev) => {
+                            return prev.map((sign) => {
+                              if (sign.officialId === officialIdToEdit) {
+                                return {
+                                  ...sign,
+                                  page: Number(e.target.value),
+                                };
+                              }
 
-                            return sign;
+                              return sign;
+                            });
                           });
-                        });
-                      }}
-                      value={
-                        signs.find(
-                          (sign) => sign.officialId === officialIdToEdit,
-                        )!.page
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label>Posisi X</Label>
-                    <Slider
-                      defaultValue={[0]}
-                      value={[
-                        signs.find(
-                          (sign) => sign.officialId === officialIdToEdit,
-                        )!.coordX,
-                      ]}
-                      max={previewMaxWidth}
-                      step={1}
-                      onValueChange={(e) =>
-                        handleXChange(e[0], officialIdToEdit)
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label>Posisi Y</Label>
-                    <Slider
-                      defaultValue={[0]}
-                      value={[
-                        signs.find(
-                          (sign) => sign.officialId === officialIdToEdit,
-                        )!.coordY,
-                      ]}
-                      max={previewMaxHeight}
-                      step={1}
-                      onValueChange={(e) =>
-                        handleYChange(e[0], officialIdToEdit)
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label>Skala</Label>
-                    <Slider
-                      defaultValue={[0]}
-                      value={[
-                        signs.find(
-                          (sign) => sign.officialId === officialIdToEdit,
-                        )!.size,
-                      ]}
-                      max={300}
-                      step={1}
-                      onValueChange={(e) =>
-                        handleSizeChange(e[0], officialIdToEdit)
-                      }
-                    />
+                        }}
+                        value={
+                          signs.find(
+                            (sign) => sign.officialId === officialIdToEdit,
+                          )?.page
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label>Posisi X</Label>
+                      <Slider
+                        defaultValue={[0]}
+                        value={[
+                          signs.find(
+                            (sign) => sign.officialId === officialIdToEdit,
+                          )?.coordX ?? 0,
+                        ]}
+                        max={previewMaxWidth}
+                        step={1}
+                        onValueChange={(e) =>
+                          handleXChange(e[0], officialIdToEdit)
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label>Posisi Y</Label>
+                      <Slider
+                        defaultValue={[0]}
+                        value={[
+                          signs.find(
+                            (sign) => sign.officialId === officialIdToEdit,
+                          )?.coordY ?? 0,
+                        ]}
+                        max={previewMaxHeight}
+                        step={1}
+                        onValueChange={(e) =>
+                          handleYChange(e[0], officialIdToEdit)
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label>Skala</Label>
+                      <Slider
+                        defaultValue={[0]}
+                        value={[
+                          signs.find(
+                            (sign) => sign.officialId === officialIdToEdit,
+                          )?.size ?? 0,
+                        ]}
+                        max={300}
+                        step={1}
+                        onValueChange={(e) =>
+                          handleSizeChange(e[0], officialIdToEdit)
+                        }
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
             <div className="mb-1 flex w-full items-center">
               <Collapsible
                 open={variablesOpen}
