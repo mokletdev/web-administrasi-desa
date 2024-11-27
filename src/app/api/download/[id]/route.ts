@@ -4,6 +4,7 @@ import { patchDocument, PatchType, TextRun } from "docx";
 import { normalizeVariableName } from "@/lib/utils";
 import { printDoc } from "@/app/actions/print-doc";
 import { convertToPdf, convertToPdfV1 } from "@/app/actions/docx-pdf";
+import { notFound } from "next/navigation";
 
 export const GET = async (
   req: NextRequest,
@@ -22,17 +23,18 @@ export const GET = async (
     let doc: Blob;
     if (data?.status !== "SIGNED") {
       const print = await printDoc(id);
-      if (!print.data)
+
+      if (!print.data || print.error?.code === "NOT_FOUND")
         return NextResponse.json(
           {
-            status: 500,
+            status: 404,
+            message: "Not Found",
           },
-          { status: 500 },
+          { status: 404 },
         );
 
       const printBlob = new Blob([print.data]);
       const printPdf = await convertToPdfV1(printBlob);
-      console.log(printPdf);
 
       doc = await b64toBlob(printPdf.data!, "application/pdf");
     } else {

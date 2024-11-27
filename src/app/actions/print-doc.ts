@@ -17,9 +17,6 @@ export async function printDoc(
   const submission = await prisma.submission.findUnique({
     where: {
       id: submissionId,
-      template: {
-        signs: { some: { image: { not: null } } },
-      },
     },
     include: {
       fields: { include: { field: { include: { fieldType: true } } } },
@@ -99,9 +96,16 @@ export async function printDoc(
         }),
       ],
     },
-    manual_sign: {
+  };
+
+  const manualSigns = submission.template.signs.filter(
+    (sign) => sign.image !== null,
+  );
+
+  if (manualSigns.length > 0)
+    patches["manual_sign"] = {
       type: PatchType.DOCUMENT,
-      children: submission.template.signs.map((manualSign) =>
+      children: manualSigns.map((manualSign) =>
         mapImagePositionToDocx({
           bottom: manualSign.coordY,
           left: manualSign.coordX,
@@ -110,8 +114,7 @@ export async function printDoc(
           imageBase64: manualSign.image!,
         }),
       ),
-    },
-  };
+    };
 
   for (const sign of submission.signRequests) {
     const normal = normalizeVariableName(sign.official?.name ?? "-");
