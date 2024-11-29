@@ -45,6 +45,9 @@ import { z } from "zod";
 import { upsertTemplate } from "../../actions";
 import { Field, RenderField } from "./field";
 import { PENDUDUK_PROPS } from "@/lib/penduduk";
+import { Checkbox } from "@/components/ui/checkbox";
+import { CheckedState } from "@radix-ui/react-checkbox";
+import ImageForm from "./imageForm";
 
 // Initiate pdfjs worker
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -59,6 +62,8 @@ type Sign = {
   coordY: number;
   size: number;
   page: number;
+  image?: File | null;
+  isManual?: boolean;
 };
 
 const MAX_FILE_SIZE = 5_000_000;
@@ -213,6 +218,30 @@ export const UpdateTemplateDialog: FC<
     });
   };
 
+  const handleManualChange = (e: boolean, officialId: string) => {
+    setSigns((prev) => {
+      return prev.map((sign) => {
+        if (sign.officialId === officialId) {
+          return { ...sign, isManual: e };
+        }
+
+        return sign;
+      });
+    });
+  };
+
+  const handleImageChange = (e: File, officialId: string) => {
+    setSigns((prev) => {
+      return prev.map((sign) => {
+        if (sign.officialId === officialId) {
+          return { ...sign, image: e };
+        }
+
+        return sign;
+      });
+    });
+  };
+
   const onSubmit = form.handleSubmit(async ({ title, content }) => {
     setLoading(true);
 
@@ -233,12 +262,11 @@ export const UpdateTemplateDialog: FC<
       content: contentFormData,
       fields,
       level: adminLevel,
-      signs: signs.map(({ coordX, coordY, officialId, size }) => ({
-        coordX,
-        coordY,
-        officialId,
-        size,
-      })),
+      signs: signs.map(({ coordX, coordY, officialId, size, image }) => {
+        const imageFormData = new FormData();
+        image && imageFormData.append("image", image);
+        return { coordX, coordY, officialId, size, image: imageFormData };
+      }),
     });
 
     if (res.error) {
@@ -533,7 +561,7 @@ export const UpdateTemplateDialog: FC<
                 )}
               </div>
               {officialIdToEdit !== undefined && (
-                <div className="mb-4 flex flex-col gap-y-4 basis-[30%]">
+                <div className="mb-4 flex basis-[30%] flex-col gap-y-4">
                   <p className="mb-2 text-foreground">
                     Edit TTE{" "}
                     {
@@ -617,6 +645,35 @@ export const UpdateTemplateDialog: FC<
                           handleSizeChange(e[0], officialIdToEdit)
                         }
                       />
+                    </div>
+                    <div>
+                      <div className="mb-4 inline-flex items-center gap-2">
+                        <Label>Image TTE</Label>
+                        <Checkbox
+                          checked={
+                            signs.find(
+                              (sign) => sign.officialId === officialIdToEdit,
+                            )!.isManual ?? false
+                          }
+                          onCheckedChange={(s: CheckedState) =>
+                            handleManualChange(s as boolean, officialIdToEdit)
+                          }
+                        />
+                      </div>
+                      {signs.find(
+                        (sign) => sign.officialId === officialIdToEdit,
+                      )!.isManual && (
+                        <ImageForm
+                          ttdFile={
+                            signs.find(
+                              (sign) => sign.officialId === officialIdToEdit,
+                            )?.image
+                          }
+                          onChange={(e: File) => {
+                            handleImageChange(e, officialIdToEdit);
+                          }}
+                        />
+                      )}
                     </div>
                   </div>
                 </div>
