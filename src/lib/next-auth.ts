@@ -51,6 +51,7 @@ export const authOptions: AuthOptions = {
       },
     },
   },
+  useSecureCookies: false,
   providers: [
     CredentialsProvider({
       name: "Credentials",
