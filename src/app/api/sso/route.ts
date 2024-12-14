@@ -49,7 +49,7 @@ export const GET = async (req: NextRequest) => {
     cookieStore.set("next-auth.session-token", jwt);
     cookieStore.set("__Secure-next-auth.session-token", jwt);
 
-    const homeUrl = new URL("/", req.url);
+    const homeUrl = new URL("/", process.env.NEXTAUTH_URL ?? req.url);
     return NextResponse.redirect(homeUrl, {
       headers: { "Set-Cookie": cookieStore.toString() },
     });
