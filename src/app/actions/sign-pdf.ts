@@ -164,4 +164,3 @@ const signPdfManual = async (
 };
 
 export default signPdf;
-module.exports = { signPdfManual };
