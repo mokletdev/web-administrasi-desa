@@ -36,11 +36,11 @@ export async function eSign(
 
     const { file, imageTTD, ...queryParams } = params;
 
-    const imageFile = new File(
-      [await (await fetch(imageTTD!)).blob()],
-      `${queryParams.nik}`,
-      { type: "image/png" },
-    );
+    // const imageFile = new File(
+    //   [await (await fetch(imageTTD!)).blob()],
+    //   `${queryParams.nik}`,
+    //   { type: "image/png" },
+    // );
 
     const formData = new FormData();
     for (let key in queryParams) {
@@ -53,9 +53,9 @@ export async function eSign(
       new Blob([file], { type: "application/pdf" }),
       "document.pdf",
     );
-    if (!params.image) {
-      formData.append("imageTTD", imageFile!);
-    }
+    // if (!params.image) {
+    //   formData.append("imageTTD", imageFile!);
+    // }
     formData.append("file", new Blob([file]), "document.pdf");
 
     const response = await fetch(`${process.env.TTE_URL}api/sign/pdf`, {
@@ -65,10 +65,7 @@ export async function eSign(
     });
 
     if (!response.ok) {
-      if (response.status === 400)
-        return ActionResponses.badRequest((await response.json()).error);
-
-      throw new Error(`HTTP error! status: ${response.status}`);
+      return ActionResponses.badRequest((await response.json()).error);
     }
 
     const responseBuffer = Buffer.from(await response.arrayBuffer());

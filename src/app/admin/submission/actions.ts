@@ -403,7 +403,15 @@ export const handleSign = async (
         let pdfFinal;
         if (status !== "REJECT") {
           const doc = await signPdf(submission.id, paraphrase);
-
+          if (doc.error) {
+            await prisma.signRequest.deleteMany({
+              where: {
+                officialId,
+                submissionId: submission.id,
+              },
+            });
+            return ActionResponses.badRequest(doc.error.message);
+          }
           if (done) pdfFinal = doc.data?.toString("base64");
           const update = await prisma.signRequest.updateMany({
             where: {
