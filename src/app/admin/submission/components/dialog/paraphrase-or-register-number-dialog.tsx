@@ -64,8 +64,8 @@ export const ParaphraseOrRegisterNumberDialog: FC<
         dismiss(loadingToast.id);
         setLoading(false);
         return toast({
-          title: "Gagal Menambahkan!",
-          description: `Gagal menambah layanan (${res.error.message})`,
+          title: "Gagal Tanda Tangan!",
+          description: `Gagal tanda tangan (${res.error.message})`,
         });
       }
     } else {
@@ -80,16 +80,16 @@ export const ParaphraseOrRegisterNumberDialog: FC<
         dismiss(loadingToast.id);
         setLoading(false);
         return toast({
-          title: "Gagal Menambahkan!",
-          description: `Gagal menambah layanan (${res.error.message})`,
+          title: "Gagal Approval!",
+          description: `Gagal Approval (${res.error.message})`,
         });
       }
     }
 
     dismiss(loadingToast.id);
     toast({
-      title: "Berhasil Menambahkan!",
-      description: `Berhasil menambahkan layanan baru`,
+      title: "Berhasil Approve!",
+      description: `Berhasil approve`,
     });
     setLoading(false);
     setIsOpen(false);

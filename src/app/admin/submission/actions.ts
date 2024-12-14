@@ -328,146 +328,147 @@ export const handleSign = async (
   paraphrase: string,
   reason?: string,
 ): Promise<ActionResponse<{ id: string }>> => {
-  // try {
-  const session = await getServerSession();
+  try {
+    const session = await getServerSession();
 
-  if (!session?.user) {
-    return ActionResponses.unauthorized();
-  }
+    if (!session?.user) {
+      return ActionResponses.unauthorized();
+    }
 
-  const { user } = session;
+    const { user } = session;
 
-  const userDb = await prisma.user.findUnique({
-    where: { id: user.id },
-    select: { unit: { select: { administrativeLevel: true } } },
-  });
+    const userDb = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { unit: { select: { administrativeLevel: true } } },
+    });
 
-  if (!userDb?.unit?.administrativeLevel) return notFound();
+    if (!userDb?.unit?.administrativeLevel) return notFound();
 
-  const request = await prisma.serviceRequest.findUnique({
-    where: { id: serviceRequestId },
-    include: {
-      admnistrativeService: { include: { administrativeUnit: true } },
-      submissions: {
-        include: {
-          signRequests: { include: { official: true } },
-          template: {
-            include: {
-              signs: { where: { image: null }, include: { Official: true } },
+    const request = await prisma.serviceRequest.findUnique({
+      where: { id: serviceRequestId },
+      include: {
+        admnistrativeService: { include: { administrativeUnit: true } },
+        submissions: {
+          include: {
+            signRequests: { include: { official: true } },
+            template: {
+              include: {
+                signs: { where: { image: null }, include: { Official: true } },
+              },
             },
           },
+          where: { template: { level: userDb.unit.administrativeLevel } },
         },
-        where: { template: { level: userDb.unit.administrativeLevel } },
       },
-    },
-  });
+    });
 
-  const approvals: Prisma.SignRequestCreateManyInput[] =
-    request?.submissions
-      .filter(
-        (item) =>
-          item.template.signs.some((i) => i.Official.userId === user.id) &&
-          !item.signRequests.some((i) => i.official.userId === user.id),
-      )
-      .map((item) => ({
-        officialId,
-        signedPdf: "-",
-        submissionId: item.id,
-        signedAt: new Date(),
-      })) ?? [];
+    const approvals: Prisma.SignRequestCreateManyInput[] =
+      request?.submissions
+        .filter(
+          (item) =>
+            item.template.signs.some((i) => i.Official.userId === user.id) &&
+            !item.signRequests.some((i) => i.official.userId === user.id),
+        )
+        .map((item) => ({
+          officialId,
+          signedPdf: "-",
+          submissionId: item.id,
+          signedAt: new Date(),
+        })) ?? [];
 
-  await prisma.signRequest.createMany({ data: approvals });
-  let doneAllTTE = true;
-  if (request?.submissions) {
-    for (let submission of request.submissions) {
-      const signLength = submission.template.signs.length;
-      const signedLength = submission.signRequests.length;
-      const remainingSignatures = signLength - signedLength;
-      console.log("REMAINS:", remainingSignatures);
+    await prisma.signRequest.createMany({ data: approvals });
+    let doneAllTTE = true;
+    if (request?.submissions) {
+      for (let submission of request.submissions) {
+        const signLength = submission.template.signs.length;
+        const signedLength = submission.signRequests.length;
+        const remainingSignatures = signLength - signedLength;
+        console.log("REMAINS:", remainingSignatures);
 
-      const availableForTTE =
-        submission.template.signs.some(
-          (sign) => sign.Official.userId === user.id,
-        ) &&
-        !submission.signRequests.some(
-          (request) => request.official.userId === user.id,
-        );
+        const availableForTTE =
+          submission.template.signs.some(
+            (sign) => sign.Official.userId === user.id,
+          ) &&
+          !submission.signRequests.some(
+            (request) => request.official.userId === user.id,
+          );
 
-      const done = availableForTTE
-        ? remainingSignatures <= 1
-        : remainingSignatures === 0;
+        const done = availableForTTE
+          ? remainingSignatures <= 1
+          : remainingSignatures === 0;
 
-      if (!done) doneAllTTE = false;
-      if (!availableForTTE) continue;
+        if (!done) doneAllTTE = false;
+        if (!availableForTTE) continue;
 
-      let pdfFinal;
-      if (status !== "REJECT") {
-        const doc = await signPdf(submission.id, paraphrase);
-        if (done) pdfFinal = doc.data?.toString("base64");
-        const update = await prisma.signRequest.updateMany({
-          where: {
-            officialId,
-            submissionId: submission.id,
+        let pdfFinal;
+        if (status !== "REJECT") {
+          const doc = await signPdf(submission.id, paraphrase);
+
+          if (done) pdfFinal = doc.data?.toString("base64");
+          const update = await prisma.signRequest.updateMany({
+            where: {
+              officialId,
+              submissionId: submission.id,
+            },
+            data: { signedPdf: doc.data?.toString("base64") ?? "-" },
+          });
+        }
+        await prisma.submission.update({
+          where: { id: submission.id },
+          data: {
+            signedPdf: pdfFinal,
+            status: status === "ACCEPT" ? "SIGNED" : "REJECTED",
           },
-          data: { signedPdf: doc.data?.toString("base64") ?? "-" },
         });
       }
-      await prisma.submission.update({
-        where: { id: submission.id },
-        data: {
-          signedPdf: pdfFinal,
-          status: status === "ACCEPT" ? "SIGNED" : "REJECTED",
-        },
-      });
     }
+
+    const next = getNextLevel(
+      request?.levelNow,
+      request?.admnistrativeService?.administrativeUnit.administrativeLevel,
+      request?.admnistrativeService?.skipStep!,
+    );
+
+    let newStatus =
+      doneAllTTE && next.nextLevel == null
+        ? "Selesai"
+        : `Menunggu Tanda Tangan di ${
+            request?.levelNow ? levelMap[request?.levelNow] : ""
+          }`;
+    let level = request?.levelNow;
+
+    console.log("DONEALL:", doneAllTTE);
+    console.log("level:", next);
+    console.log("condition:", doneAllTTE && next.nextLevel === null);
+
+    if (doneAllTTE && next.nextLevel) {
+      level = next.nextLevel as AdministrativeLevel;
+      newStatus = `Menunggu Operator ${next.nextLevel}`;
+    }
+
+    if (status === "REJECT") {
+      newStatus = `Ditolak TTE di ${
+        request?.levelNow ? levelMap[request?.levelNow] : ""
+      } (${reason})`;
+    }
+
+    console.log(newStatus);
+
+    await prisma.serviceRequest.update({
+      where: { id: serviceRequestId },
+      data: {
+        levelNow: level,
+        status: newStatus,
+        done: newStatus === "Selesai",
+      },
+    });
+
+    revalidatePath("/", "layout");
+    return ActionResponses.success({ id: serviceRequestId });
+  } catch (error) {
+    console.error("Error getting requests:", error);
+    return ActionResponses.serverError();
   }
-
-  const next = getNextLevel(
-    request?.levelNow,
-    request?.admnistrativeService?.administrativeUnit.administrativeLevel,
-    request?.admnistrativeService?.skipStep!,
-  );
-
-  let newStatus =
-    doneAllTTE && next.nextLevel == null
-      ? "Selesai"
-      : `Menunggu Tanda Tangan di ${
-          request?.levelNow ? levelMap[request?.levelNow] : ""
-        }`;
-  let level = request?.levelNow;
-
-  console.log("DONEALL:", doneAllTTE);
-  console.log("level:", next);
-  console.log("condition:", doneAllTTE && next.nextLevel === null);
-
-  if (doneAllTTE && next.nextLevel) {
-    level = next.nextLevel as AdministrativeLevel;
-    newStatus = `Menunggu Operator ${next.nextLevel}`;
-  }
-
-  if (status === "REJECT") {
-    newStatus = `Ditolak TTE di ${
-      request?.levelNow ? levelMap[request?.levelNow] : ""
-    } (${reason})`;
-  }
-
-  console.log(newStatus);
-
-  await prisma.serviceRequest.update({
-    where: { id: serviceRequestId },
-    data: {
-      levelNow: level,
-      status: newStatus,
-      done: newStatus === "Selesai",
-    },
-  });
-
-  revalidatePath("/", "layout");
-  return ActionResponses.success({ id: serviceRequestId });
-  // } catch (error) {
-  //   console.error("Error getting requests:", error);
-  //   return ActionResponses.serverError();
-  // }
 };
 
 // type SignStatus = "ACCEPT" | "REJECT";

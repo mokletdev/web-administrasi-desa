@@ -173,13 +173,12 @@ export async function printDoc(
 
     patches[`tte_${normal}_location`] = {
       type: PatchType.PARAGRAPH,
-      children: [new TextRun(sign.official?.user?.name ?? "Belum TTE")],
+      children: [new TextRun(sign.official?.user?.unit?.name ?? "Belum TTE")],
     };
   }
 
   const nik = submission.fields.find((field) => field.field.label === "NIK");
   const penduduk = nik?.value ? await getPenduduk(nik?.value) : undefined;
-  console.log(penduduk);
   if (penduduk?.success) {
     for (const data in penduduk.data) {
       const value = penduduk.data[data] ?? "-";

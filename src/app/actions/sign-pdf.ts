@@ -63,7 +63,6 @@ const signPdf = async (submissionId: string, paraphrase: string) => {
     }
 
     const unsignedPdfBuffer = Buffer.from(unsignedPdf!, "base64");
-    console.log("TTE Proccess");
     const signedPdf = await eSign({
       file: unsignedPdfBuffer,
       page: sign?.page.toString()!,
@@ -79,7 +78,7 @@ const signPdf = async (submissionId: string, paraphrase: string) => {
     });
 
     if (signedPdf.error) {
-      return ActionResponses.serverError("PDF signing failed");
+      return ActionResponses.badRequest(signedPdf.error.message);
     }
 
     revalidatePath("/", "layout");
@@ -149,6 +148,7 @@ const signPdfManual = async (
       nik: sign?.Official.user?.NIK!,
       imageTTD: sign?.image!,
       image: true,
+      linkQR: process.env.NEXTAUTH_URL + "/api/download/" + submission!.id,
     });
 
     if (signedPdf.error) {

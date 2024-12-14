@@ -65,6 +65,9 @@ export async function eSign(
     });
 
     if (!response.ok) {
+      if (response.status === 400)
+        return ActionResponses.badRequest((await response.json()).error);
+
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
