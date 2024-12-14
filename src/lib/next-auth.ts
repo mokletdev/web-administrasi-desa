@@ -41,6 +41,16 @@ export const authOptions: AuthOptions = {
     strategy: "jwt",
   },
   pages: { signIn: "/auth/login" },
+  cookies: {
+    sessionToken: {
+      name: "next-auth.session-token",
+      options: {
+        httpOnly: false,
+        secure: false,
+        path: "/",
+      },
+    },
+  },
   providers: [
     CredentialsProvider({
       name: "Credentials",

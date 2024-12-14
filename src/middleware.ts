@@ -1,6 +1,7 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 import { UserRole } from "@prisma/client";
+import { authOptions } from "./lib/next-auth";
 
 const ROUTES = {
   ROOT: "/",
@@ -63,6 +64,7 @@ export default withAuth(
     return NextResponse.next();
   },
   {
+    cookies: authOptions.cookies,
     callbacks: {
       authorized: () => true,
     },
