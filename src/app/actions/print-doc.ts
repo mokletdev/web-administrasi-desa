@@ -19,6 +19,7 @@ export async function printDoc(
       id: submissionId,
     },
     include: {
+      user: { select: { administrativeUnitId: true } },
       fields: { include: { field: { include: { fieldType: true } } } },
       template: {
         include: {
@@ -46,8 +47,41 @@ export async function printDoc(
     },
   });
 
-  const letterhead =
-    submission?.template.AdministrativeService.administrativeUnit.letterhead;
+  const templateLevel = submission?.template.level;
+
+  const findLetterHead = await prisma.administrativeUnit.findFirst({
+    where: {
+      administrativeLevel: templateLevel,
+      OR: [
+        {
+          id: submission?.template.AdministrativeService.administrativeUnitId,
+        },
+        {
+          parents: {
+            some: {
+              OR: [
+                {
+                  id: submission?.template.AdministrativeService
+                    .administrativeUnitId,
+                },
+                {
+                  parents: {
+                    some: {
+                      id: submission?.template.AdministrativeService
+                        .administrativeUnitId,
+                    },
+                  },
+                },
+              ],
+            },
+          },
+        },
+      ],
+    },
+    select: { letterhead: true },
+  });
+
+  const letterhead = findLetterHead?.letterhead;
 
   // signs: {
   //   include: {
@@ -56,8 +90,8 @@ export async function printDoc(
   // },
 
   if (!submission) return ActionResponses.notFound("submission not found");
-  if (!submission.template.AdministrativeService.administrativeUnit.letterhead)
-    return ActionResponses.badRequest("Letterhead unit belum diset!");
+  // if (!submission.template.AdministrativeService.administrativeUnit.letterhead)
+  //   return ActionResponses.badRequest("Letterhead unit belum diset!");
 
   const bufferDocx = Buffer.from(submission.template.content, "base64");
 
@@ -66,14 +100,17 @@ export async function printDoc(
       type: PatchType.PARAGRAPH,
       children: [new TextRun(submission.approvals[0]?.registerNumber || "-")],
     },
-    kop_surat: {
+  };
+
+  if (letterhead !== null && letterhead !== undefined) {
+    patches["kop_surat"] = {
       type: PatchType.DOCUMENT,
       children: [
         new Paragraph({
           children: [
             new ImageRun({
               type: "jpg",
-              data: letterhead!,
+              data: letterhead,
               floating: {
                 allowOverlap: false,
                 wrap: {
@@ -95,8 +132,8 @@ export async function printDoc(
           ],
         }),
       ],
-    },
-  };
+    };
+  }
 
   const manualSigns = submission.template.signs.filter(
     (sign) => sign.image !== null,
