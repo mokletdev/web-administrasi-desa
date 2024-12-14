@@ -64,7 +64,11 @@ export default withAuth(
     return NextResponse.next();
   },
   {
-    cookies: authOptions.cookies,
+    cookies: {
+      sessionToken: {
+        name: "next-auth.session-token",
+      },
+    },
     callbacks: {
       authorized: () => true,
     },
