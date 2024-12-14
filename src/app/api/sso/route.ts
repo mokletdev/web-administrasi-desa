@@ -47,6 +47,7 @@ export const GET = async (req: NextRequest) => {
       token: jwtPayload,
     });
     cookieStore.set("next-auth.session-token", jwt);
+    cookieStore.set("__Secure-next-auth.session-token", jwt);
 
     const homeUrl = new URL("/", req.url);
     return NextResponse.redirect(homeUrl, {
