@@ -4,7 +4,7 @@ import { encode } from "next-auth/jwt";
 import { JwtPayload, verify as jwtVerify } from "jsonwebtoken";
 import prisma from "@/lib/prisma";
 
-export const GET = async (req: NextRequest, res: NextResponse) => {
+export const GET = async (req: NextRequest) => {
   try {
     const searchParams = req.nextUrl.searchParams;
     const token = searchParams.get("token")?.toString();
