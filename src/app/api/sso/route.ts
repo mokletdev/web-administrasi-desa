@@ -55,6 +55,7 @@ export const GET = async (req: NextRequest) => {
     });
   } catch (error) {
     console.log(error);
+    console.log(error);
     return NextResponse.json(
       { status: 400, message: "Invalid" },
       { status: 400 },
