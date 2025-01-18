@@ -1,12 +1,15 @@
-import { NextResponse, NextRequest } from "next/server";
-import { cookies } from "next/headers";
-import { encode } from "next-auth/jwt";
-import { JwtPayload, verify as jwtVerify } from "jsonwebtoken";
 import prisma from "@/lib/prisma";
+import { JwtPayload, verify as jwtVerify } from "jsonwebtoken";
+import { encode } from "next-auth/jwt";
+import { cookies } from "next/headers";
+import { NextRequest, NextResponse } from "next/server";
 
 export const GET = async (req: NextRequest) => {
   try {
     const searchParams = req.nextUrl.searchParams;
+
+    const redirect = searchParams.get("redirect");
+
     const token = searchParams.get("token")?.toString();
     const cookieStore = await cookies();
 
@@ -49,12 +52,14 @@ export const GET = async (req: NextRequest) => {
     cookieStore.set("next-auth.session-token", jwt);
     cookieStore.set("__Secure-next-auth.session-token", jwt);
 
-    const homeUrl = new URL("/", process.env.NEXTAUTH_URL ?? req.url);
-    return NextResponse.redirect(homeUrl, {
+    const redirectUrl = new URL(
+      redirect || "/",
+      process.env.NEXTAUTH_URL ?? req.url,
+    );
+    return NextResponse.redirect(redirectUrl, {
       headers: { "Set-Cookie": cookieStore.toString() },
     });
   } catch (error) {
-    console.log(error);
     console.log(error);
     return NextResponse.json(
       { status: 400, message: "Invalid" },
