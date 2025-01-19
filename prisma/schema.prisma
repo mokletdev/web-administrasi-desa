@@ -16,6 +16,7 @@ model AdministrativeUnit {
   parents             AdministrativeUnit[] @relation("ParentChild")
   children            AdministrativeUnit[] @relation("ParentChild")
   letterhead          String?              @db.LongText
+  oldId               String?
 
   officials Official[]
   users     User[]

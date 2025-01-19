@@ -32,6 +32,7 @@ export const GET = async (req: NextRequest) => {
           select: {
             administrativeLevel: true,
             name: true,
+            oldId: true,
           },
         },
         name: true,
