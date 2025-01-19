@@ -121,7 +121,6 @@ const RequestDocument: FC<{
   return (
     <>
       <div className="mb-12 flex flex-col">
-        <BackButton />
         <PageHeader serviceName={service.name} />
       </div>
 
